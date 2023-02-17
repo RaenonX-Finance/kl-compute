@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UserSecretsId>dotnet-KLSitePxParse-015F73E9-6ADA-4573-B7C8-0C04CF0BB2C4</UserSecretsId>
+        <Company>RaenonX</Company>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Google.Protobuf" Version="3.22.0" />
+        <PackageReference Include="Grpc.Net.Client" Version="2.51.0" />
+        <PackageReference Include="Grpc.Tools" Version="2.50.0">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
+        <PackageReference Include="NetMQ" Version="4.0.1.10" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ContentWithTargetPath Include="..\KL.Common\config.yaml">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <TargetPath>%(Filename)%(Extension)</TargetPath>
+        </ContentWithTargetPath>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Protobuf Include="..\KL.Proto\**\*.proto" GrpcServices="Client" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\KL.Common\KL.Common.csproj" />
+        <ProjectReference Include="..\KL.Touchance\KL.Touchance.csproj" />
+    </ItemGroup>
+
+</Project>

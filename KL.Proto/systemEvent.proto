@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+import "decimalValue.proto";
+
+option csharp_namespace = "KL.Proto";
+
+package KL;
+
+service SystemEvent {
+  rpc Realtime (RealtimeData) returns (SystemEventReply);
+  rpc MinuteChange (MinuteChangeData) returns (SystemEventReply);
+  rpc Calculated (CalculatedData) returns (SystemEventReply);
+  rpc Error (ErrorData) returns (SystemEventReply);
+}
+
+message RealtimeData {
+  map<string, RealtimeDataSingle> data = 1;
+}
+
+message RealtimeDataSingle {
+  DecimalValue open = 1;
+  DecimalValue high = 2;
+  DecimalValue low = 3;
+  DecimalValue close = 4;
+  DecimalValue diffVal = 5;
+  DecimalValue diffPct = 6;
+  int32 strength = 7;
+}
+
+message MinuteChangeData {
+  int64 epochSec = 1;
+}
+
+message CalculatedData {
+  repeated string symbols = 1;
+}
+
+message ErrorData {
+  string message = 1;
+}
+
+message SystemEventReply {
+  string message = 1;
+}

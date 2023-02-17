@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Company>RaenonX</Company>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="NetMQ" Version="4.0.1.10" />
+        <PackageReference Include="Serilog" Version="2.12.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\KL.Common\KL.Common.csproj" />
+    </ItemGroup>
+
+</Project>

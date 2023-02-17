@@ -1,0 +1,38 @@
+using Grpc.Core;
+using KL.Calc.Computer;
+using KL.Proto;
+
+namespace KL.Calc.Services;
+
+
+public class PxDataService : PxData.PxDataBase {
+    private readonly ILogger<PxDataService> _logger;
+
+    public PxDataService(ILogger<PxDataService> logger) {
+        _logger = logger;
+    }
+
+    public override async Task<PxCalcReply> CalcAll(PxCalcRequestMulti request, ServerCallContext context) {
+        _logger.LogInformation("Received gRPC request to calculate all data: {Symbols}", request.Symbols);
+
+        await CalcRequestHandler.CalcAll(request.Symbols);
+
+        return new PxCalcReply { Message = "Done" };
+    }
+
+    public override async Task<PxCalcReply> CalcPartial(PxCalcRequestMulti request, ServerCallContext context) {
+        _logger.LogInformation("Received gRPC request to calculate all data: {Symbols}", request.Symbols);
+
+        await CalcRequestHandler.CalcPartial(request.Symbols, 30);
+
+        return new PxCalcReply { Message = "Done" };
+    }
+
+    public override async Task<PxCalcReply> CalcLast(PxCalcRequestSingle request, ServerCallContext context) {
+        _logger.LogInformation("Received gRPC request to calculate last data: {Symbol}", request.Symbol);
+
+        await CalcRequestHandler.CalcLast(request.Symbol);
+
+        return new PxCalcReply { Message = "Done" };
+    }
+}

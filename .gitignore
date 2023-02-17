@@ -1,0 +1,15 @@
+# Build output
+bin/
+obj/
+
+# Project files
+.idea/
+riderModule.iml
+_ReSharper.Caches/
+
+# Sandbox project
+KL.Sandbox/
+
+# Misc
+/packages/
+config.yaml

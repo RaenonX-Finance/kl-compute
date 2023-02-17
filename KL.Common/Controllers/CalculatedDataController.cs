@@ -1,0 +1,102 @@
+﻿using System.Collections.Immutable;
+using System.Diagnostics;
+using KL.Common.Extensions;
+using KL.Common.Models;
+using KL.Common.Utils;
+using MongoDB.Driver;
+using MongoDB.Driver.Linq;
+using Serilog;
+
+namespace KL.Common.Controllers;
+
+
+public static class CalculatedDataController {
+    private static readonly ILogger Log = Serilog.Log.ForContext(typeof(CalculatedDataController));
+
+    private static readonly FilterDefinitionBuilder<CalculatedDataModel> FilterBuilder =
+        Builders<CalculatedDataModel>.Filter;
+
+    public static IEnumerable<CalculatedDataModel> GetData(string symbol, int periodMin, int limit) {
+        Log.Information(
+            "Get {Limit} calculated data of {Symbol} @ {PeriodMin}",
+            limit,
+            symbol,
+            periodMin
+        );
+
+        return MongoConst.PxCalculated.AsQueryable()
+            .Where(r => r.Symbol == symbol && r.PeriodMin == periodMin)
+            .OrderByDescending(r => r.EpochSecond)
+            .Take(limit)
+            .ToImmutableArray()
+            .Reverse();
+    }
+
+    public static async Task UpdateByEpoch(IImmutableList<CalculatedDataModel> calculatedData) {
+        using var session = await MongoSession.Create();
+
+        Log.Information(
+            "Session {Session}: To update {Count} calculated data",
+            session.SessionId,
+            calculatedData.Count
+        );
+
+        var filter = calculatedData
+            .Select(r => (r.Symbol, r.PeriodMin, r.EpochSecond))
+            .Distinct()
+            .Select(
+                pair => FilterBuilder.Where(
+                    r =>
+                        r.Symbol == pair.Symbol
+                        && r.PeriodMin == pair.PeriodMin
+                        && r.EpochSecond == pair.EpochSecond
+                )
+            );
+        await MongoConst.PxCalculated.DeleteManyAsync(session.Session, FilterBuilder.Or(filter));
+        await MongoConst.PxCalculated.InsertManyAsync(session.Session, calculatedData);
+        
+        await session.Session.CommitTransactionAsync();
+
+        Log.Information(
+            "Session {Session}: Updated {Count} calculated data",
+            session.SessionId,
+            calculatedData.Count
+        );
+    }
+
+    public static async Task AddData(MongoSession session, IEnumerable<CalculatedDataModel> calculatedData) {
+        var start = Stopwatch.GetTimestamp();
+
+        Log.Information("Session {Session}: To add calculated data", session.SessionId);
+
+        await MongoConst.PxCalculated.InsertManyAsync(session.Session, calculatedData);
+
+        Log.Information(
+            "Session {Session}: Added calculated data in {Elapsed:0.00} ms",
+            session.SessionId,
+            start.GetElapsedMs()
+        );
+    }
+
+    public static async Task RemoveData(MongoSession session, IList<(string Symbol, int PeriodMin)> symbolPeriodPair) {
+        var start = Stopwatch.GetTimestamp();
+
+        Log.Information(
+            "Session {Session}: To remove calculated data of {@SymbolPeriodPair}",
+            session.SessionId,
+            symbolPeriodPair
+        );
+
+        var filter = symbolPeriodPair
+            .Distinct()
+            .Select(pair => FilterBuilder.Where(r => r.Symbol == pair.Symbol && r.PeriodMin == pair.PeriodMin));
+        await MongoConst.PxCalculated.DeleteManyAsync(session.Session, FilterBuilder.Or(filter));
+
+        Log.Information(
+            "Session {Session}: Removed calculated data of {SymbolPeriodPair} in {Elapsed:0.00} ms",
+            session.SessionId,
+            @symbolPeriodPair,
+            start.GetElapsedMs()
+        );
+    }
+}
