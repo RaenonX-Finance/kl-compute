@@ -1,4 +1,5 @@
-﻿using KL.Common.Models;
+﻿using KL.Common.Extensions;
+using KL.Common.Models;
 using KL.Common.Utils;
 using MongoDB.Driver;
 
@@ -6,7 +7,8 @@ namespace KL.Common.Controllers;
 
 
 public static class MongoConst {
-    public static readonly IMongoClient Client = new MongoClient(EnvironmentConfigHelper.Config.Database.MongoUrl);
+    public static readonly IMongoClient Client
+        = new MongoClient(EnvironmentConfigHelper.Config.Database.MongoUrl).Initialize();
 
     private static readonly IMongoDatabase PxDatabase = Client.GetDatabase("px");
 
