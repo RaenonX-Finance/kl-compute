@@ -2,6 +2,7 @@
 using KL.Common.Controllers;
 using KL.Common.Enums;
 using KL.Common.Events;
+using KL.Common.Models.Config;
 using KL.Touchance.Extensions;
 using KL.Touchance.Handlers;
 using KL.Touchance.Requests;
@@ -33,14 +34,7 @@ public class TouchanceClient : PxParseClient {
         }
     }
 
-    private async Task Initialize() {
-        var sources = PxConfigController.Config.Sources
-            .Where(
-                r => r is {
-                    Enabled: true, Source: PxSource.Touchance
-                }
-            )
-            .ToImmutableList();
+    private static async Task InitializeHistoryData(IImmutableList<PxSourceConfigModel> sources) {
         var isAnyPeriodDaily = PxConfigController.Config.Periods.Any(
             period => period.PeriodMin.GetHistoryInterval() == HistoryInterval.Daily
         );
@@ -78,8 +72,9 @@ public class TouchanceClient : PxParseClient {
         }
 
         _semaphore = null;
-        await OnInitCompleted(new InitCompletedEventArgs { SourcesInUse = sources });
+    }
 
+    private static void InitializeSubscribeHistoryData(IImmutableList<PxSourceConfigModel> sources) {
         // Subscribe history data
         foreach (var source in sources) {
             HistoryDataHandler.SendHandshakeRequest(
@@ -91,6 +86,25 @@ public class TouchanceClient : PxParseClient {
                 true
             );
         }
+    }
+
+    private async Task Initialize() {
+        var sources = PxConfigController.Config.Sources
+            .Where(
+                r => r is {
+                    Enabled: true, Source: PxSource.Touchance
+                }
+            )
+            .ToImmutableList();
+
+        await Task.WhenAll(
+            SourceInfoHandler.CheckSourceInfo(sources),
+            InitializeHistoryData(sources)
+        );
+        
+        await OnInitCompleted(new InitCompletedEventArgs { SourcesInUse = sources });
+
+        InitializeSubscribeHistoryData(sources);
     }
 
     public async Task Start() {

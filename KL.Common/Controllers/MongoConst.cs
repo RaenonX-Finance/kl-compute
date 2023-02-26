@@ -21,6 +21,9 @@ public static class MongoConst {
     public static readonly IMongoCollection<SrLevelDataModel> PxSrLevel =
         PxDatabase.GetCollection<SrLevelDataModel>("srLevel");
 
-    public static readonly IMongoCollection<PxConfigModel> CalcConfig =
+    public static readonly IMongoCollection<SourceInfoModel> PxSourceInfo =
+        PxDatabase.GetCollection<SourceInfoModel>("info");
+
+    public static readonly IMongoCollection<PxConfigModel> PxCalcConfig =
         PxDatabase.GetCollection<PxConfigModel>("config");
 }

@@ -7,5 +7,5 @@ public static class RequestType {
     public const string HistoryHandshake = "SUBQUOTE";
     public const string HistoryUnsubscribe = "UNSUBQUOTE";
     public const string HistoryData = "GETHISDATA";
-    public const string QueryInstrument = "QUERYINSTRUMENTINFO";
+    public const string SourceInfo = "QUERYINSTRUMENTINFO";
 }

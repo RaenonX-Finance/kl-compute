@@ -9,7 +9,8 @@ public static class MongoIndexManager {
         return new List<Task> {
             HistoryLookup(),
             CalculatedLookup(),
-            SrLevelLookup()
+            SrLevelLookup(),
+            SourceInfoLookup()
         };
     }
 
@@ -52,5 +53,17 @@ public static class MongoIndexManager {
         var indexModel = new CreateIndexModel<SrLevelDataModel>(indexKeys, indexOptions);
 
         return MongoConst.PxSrLevel.Indexes.CreateOneAsync(indexModel);
+    }
+
+    private static Task<string> SourceInfoLookup() {
+        var indexOptions = new CreateIndexOptions {
+            Unique = true,
+            Name = "SourceInfoLookup"
+        };
+        var indexKeys = Builders<SourceInfoModel>.IndexKeys
+            .Ascending(data => data.Symbol);
+        var indexModel = new CreateIndexModel<SourceInfoModel>(indexKeys, indexOptions);
+
+        return MongoConst.PxSourceInfo.Indexes.CreateOneAsync(indexModel);
     }
 }

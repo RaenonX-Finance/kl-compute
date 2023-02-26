@@ -9,7 +9,7 @@ namespace KL.Touchance.Requests;
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "Request")]
 [JsonDerivedType(typeof(LoginRequest), RequestType.Login)]
 [JsonDerivedType(typeof(PongRequest), RequestType.Pong)]
-[JsonDerivedType(typeof(QueryInstrumentRequest), RequestType.QueryInstrument)]
+[JsonDerivedType(typeof(SourceInfoRequest), RequestType.SourceInfo)]
 [JsonDerivedType(typeof(PxHistoryHandshakeRequest), RequestType.HistoryHandshake)]
 [JsonDerivedType(typeof(PxHistoryDataRequest), RequestType.HistoryData)]
 [JsonDerivedType(typeof(PxHistoryUnsubscribeRequest), RequestType.HistoryUnsubscribe)]

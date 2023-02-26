@@ -22,14 +22,14 @@ public static class PxConfigController {
         );
 
     private static PxConfigModel GetConfig() {
-        var config = MongoConst.CalcConfig.AsQueryable().FirstOrDefault();
+        var config = MongoConst.PxCalcConfig.AsQueryable().FirstOrDefault();
 
         if (config != default) {
             return config;
         }
 
         config = PxConfigModel.GenerateDefault();
-        MongoConst.CalcConfig.InsertOne(config);
+        MongoConst.PxCalcConfig.InsertOne(config);
 
         return config;
     }
