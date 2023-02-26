@@ -13,10 +13,10 @@ public static class MongoConst {
     private static readonly IMongoDatabase PxDatabase = Client.GetDatabase("px");
 
     public static readonly IMongoCollection<HistoryDataModel> PxHistory =
-        PxDatabase.GetCollection<HistoryDataModel>("dataNew");
+        PxDatabase.GetCollection<HistoryDataModel>("data");
 
     public static readonly IMongoCollection<CalculatedDataModel> PxCalculated =
-        PxDatabase.GetCollection<CalculatedDataModel>("calcNew");
+        PxDatabase.GetCollection<CalculatedDataModel>("calc");
 
     public static readonly IMongoCollection<SrLevelDataModel> PxSrLevel =
         PxDatabase.GetCollection<SrLevelDataModel>("srLevel");
