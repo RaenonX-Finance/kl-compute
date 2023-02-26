@@ -54,7 +54,7 @@ public record PxSourceConfigModel {
                 InternalSymbol = "FITX",
                 ExternalSymbol = "TC.F.TWF.FITX.HOT",
                 Name = "台指",
-                ProductCategory = ProductCategory.UsIndexFutures
+                ProductCategory = ProductCategory.TaiwanIndexFutures
             }
         };
     }
