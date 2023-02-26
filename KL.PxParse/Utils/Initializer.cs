@@ -19,7 +19,7 @@ public static class Initializer {
     private static IHost InitLog(this IHost app) {
         LoggingHelper.Initialize(
             EnvironmentConfigHelper.Config.Logging.OutputDirectory,
-            app.Services.GetRequiredService<IHostEnvironment>().IsDevelopment()
+            app.Services.GetRequiredService<IHostEnvironment>()
         );
 
         return app;

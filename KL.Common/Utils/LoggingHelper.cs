@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -17,13 +18,17 @@ public static class LoggingHelper {
         "{TimestampUtc:yyyy-MM-dd HH:mm:ss.fff} [{ThreadId,3}] "
         + "{SourceContext,50} [{Level:u1}] {Message:lj}{NewLine}{Exception}";
 
-    public static void Initialize(string? logDir, bool isDevelopment) {
+    public static void Initialize(string? logDir, IHostEnvironment? environment) {
         var appName = Assembly.GetCallingAssembly().GetName().FullName.Split(',')[0];
+        var isDevelopment = environment?.IsDevelopment() ?? true;
+        var isProduction = environment?.IsProduction() ?? false;
         
         if (isDevelopment) {
             appName += ".Development";
+        } else if (isProduction) {
+            appName += ".Production";
         }
-        
+
         var loggerConfig = new LoggerConfiguration()
             .Enrich.WithThreadId()
             .Enrich.With(new UtcTimestampEnricher())

@@ -43,10 +43,7 @@ public static class Initializer {
     }
 
     private static WebApplication InitLogging(this WebApplication app) {
-        LoggingHelper.Initialize(
-            EnvironmentConfigHelper.Config.Logging.OutputDirectory,
-            app.Environment.IsDevelopment()
-        );
+        LoggingHelper.Initialize(EnvironmentConfigHelper.Config.Logging.OutputDirectory, app.Environment);
 
         app.UseSerilogRequestLogging(
             options => {
