@@ -49,7 +49,8 @@ public class TouchanceClient : PxParseClient {
                     source.ExternalSymbol,
                     HistoryInterval.Minute,
                     DateTime.UtcNow.AddDays(-PxConfigController.Config.InitDataBacktrackDays[HistoryInterval.Minute]),
-                    DateTime.UtcNow,
+                    // Need to fetch the history data until the very last available bar
+                    DateTime.UtcNow.AddHours(1),
                     false
                 );
 
