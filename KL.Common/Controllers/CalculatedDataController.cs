@@ -17,7 +17,7 @@ public static class CalculatedDataController {
         Builders<CalculatedDataModel>.Filter;
 
     public static IEnumerable<CalculatedDataModel> GetData(string symbol, int periodMin, int limit) {
-        Log.Information(
+        Log.Debug(
             "Get {Limit} calculated data of {Symbol} @ {PeriodMin}",
             limit,
             symbol,
@@ -35,7 +35,7 @@ public static class CalculatedDataController {
     public static async Task UpdateByEpoch(IImmutableList<CalculatedDataModel> calculatedData) {
         using var session = await MongoSession.Create();
 
-        Log.Information(
+        Log.Debug(
             "Session {Session}: To update {Count} calculated data",
             session.SessionId,
             calculatedData.Count
@@ -57,7 +57,7 @@ public static class CalculatedDataController {
         
         await session.Session.CommitTransactionAsync();
 
-        Log.Information(
+        Log.Debug(
             "Session {Session}: Updated {Count} calculated data",
             session.SessionId,
             calculatedData.Count
