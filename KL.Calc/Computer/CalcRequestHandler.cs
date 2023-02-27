@@ -10,10 +10,32 @@ using ILogger = Serilog.ILogger;
 namespace KL.Calc.Computer;
 
 
-// TODO: [CalcAll] [CalcPartial] [CalcLast] should all calculate momentum and put to redis
-
 public static class CalcRequestHandler {
     private static readonly ILogger Log = Serilog.Log.ForContext(typeof(CalcRequestHandler));
+
+    private static async Task CalcMomentum(string symbol) {
+        await RedisMomentumController.Set(symbol, await MomentumComputer.CalcMomentum(symbol));
+    }
+
+    private static async Task CalcAll(
+        (string Symbol, int Period) c,
+        IImmutableDictionary<string, ImmutableDictionary<int, IEnumerable<GroupedHistoryDataModel>>> groupedDict,
+        MongoSession session
+    ) {
+        var grouped = groupedDict[c.Symbol][c.Period].ToImmutableList();
+
+        if (grouped.IsEmpty) {
+            throw new RpcException(
+                new Status(
+                    StatusCode.NotFound,
+                    $"{c.Symbol} @ {c.Period} does not have grouped history data available"
+                )
+            );
+        }
+
+        var calculated = (await HistoryDataComputer.CalcAll(grouped, c.Period)).ToImmutableArray();
+        await CalculatedDataController.AddData(session, calculated);
+    }
 
     public static async Task CalcAll(IList<string> symbols) {
         var periodMins = PxConfigController.Config.Periods.Select(r => r.PeriodMin).ToImmutableArray();
@@ -29,27 +51,11 @@ public static class CalcRequestHandler {
         using var session = await MongoSession.Create();
 
         await CalculatedDataController.RemoveData(session, combinations);
+        // ReSharper disable once AccessToDisposedClosure
         await Task.WhenAll(
-            combinations.Select(
-                async r => {
-                    var grouped = groupedDict[r.Symbol][r.Period].ToImmutableList();
-
-                    if (grouped.IsEmpty) {
-                        throw new RpcException(
-                            new Status(
-                                StatusCode.NotFound,
-                                $"{r.Symbol} @ {r.Period} does not have grouped history data available"
-                            )
-                        );
-                    }
-
-                    var calculated
-                        = (await HistoryDataComputer.CalcAll(grouped, r.Period))
-                        .ToImmutableArray();
-                    // ReSharper disable once AccessToDisposedClosure
-                    await CalculatedDataController.AddData(session, calculated);
-                }
-            )
+            combinations
+                .Select(r => CalcAll(r, groupedDict, session))
+                .Concat(symbols.Select(CalcMomentum))
         );
 
         await session.Session.CommitTransactionAsync();
@@ -95,6 +101,29 @@ public static class CalcRequestHandler {
         await SrLevelController.UpdateAll(SrLevelComputer.CalcLevels(symbols));
     }
 
+    private static async Task CalcPartial(
+        (string Symbol, int Period) c,
+        IImmutableDictionary<string, ImmutableDictionary<int, IEnumerable<GroupedHistoryDataModel>>> groupedHistory,
+        IReadOnlyDictionary<(string Symbol, int Period), IEnumerable<CalculatedDataModel>> groupedCalculated
+    ) {
+        try {
+            var history = groupedHistory[c.Symbol][c.Period];
+            var cachedCalculated = groupedCalculated[c];
+
+            var calculated = (await HistoryDataComputer.CalcPartial(history, cachedCalculated, c.Period))
+                .ToImmutableArray();
+            await CalculatedDataController.UpdateByEpoch(calculated);
+        } catch (InvalidOperationException e) {
+            Log.Error(e, "Error when attempting partial calculation for {Symbol} @ {Period}", c.Symbol, c.Period);
+            throw new RpcException(
+                new Status(
+                    StatusCode.NotFound,
+                    $"Unable to perform partial calculation for {c.Symbol} @ {c.Period}, symbol might be unavailable"
+                )
+            );
+        }
+    }
+
     public static async Task CalcPartial(IList<string> symbols, int limit) {
         var periodMins = PxConfigController.Config.Periods.Select(r => r.PeriodMin).ToImmutableArray();
         var combinations = symbols
@@ -111,36 +140,9 @@ public static class CalcRequestHandler {
 
         await Task.WhenAll(
             combinations
-                .Select(
-                    async r => {
-                        try {
-                            var history = groupedHistory[r.Symbol][r.Period];
-                            var cachedCalculated = groupedCalculated[(r.Symbol, r.Period)];
-
-                            var calculated = (await HistoryDataComputer.CalcPartial(
-                                    history,
-                                    cachedCalculated,
-                                    r.Period
-                                ))
-                                .ToImmutableArray();
-                            await CalculatedDataController.UpdateByEpoch(calculated);
-                        } catch (InvalidOperationException e) {
-                            Log.Error(
-                                e,
-                                "Error when attempting partial calculation for {Symbol} @ {Period}",
-                                r.Symbol,
-                                r.Period
-                            );
-                            throw new RpcException(
-                                new Status(
-                                    StatusCode.NotFound,
-                                    $"Unable to perform partial calculation for {r.Symbol} @ {r.Period}, symbol might be unavailable"
-                                )
-                            );
-                        }
-                    }
-                )
+                .Select(r => CalcPartial(r, groupedHistory, groupedCalculated))
                 .Concat(new[] { CalcPartialSrLevel(symbols) })
+                .Concat(symbols.Select(CalcMomentum))
         );
 
         Log.Information(
@@ -150,32 +152,32 @@ public static class CalcRequestHandler {
         );
     }
 
+    private static async Task CalcLast(string symbol, int periodMin) {
+        var data = CalculatedDataController.GetData(symbol, periodMin, 2).ToImmutableArray();
+
+        if (data.IsEmpty) {
+            throw new RpcException(
+                new Status(
+                    StatusCode.NotFound,
+                    $"{symbol} @ {periodMin} does not have calculated data available"
+                )
+            );
+        }
+
+        var calculated = HistoryDataComputer.CalcLast(data[^1], data[^2]);
+        await CalculatedDataController.UpdateByEpoch(ImmutableArray.Create(new[] { calculated }));
+    }
+
     public static async Task CalcLast(string symbol) {
-        // TODO: - [CalcLast] gRPC: Call on calculated
+        // TODO: [CalcLast] gRPC: Call system on calculated
         //      1. Redis grab data
         //      2. Calculate momentum
         //      3. Store momentum back
         //      4. gRPC call system on calculated
         await Task.WhenAll(
-            PxConfigController.Config.Periods.Select(
-                r => Task.Run(
-                    async () => {
-                        var data = CalculatedDataController.GetData(symbol, r.PeriodMin, 2).ToImmutableArray();
-
-                        if (data.IsEmpty) {
-                            throw new RpcException(
-                                new Status(
-                                    StatusCode.NotFound,
-                                    $"{symbol} @ {r.PeriodMin} does not have calculated data available"
-                                )
-                            );
-                        }
-
-                        var calculated = HistoryDataComputer.CalcLast(data[^1], data[^2]);
-                        await CalculatedDataController.UpdateByEpoch(ImmutableArray.Create(new[] { calculated }));
-                    }
-                )
-            )
+            PxConfigController.Config.Periods
+                .Select(r => CalcLast(symbol, r.PeriodMin))
+                .Concat(new[] { CalcMomentum(symbol) })
         );
 
         Log.Information(

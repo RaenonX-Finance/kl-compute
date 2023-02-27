@@ -42,8 +42,6 @@ public static class PxCacheController {
         await RedisLastPxController.Set(symbol, entriesToProcess);
     }
 
-    // TODO: * Add momentum calc in KL.Calc(Last|Partial|All)
-
     public static async Task CreateNewBar(DateTime timestamp) {
         var start = Stopwatch.GetTimestamp();
         Log.Information("Adding new bars at {NewBarTimestamp}", timestamp);

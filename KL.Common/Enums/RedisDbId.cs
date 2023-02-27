@@ -2,5 +2,5 @@
 
 
 public enum RedisDbId {
-    LastPx = 2
+    LastPxAndMomentum = 2
 }

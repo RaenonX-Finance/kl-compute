@@ -107,7 +107,7 @@ public class ClientAggregator {
         );
         await PxCacheController.CreateNewBar(e.Timestamp);
 
-        // TODO: - [OnMinuteChanged] gRPC: to trigger minute change event & (Frontend) client to automatically send request for data
+        // TODO: [OnMinuteChanged] gRPC: to trigger minute change event & (Frontend) client to automatically send request for data
         Log.Information(
             "Handled minute change to {NewMinuteTimestamp} in {ElapsedMs:0.00} ms",
             e.Timestamp,
@@ -116,7 +116,7 @@ public class ClientAggregator {
     }
 
     private static Task OnPxError(object? sender, PxErrorEventArgs e) {
-        // TODO: - [OnPxError] gRPC: to send error event
+        // TODO: [OnPxError] gRPC: to send error event
         Log.Information("OnPxError");
 
         return Task.CompletedTask;
