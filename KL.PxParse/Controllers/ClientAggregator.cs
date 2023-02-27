@@ -24,6 +24,7 @@ public class ClientAggregator {
         _touchanceClient = new TouchanceClient(_cancellationToken);
 
         _touchanceClient.HistoryDataUpdatedEventAsync += OnHistoryDataUpdated;
+        _touchanceClient.RealtimeDataUpdatedEventAsync += OnRealtimeDataUpdated;
         _touchanceClient.InitCompletedEvent += OnInitCompleted;
         _touchanceClient.PxErrorEventAsync += OnPxError;
     }
@@ -60,7 +61,7 @@ public class ClientAggregator {
             // Last 2nd data might get correction
             PxCacheController.Update(e.Metadata.Symbol, e.Data);
         } else {
-            // No need too much data
+            // Non-subscription only happens on initialize, so creating cache at these time
             PxCacheController.Create(e.Metadata.Symbol, e.Data);
         }
     }
@@ -77,14 +78,11 @@ public class ClientAggregator {
             last.Timestamp
         );
 
-        await OnHistoryDataUpdatedStoreDb(e);
-        OnHistoryDataUpdatedUpdateCache(e);
+        await Task.WhenAll(
+            OnHistoryDataUpdatedStoreDb(e),
+            Task.Run(() => OnHistoryDataUpdatedUpdateCache(e), _cancellationToken)
+        );
 
-        if (e.IsSubscription) {
-            GrpcHelper.CalcLastAsync(e.Metadata.Symbol, _cancellationToken);
-        }
-
-        // TODO: - [OnHistoryDataUpdated] call on realtime event, then gRPC: Call on received realtime (also calculate strength)
         Log.Information(
             "Handled history data [{Identifier}] in {ElapsedMs:0.00} ms",
             e.Metadata.ToIdentifier(),
@@ -92,6 +90,13 @@ public class ClientAggregator {
         );
     }
 
+    private Task OnRealtimeDataUpdated(object? sender, RealtimeEventArgs e) {
+        // Not putting cache updating call here because this event is currently triggered on receiving history data
+        GrpcHelper.CalcLastAsync(e.Symbol, _cancellationToken);
+
+        return Task.CompletedTask;
+    }
+    
     private Task OnMinuteChanged(object? sender, MinuteChangeEventArgs e) {
         var start = Stopwatch.GetTimestamp();
 

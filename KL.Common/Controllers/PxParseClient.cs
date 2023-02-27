@@ -10,7 +10,11 @@ public abstract class PxParseClient {
 
     protected readonly CancellationToken CancellationToken;
 
-    protected PxParseClient(CancellationToken cancellationToken) {
+    private readonly bool _triggerRealtimeOnHistory;
+
+    protected PxParseClient(bool triggerRealtimeOnHistory, CancellationToken cancellationToken) {
+        _triggerRealtimeOnHistory = triggerRealtimeOnHistory;
+
         CancellationToken = cancellationToken;
     }
 
@@ -48,10 +52,28 @@ public abstract class PxParseClient {
         await InitCompletedEvent(this, e);
     }
 
+    public event AsyncEventHandler<RealtimeEventArgs>? RealtimeDataUpdatedEventAsync;
+
+    private void OnRealtimeDataUpdated(RealtimeEventArgs e) {
+        InvokeAsyncEvent(RealtimeDataUpdatedEventAsync, e);
+    }
+
     public event AsyncEventHandler<HistoryEventArgs>? HistoryDataUpdatedEventAsync;
 
     public void OnHistoryDataUpdated(HistoryEventArgs e) {
+        if (e is { IsSubscription: true, Data.Count: 0 }) {
+            Log.Warning(
+                "[{Identifier}] Skipped processing history data - is subscription but no data",
+                e.Metadata.ToIdentifier()
+            );
+            return;
+        }
+
         InvokeAsyncEvent(HistoryDataUpdatedEventAsync, e, OnHistoryDataUpdatedCompleted);
+
+        if (_triggerRealtimeOnHistory && e.IsSubscription) {
+            OnRealtimeDataUpdated(e.ToRealtimeEventArgs());
+        }
     }
 
     protected virtual void OnHistoryDataUpdatedCompleted(HistoryEventArgs e) { }

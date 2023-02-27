@@ -10,6 +10,8 @@ using ILogger = Serilog.ILogger;
 namespace KL.Calc.Computer;
 
 
+// TODO: [CalcAll] [CalcPartial] [CalcLast] should all calculate momentum and put to redis
+
 public static class CalcRequestHandler {
     private static readonly ILogger Log = Serilog.Log.ForContext(typeof(CalcRequestHandler));
 
@@ -149,6 +151,11 @@ public static class CalcRequestHandler {
     }
 
     public static async Task CalcLast(string symbol) {
+        // TODO: - [CalcLast] gRPC: Call on calculated
+        //      1. Redis grab data
+        //      2. Calculate momentum
+        //      3. Store momentum back
+        //      4. gRPC call system on calculated
         await Task.WhenAll(
             PxConfigController.Config.Periods.Select(
                 r => Task.Run(

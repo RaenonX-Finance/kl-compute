@@ -22,7 +22,7 @@ public class TouchanceClient : PxParseClient {
 
     private static string? _sessionKeyInternal;
 
-    public TouchanceClient(CancellationToken cancellationToken) : base(cancellationToken) { }
+    public TouchanceClient(CancellationToken cancellationToken) : base(true, cancellationToken) { }
 
     public static string SessionKey {
         get {

@@ -123,7 +123,7 @@ public record PxConfigModel {
                 { HistoryInterval.Daily, 360 }
             },
             Cache = new PxCacheConfigModel {
-                InitCount = 70, // Calculating strength only needs at most 50 bars of 1K (10 MA of 5 min)
+                InitCount = 70, // Calculating momentum only needs at most 50 bars of 1K (10 MA of 5 min)
                 UpdateCount = 2 // 2nd last might get correction
             },
             Sources = PxSourceConfigModel.GenerateDefault()
