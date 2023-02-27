@@ -30,6 +30,7 @@ public class ClientAggregator {
     }
 
     public async Task Start() {
+        await PxCacheController.Initialize();
         await _touchanceClient.Start();
     }
 
@@ -56,17 +57,17 @@ public class ClientAggregator {
         );
     }
 
-    private static void OnHistoryDataUpdatedUpdateCache(HistoryEventArgs e) {
+    private static async Task OnHistoryDataUpdatedUpdateCache(HistoryEventArgs e) {
         if (e.IsSubscription) {
             // Last 2nd data might get correction
-            PxCacheController.Update(e.Metadata.Symbol, e.Data);
+            await PxCacheController.Update(e.Metadata.Symbol, e.Data);
         } else {
             // Non-subscription only happens on initialize, so creating cache at these time
-            PxCacheController.Create(e.Metadata.Symbol, e.Data);
+            await PxCacheController.Create(e.Metadata.Symbol, e.Data);
         }
     }
 
-    private async Task OnHistoryDataUpdated(object? sender, HistoryEventArgs e) {
+    private static async Task OnHistoryDataUpdated(object? sender, HistoryEventArgs e) {
         var start = Stopwatch.GetTimestamp();
         var last = e.Data[^1];
 
@@ -80,7 +81,7 @@ public class ClientAggregator {
 
         await Task.WhenAll(
             OnHistoryDataUpdatedStoreDb(e),
-            Task.Run(() => OnHistoryDataUpdatedUpdateCache(e), _cancellationToken)
+            OnHistoryDataUpdatedUpdateCache(e)
         );
 
         Log.Information(
@@ -97,23 +98,21 @@ public class ClientAggregator {
         return Task.CompletedTask;
     }
     
-    private Task OnMinuteChanged(object? sender, MinuteChangeEventArgs e) {
+    private async Task OnMinuteChanged(object? sender, MinuteChangeEventArgs e) {
         var start = Stopwatch.GetTimestamp();
 
-        PxCacheController.CreateNewBar(e.Timestamp);
         GrpcHelper.CalcPartialAsync(
             PxConfigController.Config.Sources.Where(r => r.Enabled).Select(r => r.InternalSymbol),
             _cancellationToken
         );
+        await PxCacheController.CreateNewBar(e.Timestamp);
 
         // TODO: - [OnMinuteChanged] gRPC: to trigger minute change event & (Frontend) client to automatically send request for data
         Log.Information(
-            "Handled minute change to {Timestamp} in {ElapsedMs:0.00} ms",
+            "Handled minute change to {NewMinuteTimestamp} in {ElapsedMs:0.00} ms",
             e.Timestamp,
             start.GetElapsedMs()
         );
-
-        return Task.CompletedTask;
     }
 
     private static Task OnPxError(object? sender, PxErrorEventArgs e) {

@@ -1,28 +1,60 @@
-﻿using KL.Common.Controllers;
+﻿using System.Collections.Immutable;
+using System.Diagnostics;
+using KL.Common.Controllers;
 using KL.Common.Extensions;
 using KL.Common.Interfaces;
+using ILogger = Serilog.ILogger;
 
 namespace KL.PxParse.Controllers;
 
 
 public static class PxCacheController {
-    private static readonly Dictionary<string, SortedDictionary<DateTime, decimal>> LastCloses = new();
+    private static readonly ILogger Log = Serilog.Log.ForContext(typeof(PxCacheController));
 
-    public static void Create(string symbol, IEnumerable<IHistoryDataEntry> entries) {
-        LastCloses[symbol] = entries
+    public static async Task Initialize() {
+        await RedisLastPxController.Initialize();
+    }
+
+    public static async Task Create(string symbol, IEnumerable<IHistoryDataEntry> entries) {
+        var start = Stopwatch.GetTimestamp();
+        Log.Information("Creating Px Cache of {Symbol}", symbol);
+
+        var entriesToProcess = entries
             .TakeLast(PxConfigController.Config.Cache.InitCount)
-            .ToSortedDictionary(r => r.Timestamp, r => r.Close);
+            .ToImmutableArray();
+
+        await RedisLastPxController.Set(symbol, entriesToProcess, isCreate: true);
+
+        Log.Information(
+            "Created Px Cache of {Symbol} ({Count} - last at {LastTimestamp}) in {ElapsedMs:0.00} ms",
+            symbol,
+            entriesToProcess.Length,
+            entriesToProcess.Max(r => r.Timestamp),
+            start.GetElapsedMs()
+        );
     }
 
-    public static void Update(string symbol, IEnumerable<IHistoryDataEntry> entries) {
-        foreach (var entry in entries.TakeLast(PxConfigController.Config.Cache.UpdateCount)) {
-            LastCloses[symbol][entry.Timestamp] = entry.Close;
-        }
+    public static async Task Update(string symbol, IEnumerable<IHistoryDataEntry> entries) {
+        var entriesToProcess = entries
+            .TakeLast(PxConfigController.Config.Cache.UpdateCount)
+            .ToImmutableArray();
+
+        await RedisLastPxController.Set(symbol, entriesToProcess);
     }
 
-    public static void CreateNewBar(DateTime timestamp) {
-        foreach (var symbol in LastCloses.Keys) {
-            LastCloses[symbol].Add(timestamp, LastCloses[symbol].Last().Value);
-        }
+    // TODO: * Add momentum calc in KL.Calc(Last|Partial|All)
+
+    public static async Task CreateNewBar(DateTime timestamp) {
+        var start = Stopwatch.GetTimestamp();
+        Log.Information("Adding new bars at {NewBarTimestamp}", timestamp);
+
+        var symbolsCreated = await RedisLastPxController.CreateNewBar(timestamp);
+
+        Log.Information(
+            "Added new bars for {@Symbols} at {NewBarTimestamp} in {ElapsedMs:0.00} ms",
+            symbolsCreated,
+            timestamp,
+            start.GetElapsedMs()
+        );
     }
 }

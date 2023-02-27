@@ -6,6 +6,9 @@ namespace KL.Common.Models;
 public record DatabaseConfig {
     [UsedImplicitly]
     public required string MongoUrl { get; init; }
+
+    [UsedImplicitly]
+    public required string RedisAddress { get; init; }
 }
 
 public record LoggingConfig {

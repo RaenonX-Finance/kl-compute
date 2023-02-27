@@ -17,6 +17,7 @@
         </PackageReference>
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
         <PackageReference Include="NetMQ" Version="4.0.1.10" />
+        <PackageReference Include="StackExchange.Redis" Version="2.6.96" />
     </ItemGroup>
 
     <ItemGroup>
