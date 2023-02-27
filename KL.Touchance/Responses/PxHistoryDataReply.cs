@@ -57,7 +57,8 @@ public record PxHistoryEntry : ITimestamp, IHistoryDataEntry {
     [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
     public required int Volume { get; init; }
 
-    public DateTime Timestamp => _timestamp ??= this.GetTimestamp();
+    // Touchance "Time" column return the minute in the future, not the current (02:50 will return 0251)
+    public DateTime Timestamp => _timestamp ??= this.GetTimestamp(-1);
 
     [UsedImplicitly]
     [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
