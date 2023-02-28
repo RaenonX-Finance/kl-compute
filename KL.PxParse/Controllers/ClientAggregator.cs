@@ -3,6 +3,7 @@ using System.Diagnostics;
 using KL.Common.Controllers;
 using KL.Common.Events;
 using KL.Common.Extensions;
+using KL.Common.Grpc;
 using KL.Common.Interfaces;
 using KL.PxParse.Utils;
 using KL.Touchance;
@@ -91,13 +92,15 @@ public class ClientAggregator {
         );
     }
 
-    private Task OnRealtimeDataUpdated(object? sender, RealtimeEventArgs e) {
+    private async Task OnRealtimeDataUpdated(object? sender, RealtimeEventArgs e) {
         // Not putting cache updating call here because this event is currently triggered on receiving history data
-        GrpcHelper.CalcLastAsync(e.Symbol, _cancellationToken);
 
-        return Task.CompletedTask;
+        await Task.WhenAll(
+            Task.Run(() => GrpcHelper.CalcLastAsync(e.Symbol, _cancellationToken)),
+            GrpcSystemEventCaller.OnRealtime(e.Symbol, e.Data)
+        );
     }
-    
+
     private async Task OnMinuteChanged(object? sender, MinuteChangeEventArgs e) {
         var start = Stopwatch.GetTimestamp();
 

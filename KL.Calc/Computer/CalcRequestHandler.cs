@@ -169,11 +169,7 @@ public static class CalcRequestHandler {
     }
 
     public static async Task CalcLast(string symbol) {
-        // TODO: [CalcLast] gRPC: Call system on calculated
-        //      1. Redis grab data
-        //      2. Calculate momentum
-        //      3. Store momentum back
-        //      4. gRPC call system on calculated
+        // BUG: Calculated data of last in various periods not updated
         await Task.WhenAll(
             PxConfigController.Config.Periods
                 .Select(r => CalcLast(symbol, r.PeriodMin))

@@ -15,7 +15,15 @@ public static class RedisMomentumController {
     }
 
     public static async Task Set(string symbol, Momentum momentum) {
-        var db = GetDatabase();
-        await db.StringSetAsync(KeyOfSingleData(symbol), (int)momentum);
+        await GetDatabase().StringSetAsync(KeyOfSingleData(symbol), (int)momentum);
+    }
+
+    public static async Task<Momentum> Get(string symbol) {
+        var redisResult = await GetDatabase().StringGetAsync(KeyOfSingleData(symbol));
+        if (!redisResult.TryParse(out int momentum)) {
+            throw new InvalidDataException($"Invalid momentum stored for [${symbol}]");
+        }
+
+        return (Momentum)momentum;
     }
 }

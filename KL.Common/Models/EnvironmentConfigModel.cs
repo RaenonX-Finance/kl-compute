@@ -24,7 +24,7 @@ public record GrpcConfig {
     public required int CalcPort { get; init; }
 
     [UsedImplicitly]
-    public required int ApiPort { get; init; }
+    public required int SysPort { get; init; }
 }
 
 public record RestConfig {

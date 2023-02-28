@@ -8,7 +8,7 @@ public static class MomentumComputer {
     private static readonly int[] DataInterval = { 1, 3, 5 };
 
     public static async Task<Momentum> CalcMomentum(string symbol) {
-        var lastPxSeriesRev = await RedisLastPxController.GetRev(symbol, 70);
+        var lastPxSeriesRev = await RedisLastPxController.GetRev(symbol, 51);
 
         var momentum = DataInterval
             .Select(r => CalcMomentumPair(lastPxSeriesRev.ToArray(), r * 5, r * 10))
