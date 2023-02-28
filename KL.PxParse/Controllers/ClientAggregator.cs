@@ -123,10 +123,9 @@ public class ClientAggregator {
         );
     }
 
-    private static Task OnPxError(object? sender, PxErrorEventArgs e) {
-        // TODO: [OnPxError] gRPC: to send error event
-        Log.Information("OnPxError");
-
-        return Task.CompletedTask;
+    private static async Task OnPxError(object? sender, PxErrorEventArgs e) {
+        await GrpcSystemEventCaller.OnError(e.Message);
+        
+        Log.Information("Received error message: {Message}", e.Message);
     }
 }

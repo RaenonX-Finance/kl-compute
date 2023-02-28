@@ -59,4 +59,10 @@ public static class GrpcSystemEventCaller {
             cancellationToken
         );
     }
+
+    public static async Task OnError(string message) {
+        var requestBody = new ErrorData { Message = message };
+
+        await Client.ErrorAsync(requestBody);
+    }
 }
