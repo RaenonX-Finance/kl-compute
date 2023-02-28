@@ -6,11 +6,11 @@ using KL.Common.Utils;
 using KL.Proto;
 using ILogger = Serilog.ILogger;
 
-namespace KL.PxParse.Utils;
+namespace KL.PxParse.Grpc;
 
 
-public static class GrpcHelper {
-    private static readonly ILogger Log = Serilog.Log.ForContext(typeof(GrpcHelper));
+public class GrpcPxDataCaller {
+    private static readonly ILogger Log = Serilog.Log.ForContext(typeof(GrpcPxDataCaller));
 
     private static readonly PxData.PxDataClient PxDataClient
         = new(GrpcChannel.ForAddress($"http://localhost:{EnvironmentConfigHelper.Config.Grpc.CalcPort}"));
@@ -62,7 +62,7 @@ public static class GrpcHelper {
 
         Log.Information("Sending gRPC request to {Endpoint}", nameof(PxDataClient.CalcAllAsync));
 
-        try { 
+        try {
             await PxDataClient.CalcAllAsync(request, null, null, cancellationToken);
         } catch (Exception e) {
             Log.Error(e, "Exception occurred during gRPC CalcAll request");

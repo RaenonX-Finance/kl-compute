@@ -5,7 +5,7 @@ using KL.Common.Events;
 using KL.Common.Extensions;
 using KL.Common.Grpc;
 using KL.Common.Interfaces;
-using KL.PxParse.Utils;
+using KL.PxParse.Grpc;
 using KL.Touchance;
 using ILogger = Serilog.ILogger;
 
@@ -36,10 +36,10 @@ public class ClientAggregator {
     }
 
     private async Task OnInitCompleted(object? sender, InitCompletedEventArgs e) {
-        await GrpcHelper.CalcAll(e.SourcesInUse.Select(r => r.InternalSymbol), _cancellationToken);
+        await GrpcPxDataCaller.CalcAll(e.SourcesInUse.Select(r => r.InternalSymbol), _cancellationToken);
 
         // --- Attaching these after the client has initialized ---
-        // `OnMinuteChanged` might invoke before `GrpcHelper.CalcAll`.
+        // `OnMinuteChanged` might invoke before `GrpcPxDataCaller.CalcAll`.
         // When this happen, `OnMinuteChanged` might not have data to calculate because calculated data is unavailable.
         _touchanceClient.MinuteChangeEventAsync += OnMinuteChanged;
     }
@@ -96,7 +96,7 @@ public class ClientAggregator {
         // Not putting cache updating call here because this event is currently triggered on receiving history data
 
         await Task.WhenAll(
-            Task.Run(() => GrpcHelper.CalcLastAsync(e.Symbol, _cancellationToken)),
+            Task.Run(() => GrpcPxDataCaller.CalcLastAsync(e.Symbol, _cancellationToken), _cancellationToken),
             GrpcSystemEventCaller.OnRealtime(e.Symbol, e.Data)
         );
     }
@@ -104,13 +104,18 @@ public class ClientAggregator {
     private async Task OnMinuteChanged(object? sender, MinuteChangeEventArgs e) {
         var start = Stopwatch.GetTimestamp();
 
-        GrpcHelper.CalcPartialAsync(
-            PxConfigController.Config.Sources.Where(r => r.Enabled).Select(r => r.InternalSymbol),
-            _cancellationToken
+        await Task.WhenAll(
+            Task.Run(
+                () => GrpcPxDataCaller.CalcPartialAsync(
+                    PxConfigController.Config.Sources.Where(r => r.Enabled).Select(r => r.InternalSymbol),
+                    _cancellationToken
+                ),
+                _cancellationToken
+            ),
+            PxCacheController.CreateNewBar(e.Timestamp),
+            GrpcSystemEventCaller.OnMinuteChanged(e.EpochSecond)
         );
-        await PxCacheController.CreateNewBar(e.Timestamp);
 
-        // TODO: [OnMinuteChanged] gRPC: to trigger minute change event & (Frontend) client to automatically send request for data
         Log.Information(
             "Handled minute change to {NewMinuteTimestamp} in {ElapsedMs:0.00} ms",
             e.Timestamp,

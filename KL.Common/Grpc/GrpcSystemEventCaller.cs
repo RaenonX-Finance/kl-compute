@@ -30,4 +30,10 @@ public static class GrpcSystemEventCaller {
 
         await Client.RealtimeAsync(requestBody);
     }
+
+    public static async Task OnMinuteChanged(long epochSec) {
+        var requestBody = new MinuteChangeData { EpochSec = epochSec };
+
+        await Client.MinuteChangeAsync(requestBody);
+    }
 }
