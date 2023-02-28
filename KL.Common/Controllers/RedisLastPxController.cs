@@ -87,7 +87,7 @@ public class RedisLastPxController {
 
         if (!(await db.StringGetAsync(keyToRemove)).TryParse(out double lastClose)) {
             throw new InvalidDataException(
-                $"Failed to parse the Px of {symbol} at {epochSec.FromEpochSeconds().ToShortIso8601()}"
+                $"Failed to parse the Px of {symbol} at {epochSec.ToDateTime().ToShortIso8601()}"
             );
         }
 

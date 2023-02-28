@@ -8,7 +8,7 @@ public static class DateTimeExtensions {
         return datetime.ToString("yyyy-MM-dd'T'HH:mmK", CultureInfo.InvariantCulture);
     }
 
-    public static DateTime FromEpochSeconds(this long epochSec) {
+    public static DateTime ToDateTime(this long epochSec) {
         return DateTimeOffset.FromUnixTimeSeconds(epochSec).DateTime;
     }
 
