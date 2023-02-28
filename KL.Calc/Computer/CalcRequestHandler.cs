@@ -3,6 +3,7 @@ using Grpc.Core;
 using KL.Calc.Controller;
 using KL.Calc.Models;
 using KL.Common.Controllers;
+using KL.Common.Enums;
 using KL.Common.Grpc;
 using KL.Common.Models;
 using KL.Common.Utils;
@@ -72,7 +73,7 @@ public static class CalcRequestHandler {
         );
 
         await session.Session.CommitTransactionAsync(cancellationToken);
-        
+
         GrpcSystemEventCaller.OnCalculatedAsync(symbols, cancellationToken);
 
         Log.Information(
@@ -136,6 +137,7 @@ public static class CalcRequestHandler {
     }
 
     public static async Task CalcPartial(IList<string> symbols, int limit, CancellationToken cancellationToken) {
+        // BUG: Calc Partial using data created after bar creation?
         var periodMins = PxConfigController.Config.Periods.Select(r => r.PeriodMin).ToImmutableArray();
         var combinations = symbols
             .SelectMany(symbol => periodMins.Select(period => (Symbol: symbol, Period: period)))
@@ -154,7 +156,7 @@ public static class CalcRequestHandler {
                 .Select(r => CalcPartial(r, groupedHistory, groupedCalculated))
                 .Concat(CalcGlobal(symbols))
         );
-        
+
         GrpcSystemEventCaller.OnCalculatedAsync(symbols, cancellationToken);
 
         Log.Information(
@@ -164,7 +166,7 @@ public static class CalcRequestHandler {
         );
     }
 
-    private static async Task CalcLast(string symbol, int periodMin) {
+    private static async Task CalcLast(string symbol, int periodMin, decimal lastPx) {
         var data = CalculatedDataController.GetData(symbol, periodMin, 2).ToImmutableArray();
 
         if (data.IsEmpty) {
@@ -176,15 +178,18 @@ public static class CalcRequestHandler {
             );
         }
 
+        data[^1].Close = lastPx;
+
         var calculated = HistoryDataComputer.CalcLast(data[^1], data[^2]);
         await CalculatedDataController.UpdateByEpoch(ImmutableArray.Create(new[] { calculated }));
     }
 
     public static async Task CalcLast(string symbol, CancellationToken cancellationToken) {
-        // BUG: Calculated data of last in various periods not updated
+        var lastPx = HistoryDataController.GetLastN(symbol, HistoryInterval.Minute, 1).First().Close;
+
         await Task.WhenAll(
             PxConfigController.Config.Periods
-                .Select(r => CalcLast(symbol, r.PeriodMin))
+                .Select(r => CalcLast(symbol, r.PeriodMin, lastPx))
                 .Concat(CalcGlobal(symbol))
         );
         GrpcSystemEventCaller.OnCalculatedAsync(symbol, cancellationToken);

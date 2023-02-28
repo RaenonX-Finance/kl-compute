@@ -54,7 +54,7 @@ public static class CalculatedDataController {
             );
         await MongoConst.PxCalculated.DeleteManyAsync(session.Session, FilterBuilder.Or(filter));
         await MongoConst.PxCalculated.InsertManyAsync(session.Session, calculatedData);
-        
+
         await session.Session.CommitTransactionAsync();
 
         Log.Debug(

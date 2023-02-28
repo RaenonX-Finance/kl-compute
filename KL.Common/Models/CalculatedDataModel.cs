@@ -51,7 +51,7 @@ public class CalculatedDataModel : IGroupedHistoryDataModel {
     public required decimal Low { get; init; }
 
     [UsedImplicitly]
-    public required decimal Close { get; init; }
+    public required decimal Close { get; set; }
 
     [UsedImplicitly]
     public required decimal Volume { get; init; }
