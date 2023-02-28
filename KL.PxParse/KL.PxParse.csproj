@@ -28,7 +28,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Protobuf Include="..\KL.Proto\**\*.proto" GrpcServices="Client" />
+        <Protobuf Include="..\KL.Proto\Protos\pxData.proto" GrpcServices="Client" />
     </ItemGroup>
 
     <ItemGroup>

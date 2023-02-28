@@ -30,7 +30,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Protobuf Include="..\KL.Proto\**\*.proto" />
+        <Protobuf Include="..\KL.Proto\Protos\pxData.proto" GrpcServices="Server" />
     </ItemGroup>
 
     <ItemGroup>
