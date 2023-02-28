@@ -23,7 +23,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ContentWithTargetPath Include="..\KL.Common\config.yaml">
+        <ContentWithTargetPath Include="pm2.yml">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <TargetPath>%(Filename)%(Extension)</TargetPath>
         </ContentWithTargetPath>

@@ -1,0 +1,10 @@
+﻿apps:
+  - name: 'KL.PxParse'
+    # Entry point
+    interpreter: none
+    script: './KL.PxParse.exe'
+    # Execution configs
+    exec_mode: 'fork'
+    # Others
+    cron_restart: '0 0 */3 * *'  # Restart every 3 days
+    time: true  # Log timestamp in logs

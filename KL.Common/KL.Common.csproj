@@ -29,13 +29,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ContentWithTargetPath Include="config.yaml">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <TargetPath>%(Filename)%(Extension)</TargetPath>
-        </ContentWithTargetPath>
-    </ItemGroup>
-
-    <ItemGroup>
         <Protobuf Include="..\KL.Proto\Protos\systemEvent.proto" GrpcServices="Client" />
         <Protobuf Include="..\KL.Proto\Protos\decimalValue.proto" />
     </ItemGroup>
