@@ -15,7 +15,7 @@ public class PxDataService : PxData.PxDataBase {
     public override async Task<PxCalcReply> CalcAll(PxCalcRequestMulti request, ServerCallContext context) {
         _logger.LogInformation("Received gRPC request to calculate all data: {Symbols}", request.Symbols);
 
-        await CalcRequestHandler.CalcAll(request.Symbols);
+        await CalcRequestHandler.CalcAll(request.Symbols, context.CancellationToken);
 
         return new PxCalcReply { Message = "Done" };
     }
@@ -23,7 +23,7 @@ public class PxDataService : PxData.PxDataBase {
     public override async Task<PxCalcReply> CalcPartial(PxCalcRequestMulti request, ServerCallContext context) {
         _logger.LogInformation("Received gRPC request to calculate all data: {Symbols}", request.Symbols);
 
-        await CalcRequestHandler.CalcPartial(request.Symbols, 30);
+        await CalcRequestHandler.CalcPartial(request.Symbols, 30, context.CancellationToken);
 
         return new PxCalcReply { Message = "Done" };
     }
@@ -31,7 +31,7 @@ public class PxDataService : PxData.PxDataBase {
     public override async Task<PxCalcReply> CalcLast(PxCalcRequestSingle request, ServerCallContext context) {
         _logger.LogInformation("Received gRPC request to calculate last data: {Symbol}", request.Symbol);
 
-        await CalcRequestHandler.CalcLast(request.Symbol);
+        await CalcRequestHandler.CalcLast(request.Symbol, context.CancellationToken);
 
         return new PxCalcReply { Message = "Done" };
     }

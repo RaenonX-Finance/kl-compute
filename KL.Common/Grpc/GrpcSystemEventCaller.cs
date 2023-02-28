@@ -4,11 +4,14 @@ using KL.Common.Extensions;
 using KL.Common.Models;
 using KL.Common.Utils;
 using KL.Proto;
+using Serilog;
 
 namespace KL.Common.Grpc;
 
 
 public static class GrpcSystemEventCaller {
+    private static readonly ILogger Log = Serilog.Log.ForContext(typeof(GrpcSystemEventCaller));
+
     private static readonly SystemEvent.SystemEventClient Client = new(
         GrpcChannel.ForAddress($"http://localhost:{EnvironmentConfigHelper.Config.Grpc.SysPort}")
     );
@@ -35,5 +38,25 @@ public static class GrpcSystemEventCaller {
         var requestBody = new MinuteChangeData { EpochSec = epochSec };
 
         await Client.MinuteChangeAsync(requestBody);
+    }
+
+    public static void OnCalculatedAsync(string symbol, CancellationToken cancellationToken) {
+        OnCalculatedAsync(new[] { symbol }, cancellationToken);
+    }
+
+    public static void OnCalculatedAsync(IEnumerable<string> symbols, CancellationToken cancellationToken) {
+        TaskHelper.FireAndForget(
+            async () => {
+                var requestBody = new CalculatedData();
+                requestBody.Symbols.AddRange(symbols);
+
+                await Client.CalculatedAsync(requestBody);
+            },
+            exception => {
+                const string endpointName = "onCalculated";
+                Log.Error(exception, "Error on gRPC system event: {Endpoint}", endpointName);
+            },
+            cancellationToken
+        );
     }
 }

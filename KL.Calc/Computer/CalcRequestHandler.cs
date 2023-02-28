@@ -3,6 +3,7 @@ using Grpc.Core;
 using KL.Calc.Controller;
 using KL.Calc.Models;
 using KL.Common.Controllers;
+using KL.Common.Grpc;
 using KL.Common.Models;
 using KL.Common.Utils;
 using ILogger = Serilog.ILogger;
@@ -15,6 +16,18 @@ public static class CalcRequestHandler {
 
     private static async Task CalcMomentum(string symbol) {
         await RedisMomentumController.Set(symbol, await MomentumComputer.CalcMomentum(symbol));
+    }
+
+    private static async Task CalcSrLevel(IEnumerable<string> symbols) {
+        await SrLevelController.UpdateAll(SrLevelComputer.CalcLevels(symbols));
+    }
+
+    private static IEnumerable<Task> CalcGlobal(string symbol) {
+        return new[] { CalcMomentum(symbol) };
+    }
+
+    private static IEnumerable<Task> CalcGlobal(IList<string> symbols) {
+        return symbols.Select(CalcMomentum).Concat(new[] { CalcSrLevel(symbols) });
     }
 
     private static async Task CalcAll(
@@ -37,7 +50,7 @@ public static class CalcRequestHandler {
         await CalculatedDataController.AddData(session, calculated);
     }
 
-    public static async Task CalcAll(IList<string> symbols) {
+    public static async Task CalcAll(IList<string> symbols, CancellationToken cancellationToken) {
         var periodMins = PxConfigController.Config.Periods.Select(r => r.PeriodMin).ToImmutableArray();
         var groupedDict = await HistoryDataGrouper.GetGroupedDictOfAll(
             symbols,
@@ -55,10 +68,12 @@ public static class CalcRequestHandler {
         await Task.WhenAll(
             combinations
                 .Select(r => CalcAll(r, groupedDict, session))
-                .Concat(symbols.Select(CalcMomentum))
+                .Concat(CalcGlobal(symbols))
         );
 
-        await session.Session.CommitTransactionAsync();
+        await session.Session.CommitTransactionAsync(cancellationToken);
+        
+        GrpcSystemEventCaller.OnCalculatedAsync(symbols, cancellationToken);
 
         Log.Information(
             "Completed indicator calculation of calc all request of {@Symbols} x {@Periods}",
@@ -97,10 +112,6 @@ public static class CalcRequestHandler {
             );
     }
 
-    private static async Task CalcPartialSrLevel(IEnumerable<string> symbols) {
-        await SrLevelController.UpdateAll(SrLevelComputer.CalcLevels(symbols));
-    }
-
     private static async Task CalcPartial(
         (string Symbol, int Period) c,
         IImmutableDictionary<string, ImmutableDictionary<int, IEnumerable<GroupedHistoryDataModel>>> groupedHistory,
@@ -124,7 +135,7 @@ public static class CalcRequestHandler {
         }
     }
 
-    public static async Task CalcPartial(IList<string> symbols, int limit) {
+    public static async Task CalcPartial(IList<string> symbols, int limit, CancellationToken cancellationToken) {
         var periodMins = PxConfigController.Config.Periods.Select(r => r.PeriodMin).ToImmutableArray();
         var combinations = symbols
             .SelectMany(symbol => periodMins.Select(period => (Symbol: symbol, Period: period)))
@@ -141,9 +152,10 @@ public static class CalcRequestHandler {
         await Task.WhenAll(
             combinations
                 .Select(r => CalcPartial(r, groupedHistory, groupedCalculated))
-                .Concat(new[] { CalcPartialSrLevel(symbols) })
-                .Concat(symbols.Select(CalcMomentum))
+                .Concat(CalcGlobal(symbols))
         );
+        
+        GrpcSystemEventCaller.OnCalculatedAsync(symbols, cancellationToken);
 
         Log.Information(
             "Completed calc partial request {@Symbols} x {@Periods}",
@@ -168,13 +180,14 @@ public static class CalcRequestHandler {
         await CalculatedDataController.UpdateByEpoch(ImmutableArray.Create(new[] { calculated }));
     }
 
-    public static async Task CalcLast(string symbol) {
+    public static async Task CalcLast(string symbol, CancellationToken cancellationToken) {
         // BUG: Calculated data of last in various periods not updated
         await Task.WhenAll(
             PxConfigController.Config.Periods
                 .Select(r => CalcLast(symbol, r.PeriodMin))
-                .Concat(new[] { CalcMomentum(symbol) })
+                .Concat(CalcGlobal(symbol))
         );
+        GrpcSystemEventCaller.OnCalculatedAsync(symbol, cancellationToken);
 
         Log.Information(
             "Completed calc last request of {Symbol} @ {@Periods}",
