@@ -25,7 +25,7 @@ public static class SourceInfoHandler {
                 );
 
                 return new SourceInfoModel {
-                    Symbol = r.ExternalSymbol,
+                    Symbol = r.InternalSymbol,
                     MinTick = reply.Tick,
                     Decimals = reply.Decimals
                 };
