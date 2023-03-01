@@ -7,6 +7,8 @@ namespace KL.Common.Models;
 
 
 public class CalculatedDataModel : IGroupedHistoryDataModel {
+    private decimal _close;
+
     [UsedImplicitly]
     public ObjectId Id { get; init; }
 
@@ -45,13 +47,20 @@ public class CalculatedDataModel : IGroupedHistoryDataModel {
     public required decimal Open { get; init; }
 
     [UsedImplicitly]
-    public required decimal High { get; init; }
+    public required decimal High { get; set; }
 
     [UsedImplicitly]
-    public required decimal Low { get; init; }
+    public required decimal Low { get; set; }
 
     [UsedImplicitly]
-    public required decimal Close { get; set; }
+    public required decimal Close {
+        get => _close;
+        set {
+            High = Math.Max(value, High);
+            Low = Math.Min(value, Low);
+            _close = value;
+        }
+    }
 
     [UsedImplicitly]
     public required decimal Volume { get; init; }
