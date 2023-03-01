@@ -6,6 +6,7 @@ public static class SubscriptionType {
     public const string Realtime = "REALTIME";
     public const string HistoryMinute = "1K";
     public const string HistoryDaily = "DK";
+    public const string SymbolClear = "SYMBOLCLEAR";
     public const string HistoryTick = "TICKS";
     public const string HistoryUnsubscribe = "UNSUBQUOTE";
     public const string MinuteChange = "SYSTEMTIME";
