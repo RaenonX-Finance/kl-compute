@@ -137,7 +137,6 @@ public static class CalcRequestHandler {
     }
 
     public static async Task CalcPartial(IList<string> symbols, int limit, CancellationToken cancellationToken) {
-        // BUG: Calc Partial using data created after bar creation?
         var periodMins = PxConfigController.Config.Periods.Select(r => r.PeriodMin).ToImmutableArray();
         var combinations = symbols
             .SelectMany(symbol => periodMins.Select(period => (Symbol: symbol, Period: period)))

@@ -18,6 +18,7 @@ public static class EnumerableExtensions {
 
             if (record.TryGetValue(key, out var recordMax) && recordMax > currentMax) {
                 yield return recordMax;
+                continue;
             }
 
             record[key] = currentMax;
@@ -39,19 +40,11 @@ public static class EnumerableExtensions {
 
             if (record.TryGetValue(key, out var recordMin) && recordMin < currentMin) {
                 yield return recordMin;
+                continue;
             }
 
             record[key] = currentMin;
             yield return currentMin;
         }
-    }
-
-    public static SortedDictionary<TKey, TElement> ToSortedDictionary<TSource, TKey, TElement>(
-        this IEnumerable<TSource> source,
-        Func<TSource, TKey> keySelector,
-        Func<TSource, TElement> elementSelector
-    )
-        where TKey : notnull {
-        return new SortedDictionary<TKey, TElement>(source.ToDictionary(keySelector, elementSelector));
     }
 }

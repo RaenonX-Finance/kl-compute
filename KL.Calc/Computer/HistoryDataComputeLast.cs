@@ -1,5 +1,4 @@
 ﻿using KL.Common.Controllers;
-using KL.Common.Interfaces;
 using KL.Common.Models;
 
 namespace KL.Calc.Computer;
@@ -10,7 +9,7 @@ public static partial class HistoryDataComputer {
         last1.Diff = last1.Close - last1.Open;
     }
 
-    private static void CalculateLastTiePoint(CalculatedDataModel last1, IGroupedHistoryDataModel last2) {
+    private static void CalculateLastTiePoint(CalculatedDataModel last1, CalculatedDataModel last2) {
         var currentClose = last1.Close;
 
         if (last1.MarketDate != last2.MarketDate) {
@@ -18,8 +17,8 @@ public static partial class HistoryDataComputer {
             last1.MarketDateLow = currentClose;
             last1.TiePoint = currentClose;
         } else {
-            last1.MarketDateHigh = decimal.Max(last1.MarketDateHigh, currentClose);
-            last1.MarketDateLow = decimal.Min(last1.MarketDateLow, currentClose);
+            last1.MarketDateHigh = new[] {last2.MarketDateHigh, last1.MarketDateHigh, currentClose}.Max();
+            last1.MarketDateLow = new[] {last2.MarketDateLow, last1.MarketDateLow, currentClose}.Min();
             last1.TiePoint = (last1.MarketDateHigh + last1.MarketDateLow) / 2;
         }
     }
