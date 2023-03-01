@@ -31,7 +31,7 @@ public static partial class HistoryDataComputer {
             return double.NaN;
         }
 
-        var k = 2 / (period + 1);
+        var k = 2d / (period + 1);
         return current * k + prev * (1 - k);
     }
 
