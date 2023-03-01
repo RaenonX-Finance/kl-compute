@@ -75,11 +75,10 @@ public class TouchanceClient : PxParseClient {
         _semaphore = null;
     }
 
-    private static void InitializeSubscribeHistoryData(IImmutableList<PxSourceConfigModel> sources) {
-        // Subscribe history data
-        foreach (var source in sources) {
+    public static void SendHistorySubscriptionRequest(IEnumerable<string> touchanceSymbols) {
+        foreach (var symbol in touchanceSymbols) {
             HistoryDataHandler.SendHandshakeRequest(
-                source.ExternalSymbol,
+                symbol,
                 HistoryInterval.Minute,
                 DateTime.UtcNow.AddHours(-PxConfigController.Config.HistorySubscription.InitialBufferHrs),
                 // Adding 1 hour to ensure getting the latest history data
@@ -89,23 +88,23 @@ public class TouchanceClient : PxParseClient {
         }
     }
 
+    public static void SendHistorySubscriptionRequest(string touchanceSymbol) {
+        SendHistorySubscriptionRequest(new[] { touchanceSymbol });
+    }
+
     private async Task Initialize() {
         var sources = PxConfigController.Config.Sources
-            .Where(
-                r => r is {
-                    Enabled: true, Source: PxSource.Touchance
-                }
-            )
+            .Where(r => r is { Enabled: true, Source: PxSource.Touchance })
             .ToImmutableList();
 
         await Task.WhenAll(
             SourceInfoHandler.CheckSourceInfo(sources),
             InitializeHistoryData(sources)
         );
-        
+
         await OnInitCompleted(new InitCompletedEventArgs { SourcesInUse = sources });
 
-        InitializeSubscribeHistoryData(sources);
+        SendHistorySubscriptionRequest(sources.Select(r => r.ExternalSymbol));
     }
 
     public async Task Start() {

@@ -20,6 +20,45 @@ public class SubscriptionHandler {
         new Thread(() => Start(subscriberPort, client, cancellationToken)).Start();
     }
 
+    private static void HandleSubscriptionMessage(
+        string messageJson,
+        PxParseClient client,
+        CancellationToken cancellationToken
+    ) {
+        var tcSubscription = messageJson.ToTcSubscription();
+
+        Log.Information("Received subscription message of type {Type}", tcSubscription.GetType());
+
+        switch (tcSubscription) {
+            case PingMessage:
+                TouchanceClient.RequestSocket.SendTcRequest<PongRequest, PongReply>(
+                    new PongRequest {
+                        SessionKey = TouchanceClient.SessionKey,
+                        Id = "TC"
+                    }
+                );
+                return;
+            case PxHistoryReadyMessage message:
+                var eventArgs = HistoryDataHandler.GetHistoryData(message, cancellationToken);
+                if (eventArgs == null) {
+                    return;
+                }
+
+                client.OnHistoryDataUpdated(eventArgs);
+                break;
+            case MinuteChangeMessage message:
+                client.OnMinuteChanged(new MinuteChangeEventArgs { Timestamp = message.GetTimestamp() });
+                return;
+            case SymbolClearMessage message:
+                Log.Information("Received symbol clear for {Symbol}, resubscribing...", message.Data.Symbol);
+                TouchanceClient.SendHistorySubscriptionRequest(message.Data.Symbol);
+                return;
+            default:
+                Log.Warning("Unhandled subscription message: {Message}", messageJson);
+                return;
+        }
+    }
+
     private static void Start(int subscriberPort, PxParseClient client, CancellationToken cancellationToken) {
         var socketConnectionString = $">tcp://127.0.0.1:{subscriberPort}";
         using var subscriberSocket = new SubscriberSocket(socketConnectionString);
@@ -34,33 +73,7 @@ public class SubscriptionHandler {
                 .Split(":", 2)[1];
 
             try {
-                var tcSubscription = messageJson.ToTcSubscription();
-
-                Log.Information("Received subscription message of type {Type}", tcSubscription.GetType());
-
-                switch (tcSubscription) {
-                    case PingMessage:
-                        TouchanceClient.RequestSocket.SendTcRequest<PongRequest, PongReply>(
-                            new PongRequest {
-                                SessionKey = TouchanceClient.SessionKey,
-                                Id = "TC"
-                            }
-                        );
-                        break;
-                    case PxHistoryReadyMessage message:
-                        var eventArgs = HistoryDataHandler.GetHistoryData(message, cancellationToken);
-                        if (eventArgs == null) {
-                            continue;
-                        }
-                        client.OnHistoryDataUpdated(eventArgs);
-                        break;
-                    case MinuteChangeMessage message:
-                        client.OnMinuteChanged(new MinuteChangeEventArgs { Timestamp = message.GetTimestamp() });
-                        break;
-                    default:
-                        Log.Warning("Unhandled subscription message: {Message}", messageJson);
-                        break;
-                }
+                HandleSubscriptionMessage(messageJson, client, cancellationToken);
             } catch (JsonException) {
                 client.OnPxError(
                     new PxErrorEventArgs {
