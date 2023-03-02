@@ -44,10 +44,26 @@ public record PxSourceConfigModel {
             },
             new PxSourceConfigModel {
                 Source = PxSource.Touchance,
-                Enabled = false,
+                Enabled = true,
                 InternalSymbol = "YM",
                 ExternalSymbol = "TC.F.CBOT.YM.HOT",
                 Name = "小道",
+                ProductCategory = ProductCategory.UsIndexFutures
+            },
+            new PxSourceConfigModel {
+                Source = PxSource.Touchance,
+                Enabled = false,
+                InternalSymbol = "ES",
+                ExternalSymbol = "TC.F.CME.ES.HOT",
+                Name = "SP",
+                ProductCategory = ProductCategory.UsIndexFutures
+            },
+            new PxSourceConfigModel {
+                Source = PxSource.Touchance,
+                Enabled = false,
+                InternalSymbol = "YM",
+                ExternalSymbol = "TC.F.CME.RTY.HOT",
+                Name = "羅素",
                 ProductCategory = ProductCategory.UsIndexFutures
             },
             new PxSourceConfigModel {
