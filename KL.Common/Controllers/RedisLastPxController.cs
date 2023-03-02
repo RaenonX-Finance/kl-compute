@@ -108,7 +108,7 @@ public class RedisLastPxController {
     public static async Task<IEnumerable<double>> GetRev(string symbol, int take) {
         var db = GetDatabase();
 
-        var epochSecKey = (await db.SortedSetRangeByScoreAsync(symbol, order: Order.Descending, take: take))
+        var epochSecKeys = (await db.SortedSetRangeByScoreAsync(symbol, order: Order.Descending, take: take))
             .Select(
                 (r, idx) => {
                     if (!r.TryParse(out long epochSec)) {
@@ -120,12 +120,12 @@ public class RedisLastPxController {
             )
             .ToArray();
 
-        return (await db.StringGetAsync(epochSecKey))
+        return (await db.StringGetAsync(epochSecKeys))
             .Select(
                 (r, idx) => {
                     if (!r.TryParse(out double lastPx)) {
                         throw new InvalidDataException(
-                            $"Failed to parse last Px of {symbol} at key {epochSecKey[idx]}"
+                            $"Failed to parse last Px of {symbol} at key {epochSecKeys[idx]}"
                         );
                     }
 

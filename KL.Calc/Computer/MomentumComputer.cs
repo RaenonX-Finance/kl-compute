@@ -18,6 +18,18 @@ public static class MomentumComputer {
     }
 
     private static Momentum CalcMomentumPair(double[] pxRev, int shortPeriod, int longPeriod) {
+        if (shortPeriod > pxRev.Length) {
+            throw new InvalidOperationException(
+                $"Data not enough to calculate MA of short period ({shortPeriod} / {pxRev.Length})"
+            );
+        }
+
+        if (longPeriod > pxRev.Length) {
+            throw new InvalidOperationException(
+                $"Data not enough to calculate MA of long period ({longPeriod} / {pxRev.Length})"
+            );
+        }
+
         var last = pxRev[0];
         var avgShort = pxRev[..shortPeriod].Average();
         var avgLong = pxRev[..longPeriod].Average();
