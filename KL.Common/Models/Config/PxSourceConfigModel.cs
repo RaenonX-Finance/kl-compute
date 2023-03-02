@@ -11,6 +11,7 @@ public record PxSourceConfigModel {
     [UsedImplicitly]
     public required ProductCategory ProductCategory { get; init; }
 
+    [UsedImplicitly]
     public required bool Enabled { get; init; }
 
     /// <summary>
@@ -28,6 +29,7 @@ public record PxSourceConfigModel {
     [UsedImplicitly]
     public required string ExternalSymbol { get; init; }
 
+    [UsedImplicitly]
     public required string Name { get; init; }
 
     public static PxSourceConfigModel[] GenerateDefault() {
@@ -44,7 +46,7 @@ public record PxSourceConfigModel {
                 Source = PxSource.Touchance,
                 Enabled = false,
                 InternalSymbol = "YM",
-                ExternalSymbol = "TC.F.CME.YM.HOT",
+                ExternalSymbol = "TC.F.CBOT.YM.HOT",
                 Name = "小道",
                 ProductCategory = ProductCategory.UsIndexFutures
             },

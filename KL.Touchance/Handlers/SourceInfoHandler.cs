@@ -24,11 +24,21 @@ public static class SourceInfoHandler {
                     }
                 );
 
-                return new SourceInfoModel {
-                    Symbol = r.InternalSymbol,
-                    MinTick = reply.Tick,
-                    Decimals = reply.Decimals
-                };
+                try {
+                    return new SourceInfoModel {
+                        Symbol = r.InternalSymbol,
+                        MinTick = reply.Tick,
+                        Decimals = reply.Decimals
+                    };
+                } catch (InvalidOperationException e) {
+                    Log.Error(
+                        e,
+                        "Failed to deserialize source info. Symbol ({Symbol}) could be invalid.",
+                        r.ExternalSymbol
+                    );
+                    Environment.Exit(1);
+                    throw;
+                }
             }
         );
 

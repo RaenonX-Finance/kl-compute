@@ -70,6 +70,15 @@ public class ClientAggregator {
 
     private static async Task OnHistoryDataUpdated(object? sender, HistoryEventArgs e) {
         var start = Stopwatch.GetTimestamp();
+
+        if (e.Data.Count == 0) {
+            Log.Warning(
+                "[{Identifier}] Received empty history data, aborting further actions",
+                e.Metadata.ToIdentifier()
+            );
+            return;
+        }
+
         var last = e.Data[^1];
 
         Log.Information(
@@ -125,7 +134,7 @@ public class ClientAggregator {
 
     private static async Task OnPxError(object? sender, PxErrorEventArgs e) {
         await GrpcSystemEventCaller.OnError(e.Message);
-        
+
         Log.Information("Received error message: {Message}", e.Message);
     }
 }
