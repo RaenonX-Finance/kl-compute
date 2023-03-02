@@ -50,8 +50,11 @@ public class SubscriptionHandler {
                 client.OnMinuteChanged(new MinuteChangeEventArgs { Timestamp = message.GetTimestamp() });
                 return;
             case SymbolClearMessage message:
+                // Using `SymbolToSubscribe` instead of `Data.Symbol` because
+                // `Data.Symbol` is in the format of `TC.F.CME.NQ`,
+                // but the symbol to subscribe needs to be `TC.F.CME.NQ.HOT`
                 Log.Information("Received symbol clear for {Symbol}, resubscribing...", message.Data.Symbol);
-                TouchanceClient.SendHistorySubscriptionRequest(message.Data.Symbol);
+                TouchanceClient.SendHistorySubscriptionRequest(message.SymbolToSubscribe);
                 return;
             default:
                 Log.Warning("Unhandled subscription message: {Message}", messageJson);

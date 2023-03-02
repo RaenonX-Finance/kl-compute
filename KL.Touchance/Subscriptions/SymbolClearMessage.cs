@@ -11,4 +11,6 @@ public record SymbolClearData {
 public record SymbolClearMessage : TcSubscription {
     [UsedImplicitly]
     public required SymbolClearData Data { get; init; }
+
+    public string SymbolToSubscribe => $"{Data.Symbol}.HOT";
 }
