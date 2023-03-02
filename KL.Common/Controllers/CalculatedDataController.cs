@@ -64,6 +64,19 @@ public static class CalculatedDataController {
         );
     }
 
+    public static async Task UpdateByEpoch(CalculatedDataModel calculatedData) {
+        Log.Debug("To update calculated data of {Symbol} at {DataTime}", calculatedData.Symbol, calculatedData.Date);
+
+        await MongoConst.PxCalculated.ReplaceOneAsync(
+            r => r.Symbol == calculatedData.Symbol
+                 && r.PeriodMin == calculatedData.PeriodMin
+                 && r.EpochSecond == calculatedData.EpochSecond,
+            calculatedData
+        );
+
+        Log.Debug("Updated calculated data of {Symbol} at {DataTime}", calculatedData.Symbol, calculatedData.Date);
+    }
+
     public static async Task AddData(MongoSession session, IEnumerable<CalculatedDataModel> calculatedData) {
         var start = Stopwatch.GetTimestamp();
 

@@ -64,4 +64,13 @@ public static class PxConfigController {
             throw;
         }
     }
+
+    public static bool IsMarketOpened(string symbol) {
+        return Config.MarketSessionMap[SymbolToCategory[symbol]].Any(r => r.IsNowTradingSession());
+    }
+
+    public static IEnumerable<PxSourceConfigModel> GetEnabledOpenedSymbols() {
+        return Config.Sources
+            .Where(r => r.Enabled && IsMarketOpened(r.InternalSymbol));
+    }
 }

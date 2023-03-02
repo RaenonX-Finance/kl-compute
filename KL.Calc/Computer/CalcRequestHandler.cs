@@ -139,6 +139,7 @@ public static class CalcRequestHandler {
     public static async Task CalcPartial(IList<string> symbols, int limit, CancellationToken cancellationToken) {
         var periodMins = PxConfigController.Config.Periods.Select(r => r.PeriodMin).ToImmutableArray();
         var combinations = symbols
+            .Where(PxConfigController.IsMarketOpened)
             .SelectMany(symbol => periodMins.Select(period => (Symbol: symbol, Period: period)))
             .ToImmutableArray();
 
@@ -180,7 +181,7 @@ public static class CalcRequestHandler {
         data[^1].Close = lastPx;
 
         var calculated = HistoryDataComputer.CalcLast(data[^1], data[^2]);
-        await CalculatedDataController.UpdateByEpoch(ImmutableArray.Create(new[] { calculated }));
+        await CalculatedDataController.UpdateByEpoch(calculated);
     }
 
     public static async Task CalcLast(string symbol, CancellationToken cancellationToken) {

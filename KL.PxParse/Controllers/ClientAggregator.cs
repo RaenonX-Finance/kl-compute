@@ -116,7 +116,7 @@ public class ClientAggregator {
         await Task.WhenAll(
             Task.Run(
                 () => GrpcPxDataCaller.CalcPartialAsync(
-                    PxConfigController.Config.Sources.Where(r => r.Enabled).Select(r => r.InternalSymbol),
+                    PxConfigController.GetEnabledOpenedSymbols().Select(r => r.InternalSymbol),
                     _cancellationToken
                 ),
                 _cancellationToken

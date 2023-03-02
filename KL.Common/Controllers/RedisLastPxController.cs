@@ -98,7 +98,11 @@ public class RedisLastPxController {
     public static async Task<IEnumerable<string>> CreateNewBar(DateTime timestamp) {
         var db = GetDatabase();
 
-        var symbolsToCreate = db.SetMembers(SourcesInUseKey).Select(r => r.ToString()).ToImmutableArray();
+        var symbolsToCreate = db.SetMembers(SourcesInUseKey)
+            .Select(r => r.ToString())
+            // Is market is not opened, new bar shouldn't be created
+            .Where(PxConfigController.IsMarketOpened)
+            .ToImmutableArray();
 
         await Task.WhenAll(symbolsToCreate.Select(r => CreateNewBar(db, r, timestamp)));
 

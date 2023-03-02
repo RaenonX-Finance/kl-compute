@@ -1,4 +1,5 @@
 ﻿using KL.Common.Enums;
+using KL.Common.Extensions;
 
 namespace KL.Common.Models.Config;
 
@@ -11,6 +12,23 @@ public record MarketSessionModel {
     public required TimeOnly Start { get; init; }
 
     public required TimeOnly End { get; init; }
+    
+    public bool IsNowTradingSession() {
+        var now = DateTime.UtcNow.ToTimezone(TimeZoneInfo.Utc).ToTimezone(Timezone);
+
+        if (!TradingDays.Contains(now.DayOfWeek)) {
+            return false;
+        }
+
+        var nowTime = TimeOnly.FromDateTime(now);
+
+        if (Start > End) {
+            // Cross day
+            return nowTime > Start || nowTime < End;
+        }
+        
+        return Start < nowTime && nowTime < End;
+    }
 
     public static MarketSessionModel[] GenerateDefault(ProductCategory productCategory) {
         return productCategory switch {

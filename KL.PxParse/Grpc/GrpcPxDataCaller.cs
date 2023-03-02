@@ -47,6 +47,10 @@ public class GrpcPxDataCaller {
         var request = new PxCalcRequestMulti();
         request.Symbols.AddRange(symbols);
 
+        if (request.Symbols.Count == 0) {
+            Log.Warning("Skipped sending `CalcPartial` gRPC requests - no symbols to calculate");
+        }
+
         CallGrpcAsyncRequest(
             PxDataClient.CalcPartialAsync,
             request,
