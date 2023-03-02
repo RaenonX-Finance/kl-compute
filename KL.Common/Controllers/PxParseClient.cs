@@ -82,7 +82,6 @@ public abstract class PxParseClient {
     public event AsyncEventHandler<MinuteChangeEventArgs>? MinuteChangeEventAsync;
 
     public void OnMinuteChanged(MinuteChangeEventArgs e) {
-        // FUTURE: [OnMinuteChanged] this event should only proc during trading hours
         InvokeAsyncEvent(MinuteChangeEventAsync, e);
     }
 
