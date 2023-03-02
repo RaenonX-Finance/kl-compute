@@ -1,8 +1,10 @@
-﻿using KL.Common.Structs;
-
-namespace KL.Common.Models.Config;
+﻿namespace KL.Common.Models.Config;
 
 
-public record MarketDateCutoffModel : TimeAtTimezone {
+public record MarketDateCutoffModel {
+    public required TimeZoneInfo Timezone { get; init; }
+
+    public required TimeOnly Time { get; init; }
+
     public required int OffsetOnCutoff { get; init; }
 }

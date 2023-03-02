@@ -12,17 +12,28 @@ namespace KL.Calc.Computer;
 public static class SrLevelComputer {
     private static readonly ILogger Log = Serilog.Log.ForContext(typeof(SrLevelComputer));
 
-    private static IImmutableList<DateTime> GetKeyTimestamps(int minPairs, ProductCategory category) {
+    private static IList<DateTime> GetKeyTimestamps(
+        int minPairs,
+        SrLevelType srLevelType,
+        ProductCategory category
+    ) {
         var dates = new List<DateTime>();
 
         // Adding 1 day to prevent losing the current day
         var date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+
+        var srLevelTiming = PxConfigController.Config.SrLevelTimingMap[category];
+        var timing = srLevelTiming.GetTimingPair(srLevelType);
+
+        if (timing == null) {
+            return ImmutableArray<DateTime>.Empty;
+        }
+
         while (dates.Count < minPairs * 2) {
             dates.AddRange(
-                PxConfigController.Config.SrLevelTimingMap[category]
-                    .Primary.Timings
+                timing.Timings
                     .Select(
-                        timing => date.ToDateTime(timing.Time)
+                        time => date.ToDateTime(time)
                             .ToTimezone(timing.Timezone)
                             .ToTimezone(TimeZoneInfo.Utc)
                     )
@@ -37,12 +48,12 @@ public static class SrLevelComputer {
 
     private static IImmutableList<SrLevelDataModel> GetSrLevelModels(
         string symbol,
-        IImmutableList<HistoryDataModel> data,
+        IImmutableList<HistoryDataModel> dataOpenCloseCrossed,
         SrLevelTimingModel srLevelTiming,
         SrLevelType srLevelType,
         int pairCount
     ) {
-        if (data.Count == 0) {
+        if (dataOpenCloseCrossed.Count == 0) {
             var e = new InvalidOperationException($"No data of {symbol} to calculate SR level");
             Log.Error(
                 e,
@@ -54,30 +65,22 @@ public static class SrLevelComputer {
             throw e;
         }
 
-        var timing = srLevelType switch {
-            SrLevelType.Primary => srLevelTiming.Primary,
-            SrLevelType.Secondary => srLevelTiming.Secondary,
-            _ => throw new ArgumentOutOfRangeException(
-                nameof(srLevelType),
-                srLevelType,
-                "Given SR level type does not have corresponding timing config to use"
-            )
-        };
+        var timing = srLevelTiming.GetTimingPair(srLevelType);
 
         if (timing == null) {
             return ImmutableArray<SrLevelDataModel>.Empty;
         }
 
         var srLevelModels = new List<SrLevelDataModel>();
-        using var dataEnumerator = data.OrderByDescending(r => r.Timestamp).GetEnumerator();
+        using var dataEnumerator = dataOpenCloseCrossed.OrderByDescending(r => r.Timestamp).GetEnumerator();
         dataEnumerator.MoveNext(); // Enumerator starts with `Current` being `null`
         var dataEnumeratorMoved = true;
 
         while (srLevelModels.Count < pairCount && dataEnumeratorMoved) {
             var currentOpen = dataEnumerator.Current;
-            var currentOpenTime = TimeOnly.FromDateTime(currentOpen.Timestamp.ToTimezoneFromUtc(timing.Open.Timezone));
+            var currentOpenTime = TimeOnly.FromDateTime(currentOpen.Timestamp.ToTimezoneFromUtc(timing.Timezone));
 
-            if (currentOpenTime != timing.Open.Time) {
+            if (currentOpenTime != timing.Open) {
                 dataEnumeratorMoved = dataEnumerator.MoveNext();
                 if (!dataEnumeratorMoved) {
                     break;
@@ -112,8 +115,9 @@ public static class SrLevelComputer {
 
         if (srLevelModels.Count < pairCount) {
             Log.Warning(
-                "Data given for calculating SR level is not enough ({DataCount}) to meet the desired pairs ({ModelCount})",
-                data.Count,
+                "Data of {Symbol} given for calculating SR level is not enough ({DataCount}) to meet the desired pairs ({ModelCount})",
+                symbol,
+                dataOpenCloseCrossed.Count,
                 pairCount
             );
         }
@@ -122,23 +126,45 @@ public static class SrLevelComputer {
     }
 
     private static IEnumerable<SrLevelDataModel> CalcLevelsByProductCategory(
-        IImmutableList<string> symbols,
+        IList<string> symbols,
         ProductCategory category,
         int pairCount
     ) {
-        // Adding 1 because the last pair could be incomplete
-        var groupedData = HistoryDataController.GetAtTime(symbols, GetKeyTimestamps(pairCount + 1, category))
-            .GroupBy(r => r.Symbol)
-            .ToDictionary(r => r.Key, r => r.ToImmutableArray());
+        var groupedData = Enum.GetValues(typeof(SrLevelType))
+            .Cast<SrLevelType>()
+            .SelectMany(
+                srLevelType => HistoryDataController.GetAtTime(
+                        symbols,
+                        GetKeyTimestamps(pairCount + 1, srLevelType, category)
+                    )
+                    .GroupBy(r => r.Symbol)
+                    .Select(
+                        r => new {
+                            Symbol = r.Key,
+                            SrLevelType = srLevelType,
+                            Data = r.ToImmutableArray()
+                        }
+                    )
+            )
+            .ToImmutableDictionary(
+                r => new { r.Symbol, r.SrLevelType },
+                r => r.Data
+            );
 
         var models = new List<SrLevelDataModel>();
 
         foreach (var symbol in symbols) {
-            var data = groupedData[symbol];
             var timing = PxConfigController.Config.SrLevelTimingMap[category];
 
-            models.AddRange(GetSrLevelModels(symbol, data, timing, SrLevelType.Primary, pairCount));
-            models.AddRange(GetSrLevelModels(symbol, data, timing, SrLevelType.Secondary, pairCount));
+            foreach (var srLevelType in Enum.GetValues(typeof(SrLevelType)).Cast<SrLevelType>()) {
+                if (!groupedData.TryGetValue(new { Symbol = symbol, SrLevelType = srLevelType }, out var data)) {
+                    // Data could be unavailable because timing is unavailable
+                    // For example, `Secondary` of `NQ`
+                    continue;
+                }
+
+                models.AddRange(GetSrLevelModels(symbol, data, timing, srLevelType, pairCount));
+            }
         }
 
         return models;

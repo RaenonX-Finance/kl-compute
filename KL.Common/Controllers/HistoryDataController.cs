@@ -40,10 +40,23 @@ public static class HistoryDataController {
     }
 
     public static IEnumerable<HistoryDataModel> GetAtTime(
-        IImmutableList<string> symbols,
-        IImmutableList<DateTime> timestamps
+        IList<string> symbols,
+        IList<DateTime> timestamps
     ) {
-        Log.Information("Request history data of {@Symbols} at {@Timestamps}", symbols, timestamps);
+        if (timestamps.Count == 0) {
+            Log.Information(
+                "Request history data of {@Symbols} does not have timestamp specified, returning empty response",
+                symbols
+            );
+            return Array.Empty<HistoryDataModel>();
+        }
+
+        Log.Information(
+            "Request history data of {@Symbols} at {@Timestamps} ({TimestampCount})",
+            symbols,
+            timestamps,
+            timestamps.Count
+        );
 
         return MongoConst.PxHistory.AsQueryable()
             .Where(r => symbols.Contains(r.Symbol) && timestamps.Contains(r.Timestamp))
