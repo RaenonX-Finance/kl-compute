@@ -15,19 +15,19 @@ public record MarketSessionModel {
     
     public bool IsNowTradingSession() {
         var now = DateTime.UtcNow.ToTimezone(TimeZoneInfo.Utc).ToTimezone(Timezone);
-
-        if (!TradingDays.Contains(now.DayOfWeek)) {
-            return false;
-        }
-
         var nowTime = TimeOnly.FromDateTime(now);
 
-        if (Start > End) {
-            // Cross day
-            return nowTime > Start || nowTime < End;
+        // Same day
+        if (Start <= End) {
+            return TradingDays.Contains(now.DayOfWeek) && Start < nowTime && nowTime < End;
         }
-        
-        return Start < nowTime && nowTime < End;
+
+        // Cross day
+        if (TradingDays.Contains(now.DayOfWeek) && nowTime > Start) {
+            return true;
+        }
+
+        return TradingDays.Contains(now.DayOfWeek.GetPrev()) && nowTime < End;
     }
 
     public static MarketSessionModel[] GenerateDefault(ProductCategory productCategory) {

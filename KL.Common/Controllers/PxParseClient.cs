@@ -55,11 +55,6 @@ public abstract class PxParseClient {
     public event AsyncEventHandler<RealtimeEventArgs>? RealtimeDataUpdatedEventAsync;
 
     private void OnRealtimeDataUpdated(RealtimeEventArgs e) {
-        if (!PxConfigController.IsMarketOpened(e.Symbol)) {
-            Log.Warning("Skipped processing realtime data of {Symbol} - market not opened", e.Symbol);
-            return;
-        }
-
         InvokeAsyncEvent(RealtimeDataUpdatedEventAsync, e);
     }
 
