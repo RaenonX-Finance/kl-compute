@@ -13,13 +13,13 @@ namespace KL.Touchance.Handlers;
 public static class SourceInfoHandler {
     private static readonly ILogger Log = Serilog.Log.ForContext(typeof(SourceInfoHandler));
 
-    public static async Task CheckSourceInfo(IImmutableList<PxSourceConfigModel> sources) {
+    public static async Task CheckSourceInfo(this TouchanceClient client, IImmutableList<PxSourceConfigModel> sources) {
         var sourceInfo = sources.Select(
             r => {
                 Log.Information("Checking source info of {Symbol}", r.ExternalSymbol);
-                var reply = TouchanceClient.RequestSocket.SendTcRequest<SourceInfoRequest, SourceInfoReply>(
+                var reply = client.RequestSocket.SendTcRequest<SourceInfoRequest, SourceInfoReply>(
                     new SourceInfoRequest {
-                        SessionKey = TouchanceClient.SessionKey,
+                        SessionKey = client.SessionKey,
                         Symbol = r.ExternalSymbol
                     }
                 );

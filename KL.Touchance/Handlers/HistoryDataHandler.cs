@@ -13,7 +13,7 @@ using Serilog;
 namespace KL.Touchance.Handlers;
 
 
-public static class HistoryDataHandler {
+public class HistoryDataHandler {
     private static readonly ILogger Log = Serilog.Log.ForContext(typeof(HistoryDataHandler));
 
     // Has key = request to handle
@@ -21,7 +21,9 @@ public static class HistoryDataHandler {
     private static readonly IDictionary<PxHistoryRequestIdentifier, bool> SubscribedRequests
         = new Dictionary<PxHistoryRequestIdentifier, bool>();
 
-    internal static void SendHandshakeRequest(
+    public required TouchanceClient Client { get; init; }
+
+    internal void SendHandshakeRequest(
         string touchanceSymbol,
         HistoryInterval interval,
         DateTime start,
@@ -36,9 +38,9 @@ public static class HistoryDataHandler {
         var startTime = start.ToTouchanceHourlyPrecision();
         var endTime = end.ToTouchanceHourlyPrecision();
 
-        TouchanceClient.RequestSocket.SendTcRequest<PxHistoryHandshakeRequest, PxHistoryHandshakeReply>(
+        Client.RequestSocket.SendTcRequest<PxHistoryHandshakeRequest, PxHistoryHandshakeReply>(
             new PxHistoryHandshakeRequest {
-                SessionKey = TouchanceClient.SessionKey,
+                SessionKey = Client.SessionKey,
                 Param = new PxHistoryHandshakeRequestParams {
                     Symbol = touchanceSymbol,
                     SubDataType = interval.GetTouchanceType(),
@@ -64,12 +66,12 @@ public static class HistoryDataHandler {
         );
     }
 
-    private static void SendUnsubscribeRequest(PxHistoryReadyMessage message) {
+    private void SendUnsubscribeRequest(PxHistoryReadyMessage message) {
         SubscribedRequests.Remove(message.Identifier);
 
-        TouchanceClient.RequestSocket.SendTcRequest<PxHistoryUnsubscribeRequest, PxHistoryUnsubscribeReply>(
+        Client.RequestSocket.SendTcRequest<PxHistoryUnsubscribeRequest, PxHistoryUnsubscribeReply>(
             new PxHistoryUnsubscribeRequest {
-                SessionKey = TouchanceClient.SessionKey,
+                SessionKey = Client.SessionKey,
                 Param = new PxHistoryHandshakeRequestParams {
                     Symbol = message.Symbol,
                     SubDataType = message.SubDataType,
@@ -80,10 +82,10 @@ public static class HistoryDataHandler {
         );
     }
 
-    private static PxHistoryDataReply GetPartialData(PxHistoryReadyMessage message, int queryIndex) {
-        return TouchanceClient.RequestSocket.SendTcRequest<PxHistoryDataRequest, PxHistoryDataReply>(
+    private PxHistoryDataReply GetPartialData(PxHistoryReadyMessage message, int queryIndex) {
+        return Client.RequestSocket.SendTcRequest<PxHistoryDataRequest, PxHistoryDataReply>(
             new PxHistoryDataRequest {
-                SessionKey = TouchanceClient.SessionKey,
+                SessionKey = Client.SessionKey,
                 Param = new PxHistoryDataRequestParams {
                     Symbol = message.Symbol,
                     SubDataType = message.SubDataType,
@@ -96,7 +98,7 @@ public static class HistoryDataHandler {
         );
     }
 
-    public static HistoryEventArgs? GetHistoryData(PxHistoryReadyMessage message, CancellationToken cancellationToken) {
+    public HistoryEventArgs? GetHistoryData(PxHistoryReadyMessage message, CancellationToken cancellationToken) {
         if (!message.IsReady) {
             Log.Warning("[{Identifier}] History data not ready ({Status})", message.IdentifierString, message.Status);
             return null;

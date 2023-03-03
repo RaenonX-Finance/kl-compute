@@ -16,15 +16,22 @@ namespace KL.Touchance;
 public class TouchanceClient : PxParseClient {
     private static readonly ILogger Log = Serilog.Log.ForContext(typeof(TouchanceClient));
 
-    public static readonly RequestSocket RequestSocket = new(">tcp://127.0.0.1:51237");
+    public readonly RequestSocket RequestSocket = new(">tcp://127.0.0.1:51237");
+
+    private readonly SubscriptionHandler _subscriptionHandler;
+
+    private readonly HistoryDataHandler _historyDataHandler;
 
     private static SemaphoreSlim? _semaphore;
 
-    private static string? _sessionKeyInternal;
+    private string? _sessionKeyInternal;
 
-    public TouchanceClient(CancellationToken cancellationToken) : base(true, cancellationToken) { }
+    public TouchanceClient(CancellationToken cancellationToken) : base(true, cancellationToken) {
+        _historyDataHandler = new HistoryDataHandler { Client = this };
+        _subscriptionHandler = new SubscriptionHandler { Client = this, HistoryDataHandler = _historyDataHandler };
+    }
 
-    public static string SessionKey {
+    public string SessionKey {
         get {
             if (_sessionKeyInternal == null) {
                 throw new InvalidOperationException("Touchance not connected - empty session key");
@@ -34,7 +41,7 @@ public class TouchanceClient : PxParseClient {
         }
     }
 
-    private static async Task InitializeHistoryData(IImmutableList<PxSourceConfigModel> sources) {
+    private async Task InitializeHistoryData(IImmutableList<PxSourceConfigModel> sources) {
         var isAnyPeriodDaily = PxConfigController.Config.Periods.Any(
             period => period.PeriodMin.GetHistoryInterval() == HistoryInterval.Daily
         );
@@ -45,7 +52,7 @@ public class TouchanceClient : PxParseClient {
             // Request all history data
             foreach (var source in sources) {
                 await _semaphore.WaitAsync();
-                HistoryDataHandler.SendHandshakeRequest(
+                _historyDataHandler.SendHandshakeRequest(
                     source.ExternalSymbol,
                     HistoryInterval.Minute,
                     DateTime.UtcNow.AddDays(-PxConfigController.Config.InitDataBacktrackDays[HistoryInterval.Minute]),
@@ -59,7 +66,7 @@ public class TouchanceClient : PxParseClient {
                 }
 
                 await _semaphore.WaitAsync();
-                HistoryDataHandler.SendHandshakeRequest(
+                _historyDataHandler.SendHandshakeRequest(
                     source.ExternalSymbol,
                     HistoryInterval.Daily,
                     DateTime.UtcNow.AddDays(-PxConfigController.Config.InitDataBacktrackDays[HistoryInterval.Daily]),
@@ -75,9 +82,9 @@ public class TouchanceClient : PxParseClient {
         _semaphore = null;
     }
 
-    public static void SendHistorySubscriptionRequest(IEnumerable<string> touchanceSymbols) {
+    private void SendHistorySubscriptionRequest(IEnumerable<string> touchanceSymbols) {
         foreach (var symbol in touchanceSymbols) {
-            HistoryDataHandler.SendHandshakeRequest(
+            _historyDataHandler.SendHandshakeRequest(
                 symbol,
                 HistoryInterval.Minute,
                 DateTime.UtcNow.AddHours(-PxConfigController.Config.HistorySubscription.InitialBufferHrs),
@@ -88,7 +95,7 @@ public class TouchanceClient : PxParseClient {
         }
     }
 
-    public static void SendHistorySubscriptionRequest(string touchanceSymbol) {
+    public void SendHistorySubscriptionRequest(string touchanceSymbol) {
         SendHistorySubscriptionRequest(new[] { touchanceSymbol });
     }
 
@@ -98,7 +105,7 @@ public class TouchanceClient : PxParseClient {
             .ToImmutableList();
 
         await Task.WhenAll(
-            SourceInfoHandler.CheckSourceInfo(sources),
+            this.CheckSourceInfo(sources),
             InitializeHistoryData(sources)
         );
 
@@ -127,7 +134,7 @@ public class TouchanceClient : PxParseClient {
 
         // Needs to start getting subscription before `Initialize()`
         // because `Initialize()` needs the content in the subscribing channel
-        SubscriptionHandler.StartAsync(loginReply.SubPort, this, CancellationToken);
+        _subscriptionHandler.StartAsync(loginReply.SubPort, CancellationToken);
 
         await Initialize();
     }
