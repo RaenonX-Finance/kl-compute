@@ -13,3 +13,4 @@ KL.Sandbox/
 # Misc
 /packages/
 config.yaml
+newrelic.config
