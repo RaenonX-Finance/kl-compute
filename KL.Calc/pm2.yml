@@ -5,6 +5,10 @@
     script: './KL.Calc.exe'
     # Execution configs
     exec_mode: 'fork'
+    # Restart options
+    min_uptime: 30000
+    max_restarts: 5
+    restart_delay: 10000
     # Others
     cron_restart: '0 0 */3 * *'  # Restart every 3 days
     time: true  # Log timestamp in logs
