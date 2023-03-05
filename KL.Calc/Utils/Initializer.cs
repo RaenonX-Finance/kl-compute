@@ -1,6 +1,5 @@
 ﻿using System.Net;
 using KL.Calc.Services;
-using KL.Common.Controllers;
 using KL.Common.Utils;
 using Serilog;
 
@@ -9,9 +8,7 @@ namespace KL.Calc.Utils;
 
 public static class Initializer {
     public static async Task<WebApplication> Initialize(string[] args) {
-        await MongoManager.Initialize();
-
-        return WebApplication
+        var app = WebApplication
             .CreateBuilder(args)
             .BuildLogging()
             .BuildGrpcService()
@@ -19,6 +16,10 @@ public static class Initializer {
             .InitLogging()
             .InitGrpcService()
             .InitEndpoints();
+
+        await CommonInitializer.Initialize();
+
+        return app;
     }
 
     private static WebApplicationBuilder BuildGrpcService(this WebApplicationBuilder builder) {

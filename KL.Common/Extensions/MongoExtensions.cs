@@ -19,7 +19,7 @@ public static class MongoExtensions {
     public static IMongoClient Initialize(this IMongoClient client) {
         RegisterConvention();
         RegisterSerializer();
-        
+
         return client;
     }
 
@@ -30,7 +30,7 @@ public static class MongoExtensions {
             filter: _ => true
         );
     }
-    
+
     private static void RegisterSerializer() {
         RegisterGlobalSerializer();
         RegisterFieldSpecificSerializer();
