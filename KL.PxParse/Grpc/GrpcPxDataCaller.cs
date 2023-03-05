@@ -49,6 +49,7 @@ public class GrpcPxDataCaller {
 
         if (request.Symbols.Count == 0) {
             Log.Warning("Skipped sending `CalcPartial` gRPC requests - no symbols to calculate");
+            return;
         }
 
         CallGrpcAsyncRequest(
