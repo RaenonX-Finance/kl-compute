@@ -95,7 +95,8 @@ public class ClientAggregator {
         );
 
         Log.Information(
-            "Handled history data [{Identifier}] in {Elapsed:0.00} ms",
+            "Handled history data of {Symbol} ({Identifier}) in {Elapsed:0.00} ms",
+            e.Metadata.Symbol,
             e.Metadata.ToIdentifier(),
             start.GetElapsedMs()
         );
