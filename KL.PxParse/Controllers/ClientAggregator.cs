@@ -95,7 +95,7 @@ public class ClientAggregator {
         );
 
         Log.Information(
-            "Handled history data [{Identifier}] in {ElapsedMs:0.00} ms",
+            "Handled history data [{Identifier}] in {Elapsed:0.00} ms",
             e.Metadata.ToIdentifier(),
             start.GetElapsedMs()
         );
@@ -126,7 +126,7 @@ public class ClientAggregator {
         );
 
         Log.Information(
-            "Handled minute change to {NewMinuteTimestamp} in {ElapsedMs:0.00} ms",
+            "Handled minute change to {NewMinuteTimestamp} in {Elapsed:0.00} ms",
             e.Timestamp,
             start.GetElapsedMs()
         );

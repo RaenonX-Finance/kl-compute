@@ -74,7 +74,7 @@ public class GrpcPxDataCaller {
         }
 
         Log.Information(
-            "gRPC request of {Endpoint} completed in {ElapsedMs:0.00} ms",
+            "gRPC request of {Endpoint} completed in {Elapsed:0.00} ms",
             nameof(PxDataClient.CalcAllAsync),
             start.GetElapsedMs()
         );

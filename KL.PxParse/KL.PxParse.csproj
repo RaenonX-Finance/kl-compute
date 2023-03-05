@@ -4,7 +4,7 @@
         <TargetFramework>net7.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <UserSecretsId>dotnet-KLSitePxParse-015F73E9-6ADA-4573-B7C8-0C04CF0BB2C4</UserSecretsId>
+        <UserSecretsId>dotnet-KLPxParse-015F73E9-6ADA-4573-B7C8-0C04CF0BB2C4</UserSecretsId>
         <Company>RaenonX</Company>
     </PropertyGroup>
 

@@ -26,7 +26,7 @@ public static class PxCacheController {
         await RedisLastPxController.Set(symbol, entriesToProcess, isCreate: true);
 
         Log.Information(
-            "Created Px Cache of {Symbol} ({Count} - last at {LastTimestamp}) in {ElapsedMs:0.00} ms",
+            "Created Px Cache of {Symbol} ({Count} - last at {LastTimestamp}) in {Elapsed:0.00} ms",
             symbol,
             entriesToProcess.Length,
             entriesToProcess.Max(r => r.Timestamp),
@@ -49,7 +49,7 @@ public static class PxCacheController {
         var symbolsCreated = await RedisLastPxController.CreateNewBar(timestamp);
 
         Log.Information(
-            "Added new bars for {@Symbols} at {NewBarTimestamp} in {ElapsedMs:0.00} ms",
+            "Added new bars for {@Symbols} at {NewBarTimestamp} in {Elapsed:0.00} ms",
             symbolsCreated,
             timestamp,
             start.GetElapsedMs()

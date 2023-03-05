@@ -60,7 +60,7 @@ public static partial class HistoryDataComputer {
 
         var firstCalculated = baseData.Calculated[0];
         Log.Information(
-            "Calculated partial indicator for {Symbol} @ {PeriodMin} ({Count}) in {ElapsedMs:0.00} ms",
+            "Calculated partial indicator for {Symbol} @ {PeriodMin} ({Count}) in {Elapsed:0.00} ms",
             firstCalculated.Symbol,
             firstCalculated.PeriodMin,
             history.Length,
@@ -104,7 +104,7 @@ public static partial class HistoryDataComputer {
 
         var firstHistory = historyData[0];
         Log.Information(
-            "Calculated all indicators of {Symbol} @ {PeriodMin} ({Count}) in {ElapsedMs:0.00} ms",
+            "Calculated all indicators of {Symbol} @ {PeriodMin} ({Count}) in {Elapsed:0.00} ms",
             firstHistory.Symbol,
             periodMin,
             historyData.Count,
