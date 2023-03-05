@@ -10,4 +10,9 @@ public static class NumberHelper {
             yield return i;
         }
     }
+
+    public static int Mod(int num, int mod) {
+        var r = num % mod;
+        return r < 0 ? r + mod : r;
+    }
 }

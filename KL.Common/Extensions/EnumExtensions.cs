@@ -1,4 +1,6 @@
-﻿namespace KL.Common.Extensions;
+﻿using KL.Common.Utils;
+
+namespace KL.Common.Extensions;
 
 
 public static class EnumExtensions {
@@ -8,6 +10,7 @@ public static class EnumExtensions {
         }
 
         var enums = (T[])Enum.GetValues(@enum.GetType());
-        return enums[Array.IndexOf(enums, @enum) - 1 % enums.Length];
+        // Not using `%` because it doesn't take care of negative ints
+        return enums[NumberHelper.Mod(Array.IndexOf(enums, @enum) - 1, enums.Length)];
     }
 }
