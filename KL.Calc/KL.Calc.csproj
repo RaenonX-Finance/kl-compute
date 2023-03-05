@@ -29,6 +29,13 @@
         </ContentWithTargetPath>
     </ItemGroup>
 
+    <Target Name="CopyConfigFileBeforeBuild" BeforeTargets="BeforeBuild">
+        <ItemGroup>
+            <ConfigFile Include="..\KL.Common\config.yaml" />
+        </ItemGroup>
+        <Copy SourceFiles="@(ConfigFile)" DestinationFolder="$(OutDir)" Condition="Exists('%(FullPath)')" />
+    </Target>
+
     <ItemGroup>
         <Protobuf Include="..\KL.Proto\Protos\pxData.proto" GrpcServices="Server" />
     </ItemGroup>
