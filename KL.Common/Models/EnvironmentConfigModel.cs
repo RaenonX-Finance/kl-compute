@@ -1,4 +1,5 @@
 ﻿using JetBrains.Annotations;
+using KL.Common.Models.Config;
 
 namespace KL.Common.Models;
 
@@ -17,6 +18,11 @@ public record LoggingConfig {
 
     [UsedImplicitly]
     public string? NewRelicApiKey { get; init; }
+}
+
+public record SourceConfig {
+    [UsedImplicitly]
+    public required TouchanceConfigModel Touchance { get; init; }
 }
 
 public record GrpcConfig {
@@ -38,6 +44,9 @@ public record EnvironmentConfigModel {
 
     [UsedImplicitly]
     public required LoggingConfig Logging { get; init; }
+
+    [UsedImplicitly]
+    public required SourceConfig Source { get; init; }
 
     [UsedImplicitly]
     public required GrpcConfig Grpc { get; init; }

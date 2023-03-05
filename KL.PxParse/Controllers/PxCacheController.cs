@@ -12,6 +12,7 @@ public static class PxCacheController {
     private static readonly ILogger Log = Serilog.Log.ForContext(typeof(PxCacheController));
 
     public static async Task Initialize() {
+        Log.Information("Initializing Px cache");
         await RedisLastPxController.Initialize();
     }
 

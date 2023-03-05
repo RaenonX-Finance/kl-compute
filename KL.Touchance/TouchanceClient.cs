@@ -3,6 +3,7 @@ using KL.Common.Controllers;
 using KL.Common.Enums;
 using KL.Common.Events;
 using KL.Common.Models.Config;
+using KL.Common.Utils;
 using KL.Touchance.Extensions;
 using KL.Touchance.Handlers;
 using KL.Touchance.Requests;
@@ -16,7 +17,8 @@ namespace KL.Touchance;
 public class TouchanceClient : PxParseClient {
     private static readonly ILogger Log = Serilog.Log.ForContext(typeof(TouchanceClient));
 
-    public readonly RequestSocket RequestSocket = new(">tcp://127.0.0.1:51237");
+    public readonly RequestSocket RequestSocket
+        = new($">tcp://127.0.0.1:{EnvironmentConfigHelper.Config.Source.Touchance.ZmqPort}");
 
     private readonly SubscriptionHandler _subscriptionHandler;
 
@@ -39,6 +41,42 @@ public class TouchanceClient : PxParseClient {
 
             return _sessionKeyInternal;
         }
+    }
+
+    public async Task Start() {
+        Log.Information("Starting Touchance");
+        var loginReply = RequestSocket.SendTcRequest<LoginRequest, LoginReply>(
+            new LoginRequest {
+                Param = new LoginRequestParams {
+                    SystemName = "ZMQ",
+                    ServiceKey = "8076c9867a372d2a9a814ae710c256e2"
+                }
+            },
+            new TimeSpan(0, 0, 0, EnvironmentConfigHelper.Config.Source.Touchance.LoginTimeout)
+        );
+
+        if (loginReply == null) {
+            Log.Error(
+                "Touchance did not respond from port {TouchancePort} in {LoginTimeoutSec} seconds, terminating",
+                EnvironmentConfigHelper.Config.Source.Touchance.ZmqPort,
+                EnvironmentConfigHelper.Config.Source.Touchance.LoginTimeout
+            );
+            Environment.Exit(1);
+        }
+
+        Log.Information(
+            "Touchance logged in - Session [{Session}] Subscription Port [{SubPort}]",
+            loginReply.SessionKey,
+            loginReply.SubPort
+        );
+
+        _sessionKeyInternal = loginReply.SessionKey;
+
+        // Needs to start getting subscription before `Initialize()`
+        // because `Initialize()` needs the content in the subscribing channel
+        _subscriptionHandler.StartAsync(loginReply.SubPort, CancellationToken);
+
+        await Initialize();
     }
 
     private async Task InitializeHistoryData(IImmutableList<PxSourceConfigModel> sources) {
@@ -112,31 +150,6 @@ public class TouchanceClient : PxParseClient {
         await OnInitCompleted(new InitCompletedEventArgs { SourcesInUse = sources });
 
         SendHistorySubscriptionRequest(sources.Select(r => r.ExternalSymbol));
-    }
-
-    public async Task Start() {
-        var loginReply = RequestSocket.SendTcRequest<LoginRequest, LoginReply>(
-            new LoginRequest {
-                Param = new LoginRequestParams {
-                    SystemName = "ZMQ",
-                    ServiceKey = "8076c9867a372d2a9a814ae710c256e2"
-                }
-            }
-        );
-
-        Log.Information(
-            "Touchance logged in - Session [{Session}] Subscription Port [{SubPort}]",
-            loginReply.SessionKey,
-            loginReply.SubPort
-        );
-
-        _sessionKeyInternal = loginReply.SessionKey;
-
-        // Needs to start getting subscription before `Initialize()`
-        // because `Initialize()` needs the content in the subscribing channel
-        _subscriptionHandler.StartAsync(loginReply.SubPort, CancellationToken);
-
-        await Initialize();
     }
 
     protected override void OnHistoryDataUpdatedCompleted(HistoryEventArgs e) {

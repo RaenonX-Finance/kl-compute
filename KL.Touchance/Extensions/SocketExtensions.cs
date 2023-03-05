@@ -17,8 +17,32 @@ public static class SocketExtensions {
         where TReply : TcReply {
         socket.SendFrame(request.ToJson());
 
-        var response = socket.ReceiveFrameString();
+        return ParseReplyToJson<TReply>(socket.ReceiveFrameString(), hasPrefix);
+    }
 
+    public static TReply? SendTcRequest<TRequest, TReply>(
+        this RequestSocket socket,
+        TRequest request,
+        TimeSpan timeout,
+        bool hasPrefix = false
+    )
+        where TRequest : TcRequest
+        where TReply : TcReply {
+        socket.SendFrame(request.ToJson());
+
+        var hasMessage = socket.TryReceiveFrameString(timeout, out var response);
+
+        if (!hasMessage || response == null) {
+            return null;
+        }
+
+        return ParseReplyToJson<TReply>(response, hasPrefix);
+    }
+
+    private static TReply ParseReplyToJson<TReply>(
+        string response,
+        bool hasPrefix = false
+    ) where TReply : TcReply {
         if (hasPrefix) {
             // Only care about the message after 1st colon
             response = response.Split(":", 2)[1];
