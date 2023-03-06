@@ -61,7 +61,7 @@ public record PxSourceConfigModel {
             new PxSourceConfigModel {
                 Source = PxSource.Touchance,
                 Enabled = false,
-                InternalSymbol = "YM",
+                InternalSymbol = "RTY",
                 ExternalSymbol = "TC.F.CME.RTY.HOT",
                 Name = "羅素",
                 ProductCategory = ProductCategory.UsIndexFutures
