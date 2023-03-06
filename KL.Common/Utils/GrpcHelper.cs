@@ -68,21 +68,31 @@ public static class GrpcHelper {
                 cancellationToken: cancellationToken
             );
         } catch (RpcException e) {
-            if (e.StatusCode != StatusCode.DeadlineExceeded) {
-                Log.Error(
-                    e,
-                    "Error on gRPC call to `{GrpcCallEndpoint}` (Call body: {@GrpcCallBody})",
-                    endpointName,
-                    request
-                );
-                throw;
+            switch (e.StatusCode) {
+                case StatusCode.DeadlineExceeded:
+                    Log.Warning(
+                        "Call to gRPC `{GrpcCallEndpoint}` deadline exceeded (Timeout: {Timeout} ms)",
+                        endpointName,
+                        timeout
+                    );
+                    return;
+                case StatusCode.Unavailable:
+                    Log.Warning(
+                        e,
+                        "gRPC server unavailable for `{GrpcCallEndpoint}` (Call body: {@GrpcCallBody})",
+                        endpointName,
+                        request
+                    );
+                    return;
+                default:
+                    Log.Error(
+                        e,
+                        "Error on gRPC call to `{GrpcCallEndpoint}` (Call body: {@GrpcCallBody})",
+                        endpointName,
+                        request
+                    );
+                    throw;
             }
-
-            Log.Warning(
-                "Call to gRPC `{GrpcCallEndpoint}` deadline exceeded (Timeout: {Timeout} ms)",
-                endpointName,
-                timeout
-            );
         }
     }
 

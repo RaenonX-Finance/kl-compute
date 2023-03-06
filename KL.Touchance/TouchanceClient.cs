@@ -30,7 +30,11 @@ public class TouchanceClient : PxParseClient {
 
     public TouchanceClient(CancellationToken cancellationToken) : base(true, cancellationToken) {
         _historyDataHandler = new HistoryDataHandler { Client = this };
-        _subscriptionHandler = new SubscriptionHandler { Client = this, HistoryDataHandler = _historyDataHandler };
+        _subscriptionHandler = new SubscriptionHandler {
+            Client = this,
+            HistoryDataHandler = _historyDataHandler,
+            MinuteChangedHandler = new MinuteChangedHandler { Client = this }
+        };
     }
 
     public string SessionKey {

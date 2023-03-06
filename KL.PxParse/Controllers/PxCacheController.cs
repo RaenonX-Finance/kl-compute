@@ -43,15 +43,14 @@ public static class PxCacheController {
         await RedisLastPxController.Set(symbol, entriesToProcess);
     }
 
-    public static async Task CreateNewBar(DateTime timestamp) {
+    public static async Task CreateNewBar(string symbol, DateTime timestamp) {
         var start = Stopwatch.GetTimestamp();
-        Log.Information("Adding new bars at {NewBarTimestamp}", timestamp);
 
-        var symbolsCreated = await RedisLastPxController.CreateNewBar(timestamp);
+        await RedisLastPxController.CreateNewBar(symbol, timestamp);
 
         Log.Information(
-            "Added new bars for {@Symbols} at {NewBarTimestamp} in {Elapsed:0.00} ms",
-            symbolsCreated,
+            "Added new bar for {Symbol} at {NewBarTimestamp} in {Elapsed:0.00} ms",
+            symbol,
             timestamp,
             start.GetElapsedMs()
         );

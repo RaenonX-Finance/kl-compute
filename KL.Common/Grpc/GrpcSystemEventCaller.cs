@@ -38,10 +38,13 @@ public static class GrpcSystemEventCaller {
         );
     }
 
-    public static void OnMinuteChangedAsync(long epochSec, CancellationToken cancellationToken) {
+    public static void OnMinuteChangedAsync(string symbol, long epochSec, CancellationToken cancellationToken) {
+        var request = new MinuteChangeData { EpochSec = epochSec };
+        request.Symbols.Add(symbol);
+
         GrpcHelper.CallWithDeadlineAsync(
             Client.MinuteChangeAsync,
-            new MinuteChangeData { EpochSec = epochSec },
+            request,
             nameof(Client.MinuteChangeAsync),
             cancellationToken,
             useTimeout: false

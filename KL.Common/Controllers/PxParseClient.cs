@@ -60,7 +60,7 @@ public abstract class PxParseClient {
 
     public event AsyncEventHandler<HistoryEventArgs>? HistoryDataUpdatedEventAsync;
 
-    public void OnHistoryDataUpdated(HistoryEventArgs e) {
+    public async Task OnHistoryDataUpdated(HistoryEventArgs e) {
         if (e is { IsSubscription: true, Data.Count: 0 }) {
             Log.Warning(
                 "[{Identifier}] Skipped processing history data - is subscription but no data",
@@ -69,7 +69,11 @@ public abstract class PxParseClient {
             return;
         }
 
-        InvokeAsyncEvent(HistoryDataUpdatedEventAsync, e, OnHistoryDataUpdatedCompleted);
+        if (HistoryDataUpdatedEventAsync != null) {
+            await HistoryDataUpdatedEventAsync.Invoke(this, e);
+            OnHistoryDataUpdatedCompleted(e);
+        }
+
 
         if (_triggerRealtimeOnHistory && e.IsSubscription) {
             OnRealtimeDataUpdated(e.ToRealtimeEventArgs());

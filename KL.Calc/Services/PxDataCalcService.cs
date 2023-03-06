@@ -21,7 +21,7 @@ public class PxDataService : PxData.PxDataBase {
     }
 
     public override async Task<PxCalcReply> CalcPartial(PxCalcRequestMulti request, ServerCallContext context) {
-        _logger.LogInformation("Received gRPC request to calculate all data: {Symbols}", request.Symbols);
+        _logger.LogInformation("Received gRPC request to calculate partial data: {Symbols}", request.Symbols);
 
         // Should only needs 10 or even less data to calculate data for new bar
         await CalcRequestHandler.CalcPartial(request.Symbols, 10, context.CancellationToken);

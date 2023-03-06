@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using KL.Common.Controllers;
 using KL.Common.Events;
 using KL.Touchance.Extensions;
 using KL.Touchance.Requests;
@@ -18,12 +19,14 @@ public class SubscriptionHandler {
     public required TouchanceClient Client { get; init; }
 
     public required HistoryDataHandler HistoryDataHandler { get; init; }
-    
+
+    public required MinuteChangedHandler MinuteChangedHandler { get; init; }
+
     public void StartAsync(int subscriberPort, CancellationToken cancellationToken) {
-        new Thread(() => Start(subscriberPort, Client, cancellationToken)).Start();
+        Task.Run(() => Start(subscriberPort, Client, cancellationToken), cancellationToken);
     }
 
-    private void HandleSubscriptionMessage(
+    private async Task HandleSubscriptionMessage(
         string messageJson,
         CancellationToken cancellationToken
     ) {
@@ -42,14 +45,28 @@ public class SubscriptionHandler {
                 return;
             case PxHistoryReadyMessage message:
                 var eventArgs = HistoryDataHandler.GetHistoryData(message, cancellationToken);
+
                 if (eventArgs == null) {
                     return;
                 }
 
-                Client.OnHistoryDataUpdated(eventArgs);
-                break;
-            case MinuteChangeMessage message:
-                Client.OnMinuteChanged(new MinuteChangeEventArgs { Timestamp = message.GetTimestamp() });
+                await Client.OnHistoryDataUpdated(eventArgs);
+                
+                // Minute change needs to be placed AFTER history event
+                // History event handler could add a new bar, which is to be used by minute changed event 
+                if (eventArgs.Data.Count > 0) {
+                    MinuteChangedHandler.CheckMinuteChangedEvent(
+                        eventArgs.Metadata.Symbol,
+                        eventArgs.Data[^1].Timestamp
+                    );
+                }
+                return;
+            case MinuteChangeMessage:
+                // Not using Touchance minute change event because it could trigger
+                // before history data actually logs minute change
+                // > If minute change is triggered before history data actually gets new bar,
+                // history data grouper will be called with the latest data in previous minute,
+                // causing minute freeze in calculated data, but not on history data
                 return;
             case SymbolClearMessage message:
                 // Using `SymbolToSubscribe` instead of `Data.Symbol` because
@@ -64,7 +81,7 @@ public class SubscriptionHandler {
         }
     }
 
-    private void Start(int subscriberPort, TouchanceClient client, CancellationToken cancellationToken) {
+    private async Task Start(int subscriberPort, PxParseClient client, CancellationToken cancellationToken) {
         var socketConnectionString = $">tcp://127.0.0.1:{subscriberPort}";
         using var subscriberSocket = new SubscriberSocket(socketConnectionString);
         subscriberSocket.SubscribeToAnyTopic();
@@ -78,7 +95,7 @@ public class SubscriptionHandler {
                 .Split(":", 2)[1];
 
             try {
-                HandleSubscriptionMessage(messageJson, cancellationToken);
+                await HandleSubscriptionMessage(messageJson, cancellationToken);
             } catch (JsonException) {
                 client.OnPxError(
                     new PxErrorEventArgs {

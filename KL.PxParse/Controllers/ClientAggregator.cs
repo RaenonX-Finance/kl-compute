@@ -114,16 +114,13 @@ public class ClientAggregator {
 
         await Task.WhenAll(
             Task.Run(
-                // Wrapped in a task so `PxConfigController.GetEnabledOpenedSymbols()` is run asynchronously too
-                () => GrpcPxDataCaller.CalcPartialAsync(
-                    PxConfigController.GetEnabledOpenedSymbols().Select(r => r.InternalSymbol),
-                    _cancellationToken
-                ),
+                // Wrapped in a task so `PxConfigController.GetEnabledOpenedSymbols()` is ran asynchronously too
+                () => GrpcPxDataCaller.CalcPartialAsync(new[] { e.Symbol }, _cancellationToken),
                 _cancellationToken
             ),
-            PxCacheController.CreateNewBar(e.Timestamp)
+            PxCacheController.CreateNewBar(e.Symbol, e.Timestamp)
         );
-        GrpcSystemEventCaller.OnMinuteChangedAsync(e.EpochSecond, _cancellationToken);
+        GrpcSystemEventCaller.OnMinuteChangedAsync(e.Symbol, e.EpochSecond, _cancellationToken);
 
         Log.Information(
             "Handled minute change to {NewMinuteTimestamp} in {Elapsed:0.00} ms",

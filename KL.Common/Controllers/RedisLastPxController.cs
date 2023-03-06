@@ -74,7 +74,9 @@ public class RedisLastPxController {
         );
     }
 
-    private static async Task CreateNewBar(IDatabaseAsync db, string symbol, DateTime timestamp) {
+    public static async Task CreateNewBar(string symbol, DateTime timestamp) {
+        var db = GetDatabase();
+        
         var epochSecToRemove = await db.SortedSetPopAsync(symbol);
 
         if (epochSecToRemove == null) {
@@ -93,20 +95,6 @@ public class RedisLastPxController {
 
         await db.KeyDeleteAsync(keyToRemove);
         await db.StringSetAsync(KeyOfSingleData(symbol, timestamp.ToEpochSeconds()), lastClose);
-    }
-
-    public static async Task<IEnumerable<string>> CreateNewBar(DateTime timestamp) {
-        var db = GetDatabase();
-
-        var symbolsToCreate = db.SetMembers(SourcesInUseKey)
-            .Select(r => r.ToString())
-            // Is market is not opened, new bar shouldn't be created
-            .Where(PxConfigController.IsMarketOpened)
-            .ToImmutableArray();
-
-        await Task.WhenAll(symbolsToCreate.Select(r => CreateNewBar(db, r, timestamp)));
-
-        return symbolsToCreate;
     }
 
     public static async Task<IEnumerable<double>> GetRev(string symbol, int take) {
