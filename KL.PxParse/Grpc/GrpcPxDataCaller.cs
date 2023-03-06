@@ -34,7 +34,13 @@ public class GrpcPxDataCaller {
             return;
         }
 
-        GrpcHelper.CallWithDeadlineAsync(Client.CalcPartialAsync, request, endpointName, cancellationToken);
+        GrpcHelper.CallWithDeadlineAsync(
+            Client.CalcPartialAsync,
+            request,
+            endpointName,
+            cancellationToken,
+            useTimeout: false
+        );
     }
 
     public static async Task CalcAll(IEnumerable<string> symbols, CancellationToken cancellationToken) {
@@ -55,6 +61,7 @@ public class GrpcPxDataCaller {
             request,
             endpointName,
             cancellationToken,
+            useTimeout: false,
             // Add additional 30s on top of existing timeout because `CalcAll` should take longer to calculate 
             timeoutExtension: EnvironmentConfigHelper.Config.Grpc.Timeout.CalcAll
         );

@@ -21,14 +21,16 @@ public static class GrpcHelper {
         TRequest request,
         string endpointName,
         CancellationToken cancellationToken,
+        bool useTimeout = true,
         int timeoutExtension = 0
     ) {
         return CallWithDeadline(
             grpcCall,
             request,
             endpointName,
+            false,
             cancellationToken,
-            isFireAndForget: false,
+            useTimeout: useTimeout,
             timeoutExtension: timeoutExtension
         );
     }
@@ -37,8 +39,9 @@ public static class GrpcHelper {
         GrpcCall<TRequest, TReply> grpcCall,
         TRequest request,
         string endpointName,
-        CancellationToken cancellationToken,
         bool isFireAndForget,
+        CancellationToken cancellationToken,
+        bool useTimeout = true,
         int timeoutExtension = 0
     ) {
         Log.Information(
@@ -49,7 +52,7 @@ public static class GrpcHelper {
 
         var timeout = EnvironmentConfigHelper.Config.Grpc.Timeout.Default + timeoutExtension;
 
-        if (!ChronoGate.IsGateOpened(endpointName, timeout, out var nextOpen)) {
+        if (useTimeout && !ChronoGate.IsGateOpened(endpointName, timeout, out var nextOpen)) {
             Log.Warning(
                 "`{GrpcCallEndpoint}` still in cooldown, next available call at {GrpcGateAllowTime}",
                 endpointName,
@@ -61,7 +64,7 @@ public static class GrpcHelper {
         try {
             await grpcCall(
                 request,
-                deadline: DateTime.UtcNow.AddMilliseconds(timeout),
+                deadline: useTimeout ? DateTime.UtcNow.AddMilliseconds(timeout) : null,
                 cancellationToken: cancellationToken
             );
         } catch (RpcException e) {
@@ -88,6 +91,7 @@ public static class GrpcHelper {
         TRequest request,
         string endpointName,
         CancellationToken cancellationToken,
+        bool useTimeout = false,
         int timeoutExtension = 0
     ) {
         // Cannot use `nameof(grpcRequestFunc)` because it would return literally `grpcRequestFunc`
@@ -97,6 +101,7 @@ public static class GrpcHelper {
                 request,
                 endpointName,
                 cancellationToken,
+                useTimeout: useTimeout,
                 timeoutExtension: timeoutExtension
             ),
             exception => {

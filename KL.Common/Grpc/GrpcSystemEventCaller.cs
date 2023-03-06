@@ -43,7 +43,8 @@ public static class GrpcSystemEventCaller {
             Client.MinuteChangeAsync,
             new MinuteChangeData { EpochSec = epochSec },
             nameof(Client.MinuteChangeAsync),
-            cancellationToken
+            cancellationToken,
+            useTimeout: false
         );
     }
 
