@@ -105,10 +105,8 @@ public class ClientAggregator {
     private async Task OnRealtimeDataUpdated(object? sender, RealtimeEventArgs e) {
         // Not putting cache updating call here because this event is currently triggered on receiving history data
 
-        await Task.WhenAll(
-            Task.Run(() => GrpcPxDataCaller.CalcLastAsync(e.Symbol, _cancellationToken), _cancellationToken),
-            GrpcSystemEventCaller.OnRealtime(e.Symbol, e.Data)
-        );
+        GrpcPxDataCaller.CalcLastAsync(e.Symbol, _cancellationToken);
+        await GrpcSystemEventCaller.OnRealtimeAsync(e.Symbol, e.Data, _cancellationToken);
     }
 
     private async Task OnMinuteChanged(object? sender, MinuteChangeEventArgs e) {
@@ -116,15 +114,16 @@ public class ClientAggregator {
 
         await Task.WhenAll(
             Task.Run(
+                // Wrapped in a task so `PxConfigController.GetEnabledOpenedSymbols()` is run asynchronously too
                 () => GrpcPxDataCaller.CalcPartialAsync(
                     PxConfigController.GetEnabledOpenedSymbols().Select(r => r.InternalSymbol),
                     _cancellationToken
                 ),
                 _cancellationToken
             ),
-            PxCacheController.CreateNewBar(e.Timestamp),
-            GrpcSystemEventCaller.OnMinuteChanged(e.EpochSecond)
+            PxCacheController.CreateNewBar(e.Timestamp)
         );
+        GrpcSystemEventCaller.OnMinuteChangedAsync(e.EpochSecond, _cancellationToken);
 
         Log.Information(
             "Handled minute change to {NewMinuteTimestamp} in {Elapsed:0.00} ms",
@@ -133,9 +132,11 @@ public class ClientAggregator {
         );
     }
 
-    private static async Task OnPxError(object? sender, PxErrorEventArgs e) {
-        await GrpcSystemEventCaller.OnError(e.Message);
+    private Task OnPxError(object? sender, PxErrorEventArgs e) {
+        GrpcSystemEventCaller.OnErrorAsync(e.Message, _cancellationToken);
 
         Log.Information("Received error message: {Message}", e.Message);
+
+        return Task.CompletedTask;
     }
 }
