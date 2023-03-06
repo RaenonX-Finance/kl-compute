@@ -42,10 +42,9 @@ public static class GrpcHelper {
         int timeoutExtension = 0
     ) {
         Log.Information(
-            "Calling gRPC `{GrpcCallEndpoint}` {GrpcCallType} (Request Body: {@GrpcCallBody})",
+            "Calling gRPC `{GrpcCallEndpoint}` {GrpcCallType}",
             endpointName,
-            isFireAndForget ? "in fire and forget" : "asynchronously",
-            request
+            isFireAndForget ? "in fire and forget" : "asynchronously"
         );
 
         var timeout = EnvironmentConfigHelper.Config.Grpc.Timeout.Default + timeoutExtension;
@@ -67,7 +66,12 @@ public static class GrpcHelper {
             );
         } catch (RpcException e) {
             if (e.StatusCode != StatusCode.DeadlineExceeded) {
-                Log.Error(e, "Error on gRPC call to `{GrpcCallEndpoint}`", endpointName);
+                Log.Error(
+                    e,
+                    "Error on gRPC call to `{GrpcCallEndpoint}` (Call body: {@GrpcCallBody})",
+                    endpointName,
+                    request
+                );
                 throw;
             }
 
