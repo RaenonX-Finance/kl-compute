@@ -1,5 +1,6 @@
 ﻿apps:
-  - name: 'KL.Calc'
+  - namespace: 'KL'
+    name: 'KL.Calc'
     # Entry point
     interpreter: none
     script: './KL.Calc.exe'

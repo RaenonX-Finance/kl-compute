@@ -1,5 +1,6 @@
 ﻿apps:
-  - name: 'KL.PxParse'
+  - namespace: 'KL'
+    name: 'KL.PxParse'
     # Entry point
     interpreter: none
     script: './KL.PxParse.exe'
