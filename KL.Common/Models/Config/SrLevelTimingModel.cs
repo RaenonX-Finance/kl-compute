@@ -39,19 +39,22 @@ public record SrLevelTimingModel {
                 Primary = new SrLevelTimingPair {
                     Timezone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Taipei"),
                     Open = new TimeOnly(8, 45),
-                    Close = new TimeOnly(13, 30)
+                    // Needs to be 29 instead of 30 because it's close of 13:29 being used
+                    Close = new TimeOnly(13, 29)
                 },
                 Secondary = new SrLevelTimingPair {
                     Timezone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Taipei"),
                     Open =new TimeOnly(15, 00),
-                    Close = new TimeOnly(13, 30)
+                    // Needs to be 29 instead of 30 because it's close of 13:29 being used
+                    Close = new TimeOnly(13, 29)
                 }
             },
             ProductCategory.UsIndexFutures => new SrLevelTimingModel {
                 Primary = new SrLevelTimingPair {
                     Timezone = TimeZoneInfo.FindSystemTimeZoneById("America/Chicago"),
                     Open = new TimeOnly(8, 30),
-                    Close = new TimeOnly(15, 00)
+                    // Needs to be 59 instead of 00 because it's close of 14:59 being used
+                    Close = new TimeOnly(14, 59)
                 }
             },
             _ => throw new ArgumentOutOfRangeException(

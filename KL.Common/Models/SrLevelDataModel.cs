@@ -13,7 +13,7 @@ public record SrLevelDataModel {
 
     [UsedImplicitly]
     public required string Symbol { get; init; }
-    
+
     [UsedImplicitly]
     public required DateOnly LastDate { get; init; }
 
@@ -36,11 +36,19 @@ public record SrLevelDataModel {
                 return Array.Empty<decimal>();
             }
 
-            return NumberHelper.RangeWithStep(
+            return NumberHelper.DecreasingRangeWithStep(
+                    Math.Min(LastClose, CurrentOpen),
                     Math.Min(LastClose, CurrentOpen) * (decimal)0.95,
-                    Math.Max(LastClose, CurrentOpen) * (decimal)1.05,
-                    diff
+                    -diff
                 )
+                .Concat(
+                    NumberHelper.IncreasingRangeWithStep(
+                        Math.Max(LastClose, CurrentOpen),
+                        Math.Max(LastClose, CurrentOpen) * (decimal)1.05,
+                        diff
+                    )
+                )
+                .Order()
                 .ToArray();
         }
     }
