@@ -31,10 +31,10 @@ public static partial class HistoryDataComputer {
         IImmutableList<GroupedHistoryDataModel> groupedHistory
     ) {
         var marketDateHigh = Task.Run(
-            () => groupedHistory.GroupedCumulativeMax(r => r.MarketDate, r => r.Close).ToImmutableArray()
+            () => groupedHistory.GroupedCumulativeMax(r => r.MarketDate, r => r.High).ToImmutableArray()
         );
         var marketDateLow = Task.Run(
-            () => groupedHistory.GroupedCumulativeMin(r => r.MarketDate, r => r.Close).ToImmutableArray()
+            () => groupedHistory.GroupedCumulativeMin(r => r.MarketDate, r => r.Low).ToImmutableArray()
         );
 
         return new TiePointDataCollection {

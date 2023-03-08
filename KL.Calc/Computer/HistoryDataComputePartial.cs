@@ -156,7 +156,7 @@ public static partial class HistoryDataComputer {
         var marketDateHigh = Task.Run(
             () => history.GroupedCumulativeMax(
                     r => r.MarketDate,
-                    r => r.Close,
+                    r => r.High,
                     new Dictionary<DateOnly, decimal> {
                         { startingCalculated.MarketDate, startingCalculated.MarketDateHigh }
                     }
@@ -166,7 +166,7 @@ public static partial class HistoryDataComputer {
         var marketDateLow = Task.Run(
             () => history.GroupedCumulativeMin(
                     r => r.MarketDate,
-                    r => r.Close,
+                    r => r.Low,
                     new Dictionary<DateOnly, decimal> {
                         { startingCalculated.MarketDate, startingCalculated.MarketDateLow }
                     }

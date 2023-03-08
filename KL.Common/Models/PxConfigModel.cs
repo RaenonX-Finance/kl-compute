@@ -80,8 +80,8 @@ public record PxConfigModel {
                 }
             },
             HistorySubscription = new HistorySubscriptionConfigModel {
-                StoreLimit = 50,
-                InitialBufferHrs = 2
+                StoreLimit = 2,
+                InitialBufferHrs = 1
             },
             SrLevelTimingMap = new Dictionary<ProductCategory, SrLevelTimingModel> {
                 {

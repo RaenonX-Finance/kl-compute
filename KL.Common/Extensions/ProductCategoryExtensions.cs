@@ -10,6 +10,6 @@ public static class ProductCategoryExtensions {
         var date = DateOnly.FromDateTime(timestamp);
         var time = TimeOnly.FromDateTime(timestamp);
 
-        return date.AddBusinessDay((time > cutoff.Time ? 0 : -1) + cutoff.OffsetOnCutoff);
+        return date.AddBusinessDay((time >= cutoff.Time ? 0 : -1) + cutoff.OffsetOnCutoff);
     }
 }
