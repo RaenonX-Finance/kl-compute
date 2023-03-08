@@ -51,6 +51,10 @@ public static class DateTimeExtensions {
     }
 
     public static DateTime ToTimezoneFromUtc(this DateTime date, TimeZoneInfo timezone) {
-        return date.ToTimezone(TimeZoneInfo.Utc).ToTimezone(timezone);
+        return TimeZoneInfo.ConvertTimeFromUtc(date, timezone);
+    }
+
+    public static DateTime FromTimezoneToUtc(this DateTime date, TimeZoneInfo timezone) {
+        return TimeZoneInfo.ConvertTime(date, timezone, TimeZoneInfo.Utc);
     }
 }

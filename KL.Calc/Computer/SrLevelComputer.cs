@@ -33,9 +33,9 @@ public static class SrLevelComputer {
             dates.AddRange(
                 timing.Timings
                     .Select(
-                        time => date.ToDateTime(time)
-                            .ToTimezone(timing.Timezone)
-                            .ToTimezone(TimeZoneInfo.Utc)
+                        time => date
+                            .ToDateTime(time, DateTimeKind.Unspecified)
+                            .FromTimezoneToUtc(timing.Timezone)
                     )
                     .Where(r => r <= DateTime.UtcNow)
             );
