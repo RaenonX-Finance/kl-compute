@@ -130,8 +130,10 @@ public class TouchanceClient : PxParseClient {
                 symbol,
                 HistoryInterval.Minute,
                 DateTime.UtcNow.AddHours(-PxConfigController.Config.HistorySubscription.InitialBufferHrs),
-                // Adding 1 hour to ensure getting the latest history data
-                DateTime.UtcNow.AddHours(1),
+                // Needs to be 2 because symbol clear happens before the trading hour starts
+                // If this is `1`, say the symbol clear happens at 6, then the request would be ending at 7.
+                // Then, when the actual trading sessions starts, the request won't get any data.
+                DateTime.UtcNow.AddHours(2),
                 true
             );
         }
