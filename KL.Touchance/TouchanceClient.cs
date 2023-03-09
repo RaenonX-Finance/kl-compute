@@ -8,6 +8,7 @@ using KL.Touchance.Extensions;
 using KL.Touchance.Handlers;
 using KL.Touchance.Requests;
 using KL.Touchance.Responses;
+using KL.Touchance.Subscriptions;
 using NetMQ.Sockets;
 using Serilog;
 
@@ -124,7 +125,7 @@ public class TouchanceClient : PxParseClient {
         _semaphore = null;
     }
 
-    private void SendHistorySubscriptionRequest(IEnumerable<string> touchanceSymbols) {
+    public void SendHistorySubscriptionRequest(IEnumerable<string> touchanceSymbols) {
         foreach (var symbol in touchanceSymbols) {
             _historyDataHandler.SendHandshakeRequest(
                 symbol,
@@ -138,9 +139,25 @@ public class TouchanceClient : PxParseClient {
             );
         }
     }
+    
+    public void OnSymbolCleared(SymbolClearMessage message) {
+        Log.Information("Received symbol clear for {Symbol}, resubscribing...", message.Data.Symbol);
 
-    public void SendHistorySubscriptionRequest(string touchanceSymbol) {
-        SendHistorySubscriptionRequest(new[] { touchanceSymbol });
+        // `TWF` symbols need manual re-subscription for the open before 8:45 AM (UTC +8)
+        // according to Touchance Customer Service
+        var twfSymbols = PxConfigController.Config.Sources
+            .Where(r => r.Source == PxSource.Touchance && r.ExternalSymbol.Contains("TWF"))
+            .Select(r => r.ExternalSymbol);
+        SendHistorySubscriptionRequest(twfSymbols);
+                
+        // Searching symbols to resubscribe because
+        // `message.Data.Symbol` is in the format of `TC.F.CME.NQ`,
+        // but the symbol to subscribe needs to be `TC.F.CME.NQ.HOT`
+        SendHistorySubscriptionRequest(
+            PxConfigController.Config.Sources
+                .Where(r => r.Source == PxSource.Touchance && r.ExternalSymbol.Contains(message.Data.Symbol))
+                .Select(r => r.ExternalSymbol)
+        );
     }
 
     private async Task Initialize() {

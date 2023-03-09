@@ -51,7 +51,7 @@ public class SubscriptionHandler {
                 }
 
                 await Client.OnHistoryDataUpdated(eventArgs);
-                
+
                 // Minute change needs to be placed AFTER history event
                 // History event handler could add a new bar, which is to be used by minute changed event 
                 if (eventArgs.Data.Count > 0) {
@@ -60,6 +60,7 @@ public class SubscriptionHandler {
                         eventArgs.Data[^1].Timestamp
                     );
                 }
+
                 return;
             case MinuteChangeMessage:
                 // Not using Touchance minute change event because it could trigger
@@ -69,11 +70,7 @@ public class SubscriptionHandler {
                 // causing minute freeze in calculated data, but not on history data
                 return;
             case SymbolClearMessage message:
-                // Using `SymbolToSubscribe` instead of `Data.Symbol` because
-                // `Data.Symbol` is in the format of `TC.F.CME.NQ`,
-                // but the symbol to subscribe needs to be `TC.F.CME.NQ.HOT`
-                Log.Information("Received symbol clear for {Symbol}, resubscribing...", message.Data.Symbol);
-                Client.SendHistorySubscriptionRequest(message.SymbolToSubscribe);
+                Client.OnSymbolCleared(message);
                 return;
             default:
                 Log.Warning("Unhandled subscription message: {Message}", messageJson);
