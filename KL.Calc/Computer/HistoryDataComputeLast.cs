@@ -23,22 +23,19 @@ public static partial class HistoryDataComputer {
         }
     }
 
-    private static double CalculateSingleEma(double? currentValue, double? prevEma, int period) {
-        var current = currentValue ?? double.NaN;
-        var prev = prevEma ?? double.NaN;
-        if (double.IsNaN(prev)) {
-            return double.NaN;
-        }
+    private static double? CalculateSingleEma(double? currentValue, double? prevEma, int period) {
+        var current = currentValue ?? null;
+        var prev = prevEma ?? null;
 
         var k = 2d / (period + 1);
         return current * k + prev * (1 - k);
     }
 
     private static void CalculateLastEma(CalculatedDataModel last1, CalculatedDataModel last2, int period) {
-        var prevEma = last2.Ema[period] ?? double.NaN;
+        var prevEma = last2.Ema[period];
 
-        if (double.IsNaN(prevEma)) {
-            last1.Ema[period] = double.NaN;
+        if (prevEma == null) {
+            last1.Ema[period] = null;
             return;
         }
 
@@ -56,7 +53,7 @@ public static partial class HistoryDataComputer {
         var hist = macd - signal;
 
         last1.MacdSignal = signal;
-        last1.CandleDirection = double.IsNaN(hist ?? double.NaN)
+        last1.CandleDirection = hist == null
             ? 0
             : hist > 0
                 ? 1

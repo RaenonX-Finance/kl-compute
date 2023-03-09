@@ -110,8 +110,8 @@ public static partial class HistoryDataComputer {
         int period,
         double? startingEma
     ) {
-        if (double.IsNaN(startingEma ?? double.NaN)) {
-            Log.Warning("Attempt to calculate EMA with null / NaN starting point (EMA {Period})", period);
+        if (startingEma == null) {
+            Log.Warning("Attempt to calculate EMA with null starting point (EMA {Period})", period);
             return Enumerable.Repeat<double?>(null, dataList.Count).ToImmutableArray();
         }
 
@@ -203,7 +203,7 @@ public static partial class HistoryDataComputer {
         return signal.Zip(histogram)
             .Select(
                 r => new CandleDirectionDataPoint {
-                    Direction = double.IsNaN(r.Second ?? double.NaN)
+                    Direction = r.Second == null
                         ? 0
                         : r.Second > 0
                             ? 1

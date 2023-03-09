@@ -59,7 +59,7 @@ public static partial class HistoryDataComputer {
             )
             .Select(
                 r => new CandleDirectionDataPoint {
-                    Direction = double.IsNaN(r.Histogram ?? double.NaN)
+                    Direction = r.Histogram == null
                         ? 0
                         : r.Histogram > 0
                             ? 1
