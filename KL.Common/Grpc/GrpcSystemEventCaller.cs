@@ -38,11 +38,11 @@ public static class GrpcSystemEventCaller {
         );
     }
 
-    public static void OnMinuteChangedAsync(string symbol, long epochSec, CancellationToken cancellationToken) {
+    public static Task OnMinuteChanged(string symbol, long epochSec, CancellationToken cancellationToken) {
         var request = new MinuteChangeData { EpochSec = epochSec };
         request.Symbols.Add(symbol);
 
-        GrpcHelper.CallWithDeadlineAsync(
+        return GrpcHelper.CallWithDeadline(
             Client.MinuteChangeAsync,
             request,
             nameof(Client.MinuteChangeAsync),
@@ -72,6 +72,18 @@ public static class GrpcSystemEventCaller {
             Client.ErrorAsync,
             new ErrorData { Message = message },
             nameof(Client.ErrorAsync),
+            cancellationToken
+        );
+    }
+
+    public static Task OnMarketDateCutoff(string symbol, CancellationToken cancellationToken) {
+        var request = new MarketDateCutoffData();
+        request.Symbols.Add(symbol);
+
+        return GrpcHelper.CallWithDeadline(
+            Client.MarketDateCutoffAsync,
+            request,
+            nameof(Client.MarketDateCutoffAsync),
             cancellationToken
         );
     }

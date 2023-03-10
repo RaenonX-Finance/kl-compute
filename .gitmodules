@@ -1,3 +1,4 @@
 [submodule "KL.Proto/Protos"]
 	path = KL.Proto/Protos
 	url = https://github.com/RaenonX-Finance/kl-proto
+	update = rebase

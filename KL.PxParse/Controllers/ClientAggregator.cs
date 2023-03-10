@@ -112,18 +112,20 @@ public class ClientAggregator {
     private async Task OnMinuteChanged(object? sender, MinuteChangeEventArgs e) {
         var start = Stopwatch.GetTimestamp();
 
-        await Task.WhenAll(
-            Task.Run(
-                // Wrapped in a task so `PxConfigController.GetEnabledOpenedSymbols()` is ran asynchronously too
-                () => GrpcPxDataCaller.CalcPartialAsync(new[] { e.Symbol }, _cancellationToken),
-                _cancellationToken
-            ),
+        var tasks = new List<Task> {
+            GrpcPxDataCaller.CalcPartial(e.Symbol, _cancellationToken),
+            GrpcSystemEventCaller.OnMinuteChanged(e.Symbol, e.EpochSecond, _cancellationToken),
             PxCacheController.CreateNewBar(e.Symbol, e.Timestamp)
-        );
-        GrpcSystemEventCaller.OnMinuteChangedAsync(e.Symbol, e.EpochSecond, _cancellationToken);
-
+        };
+        if (PxConfigController.IsTimestampMarketDateCutoff(e.Symbol, e.Timestamp)) {
+            tasks.Add(GrpcSystemEventCaller.OnMarketDateCutoff(e.Symbol, _cancellationToken));
+        }
+        
+        await Task.WhenAll(tasks);
+        
         Log.Information(
-            "Handled minute change to {NewMinuteTimestamp} in {Elapsed:0.00} ms",
+            "Handled minute change of {Symbol} to {NewMinuteTimestamp} in {Elapsed:0.00} ms",
+            e.Symbol,
             e.Timestamp,
             start.GetElapsedMs()
         );

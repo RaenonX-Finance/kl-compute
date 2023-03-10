@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using KL.Common.Enums;
+using KL.Common.Extensions;
 using KL.Common.Models;
 using KL.Common.Models.Config;
 using MongoDB.Driver;
@@ -69,8 +70,12 @@ public static class PxConfigController {
         return Config.MarketSessionMap[SymbolToCategory[symbol]].Any(r => r.IsNowTradingSession());
     }
 
-    public static IEnumerable<PxSourceConfigModel> GetEnabledOpenedSymbols() {
-        return Config.Sources
-            .Where(r => r.Enabled && IsMarketOpened(r.InternalSymbol));
+    public static bool IsTimestampMarketDateCutoff(string symbol, DateTime timestamp) {
+        var cutoff = Config.MarketDateCutoffMap[SymbolToCategory[symbol]];
+
+        return TimeOnly
+            .FromDateTime(timestamp.ToTimezoneFromUtc(cutoff.Timezone))
+            // Add 1 minute because second of `timestamp` may not be exactly :00
+            .IsBetween(cutoff.Time, cutoff.Time.AddMinutes(1));
     }
 }

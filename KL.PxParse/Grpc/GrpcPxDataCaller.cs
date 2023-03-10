@@ -23,18 +23,13 @@ public class GrpcPxDataCaller {
         );
     }
 
-    public static void CalcPartialAsync(IEnumerable<string> symbols, CancellationToken cancellationToken) {
+    public static Task CalcPartial(string symbol, CancellationToken cancellationToken) {
         const string endpointName = nameof(Client.CalcPartialAsync);
 
         var request = new PxCalcRequestMulti();
-        request.Symbols.AddRange(symbols);
+        request.Symbols.Add(symbol);
 
-        if (request.Symbols.Count == 0) {
-            Log.Warning("Skipped gRPC call {GrpcCallEndpoint} - no symbols to calculate", endpointName);
-            return;
-        }
-
-        GrpcHelper.CallWithDeadlineAsync(
+        return GrpcHelper.CallWithDeadline(
             Client.CalcPartialAsync,
             request,
             endpointName,
