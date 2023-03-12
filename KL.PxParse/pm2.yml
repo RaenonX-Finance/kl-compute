@@ -1,5 +1,5 @@
 ﻿apps:
-  - namespace: 'KL'
+  - namespace: 'KL.Compute'
     name: 'KL.PxParse'
     # Entry point
     interpreter: none
