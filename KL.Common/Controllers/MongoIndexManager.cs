@@ -49,8 +49,7 @@ public static class MongoIndexManager {
         };
         var indexKeys = Builders<SrLevelDataModel>.IndexKeys
             .Ascending(data => data.Symbol)
-            .Ascending(data => data.CurrentDate)
-            .Ascending(data => data.Type);
+            .Ascending(data => data.CurrentDate);
         var indexModel = new CreateIndexModel<SrLevelDataModel>(indexKeys, indexOptions);
 
         return MongoConst.PxSrLevel.Indexes.CreateOneAsync(indexModel);

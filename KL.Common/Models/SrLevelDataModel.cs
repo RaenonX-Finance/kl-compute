@@ -1,6 +1,5 @@
 ﻿using JetBrains.Annotations;
 using KL.Common.Controllers;
-using KL.Common.Enums;
 using KL.Common.Utils;
 using MongoDB.Bson.Serialization.Attributes;
 
@@ -8,9 +7,6 @@ namespace KL.Common.Models;
 
 
 public record SrLevelDataModel {
-    [UsedImplicitly]
-    public required SrLevelType Type { get; init; }
-
     [UsedImplicitly]
     public required string Symbol { get; init; }
 

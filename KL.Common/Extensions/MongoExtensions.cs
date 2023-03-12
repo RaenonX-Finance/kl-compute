@@ -41,7 +41,6 @@ public static class MongoExtensions {
         BsonSerializer.RegisterSerializer(new EnumSerializer<ProductCategory>(BsonType.String));
         BsonSerializer.RegisterSerializer(new EnumSerializer<HistoryInterval>(BsonType.String));
         BsonSerializer.RegisterSerializer(new EnumSerializer<DayOfWeek>(BsonType.String));
-        BsonSerializer.RegisterSerializer(new EnumSerializer<SrLevelType>(BsonType.String));
         // By default, `decimal` are stored in `string`, which is undesired
         BsonSerializer.RegisterSerializer(new DecimalSerializer(BsonType.Decimal128));
         // `TimeOnly.ticks` is serialized, but no corresponding constructor is taking `ticks` 
