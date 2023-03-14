@@ -79,7 +79,7 @@ public class RedisLastPxController {
         
         var epochSecToRemove = await db.SortedSetPopAsync(symbol);
 
-        if (epochSecToRemove == null) {
+        if (epochSecToRemove is null) {
             Log.Warning("{Symbol} does not have px data, failed to create new bar", symbol);
             return;
         }

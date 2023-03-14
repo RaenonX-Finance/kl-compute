@@ -23,7 +23,7 @@ public static class JsonHelper {
         try {
             var deserialized = JsonSerializer.Deserialize<T>(message.Trim('\0'), SerializingOptions);
 
-            if (deserialized == null) {
+            if (deserialized is null) {
                 throw new JsonException("`JsonSerializer.Deserialize()` returns `null`");
             }
 

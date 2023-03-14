@@ -34,7 +34,7 @@ public static partial class HistoryDataComputer {
     private static void CalculateLastEma(CalculatedDataModel last1, CalculatedDataModel last2, int period) {
         var prevEma = last2.Ema[period];
 
-        if (prevEma == null) {
+        if (prevEma is null) {
             last1.Ema[period] = null;
             return;
         }
@@ -53,7 +53,7 @@ public static partial class HistoryDataComputer {
         var hist = macd - signal;
 
         last1.MacdSignal = signal;
-        last1.CandleDirection = hist == null
+        last1.CandleDirection = hist is null
             ? 0
             : hist > 0
                 ? 1

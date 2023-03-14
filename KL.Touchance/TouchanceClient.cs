@@ -40,7 +40,7 @@ public class TouchanceClient : PxParseClient {
 
     public string SessionKey {
         get {
-            if (_sessionKeyInternal == null) {
+            if (_sessionKeyInternal is null) {
                 throw new InvalidOperationException("Touchance not connected - empty session key");
             }
 
@@ -60,7 +60,7 @@ public class TouchanceClient : PxParseClient {
             new TimeSpan(0, 0, 0, EnvironmentConfigHelper.Config.Source.Touchance.LoginTimeout)
         );
 
-        if (loginReply == null) {
+        if (loginReply is null) {
             Log.Error(
                 "Touchance did not respond from port {TouchancePort} in {LoginTimeoutSec} seconds, terminating",
                 EnvironmentConfigHelper.Config.Source.Touchance.ZmqPort,

@@ -59,7 +59,7 @@ public static partial class HistoryDataComputer {
             )
             .Select(
                 r => new CandleDirectionDataPoint {
-                    Direction = r.Histogram == null
+                    Direction = r.Histogram is null
                         ? 0
                         : r.Histogram > 0
                             ? 1

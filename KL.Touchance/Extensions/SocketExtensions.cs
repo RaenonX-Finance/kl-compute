@@ -32,7 +32,7 @@ public static class SocketExtensions {
 
         var hasMessage = socket.TryReceiveFrameString(timeout, out var response);
 
-        if (!hasMessage || response == null) {
+        if (!hasMessage || response is null) {
             return null;
         }
 

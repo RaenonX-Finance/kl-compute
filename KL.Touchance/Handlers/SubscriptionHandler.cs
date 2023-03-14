@@ -46,7 +46,7 @@ public class SubscriptionHandler {
             case PxHistoryReadyMessage message:
                 var eventArgs = HistoryDataHandler.GetHistoryData(message, cancellationToken);
 
-                if (eventArgs == null) {
+                if (eventArgs is null) {
                     return;
                 }
 

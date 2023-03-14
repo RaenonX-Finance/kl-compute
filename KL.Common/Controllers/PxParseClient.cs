@@ -24,7 +24,7 @@ public abstract class PxParseClient {
         Action<TEventArgs>? onHandled = null
     )
         where TEventArgs : EventArgs {
-        if (eventHandler == null) {
+        if (eventHandler is null) {
             return;
         }
 
@@ -45,7 +45,7 @@ public abstract class PxParseClient {
     public event AsyncEventHandler<InitCompletedEventArgs>? InitCompletedEvent;
 
     protected async Task OnInitCompleted(InitCompletedEventArgs e) {
-        if (InitCompletedEvent == null) {
+        if (InitCompletedEvent is null) {
             return;
         }
 
