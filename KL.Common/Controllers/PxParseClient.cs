@@ -71,9 +71,8 @@ public abstract class PxParseClient {
 
         if (HistoryDataUpdatedEventAsync is not null) {
             await HistoryDataUpdatedEventAsync.Invoke(this, e);
-            OnHistoryDataUpdatedCompleted(e);
         }
-
+        OnHistoryDataUpdatedCompleted(e);
 
         if (_triggerRealtimeOnHistory && e.IsSubscription) {
             OnRealtimeDataUpdated(e.ToRealtimeEventArgs());
