@@ -38,18 +38,6 @@ public class HistoryDataHandler {
         var startTime = start.ToTouchanceHourlyPrecision();
         var endTime = end.ToTouchanceHourlyPrecision();
 
-        Client.RequestSocket.SendTcRequest<PxHistoryHandshakeRequest, PxHistoryHandshakeReply>(
-            new PxHistoryHandshakeRequest {
-                SessionKey = Client.SessionKey,
-                Param = new PxHistoryHandshakeRequestParams {
-                    Symbol = touchanceSymbol,
-                    SubDataType = interval.GetTouchanceType(),
-                    StartTime = startTime,
-                    EndTime = endTime
-                }
-            }
-        );
-
         var identifier = new PxHistoryRequestIdentifier {
             Symbol = touchanceSymbol,
             Interval = interval,
@@ -63,6 +51,18 @@ public class HistoryDataHandler {
             "[{Identifier}] {Action} history data",
             ((IHistoryMetadata)identifier).ToIdentifier(),
         isSubscription ? "Subscribing" : "Requesting"
+        );
+
+        Client.RequestSocket.SendTcRequest<PxHistoryHandshakeRequest, PxHistoryHandshakeReply>(
+            new PxHistoryHandshakeRequest {
+                SessionKey = Client.SessionKey,
+                Param = new PxHistoryHandshakeRequestParams {
+                    Symbol = touchanceSymbol,
+                    SubDataType = interval.GetTouchanceType(),
+                    StartTime = startTime,
+                    EndTime = endTime
+                }
+            }
         );
     }
 
