@@ -50,7 +50,7 @@ public class HistoryDataHandler {
         Log.Information(
             "[{Identifier}] {Action} history data",
             ((IHistoryMetadata)identifier).ToIdentifier(),
-        isSubscription ? "Subscribing" : "Requesting"
+            isSubscription ? "Subscribing" : "Requesting"
         );
 
         Client.RequestSocket.SendTcRequest<PxHistoryHandshakeRequest, PxHistoryHandshakeReply>(

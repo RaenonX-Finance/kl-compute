@@ -105,8 +105,20 @@ public class ClientAggregator {
     private async Task OnRealtimeDataUpdated(object? sender, RealtimeEventArgs e) {
         // Not putting cache updating call here because this event is currently triggered on receiving history data
 
-        GrpcPxDataCaller.CalcLastAsync(e.Symbol, _cancellationToken);
-        await GrpcSystemEventCaller.OnRealtimeAsync(e.Symbol, e.Data, _cancellationToken);
+        var isPxUpdated = await PxCacheController.IsUpdated(e.Symbol);
+
+        if (isPxUpdated) {
+            await Task.WhenAll(
+                Task.Run(() => GrpcPxDataCaller.CalcLastAsync(e.Symbol, _cancellationToken), _cancellationToken),
+                GrpcSystemEventCaller.OnRealtimeAsync(e.Symbol, e.Data, _cancellationToken)
+            );
+        }
+
+        Log.Information(
+            "Realtime data of {Symbol} {WillHandle}",
+            e.Symbol,
+            isPxUpdated ? "handled" : "skipped"
+        );
     }
 
     private async Task OnMinuteChanged(object? sender, MinuteChangeEventArgs e) {
@@ -120,9 +132,9 @@ public class ClientAggregator {
         if (PxConfigController.IsTimestampMarketDateCutoff(e.Symbol, e.Timestamp)) {
             tasks.Add(GrpcSystemEventCaller.OnMarketDateCutoff(e.Symbol, _cancellationToken));
         }
-        
+
         await Task.WhenAll(tasks);
-        
+
         Log.Information(
             "Handled minute change of {Symbol} to {NewMinuteTimestamp} in {Elapsed:0.00} ms",
             e.Symbol,

@@ -5,4 +5,6 @@ public record PxCacheConfigModel {
     public required int InitCount { get; init; }
 
     public required int UpdateCount { get; init; }
+
+    public required int MarketUpdateGapMs { get; init; }
 }

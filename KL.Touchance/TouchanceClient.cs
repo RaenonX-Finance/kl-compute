@@ -125,7 +125,7 @@ public class TouchanceClient : PxParseClient {
         _semaphore = null;
     }
 
-    public void SendHistorySubscriptionRequest(IEnumerable<string> touchanceSymbols) {
+    private void SendHistorySubscriptionRequest(IEnumerable<string> touchanceSymbols) {
         foreach (var symbol in touchanceSymbols) {
             _historyDataHandler.SendHandshakeRequest(
                 symbol,

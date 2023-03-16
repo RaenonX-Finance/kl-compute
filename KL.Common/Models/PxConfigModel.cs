@@ -124,7 +124,8 @@ public record PxConfigModel {
             },
             Cache = new PxCacheConfigModel {
                 InitCount = 70, // Calculating momentum only needs at most 50 bars of 1K (10 MA of 5 min)
-                UpdateCount = 2 // 2nd last might get correction
+                UpdateCount = 2, // 2nd last might get correction
+                MarketUpdateGapMs = 200
             },
             Sources = PxSourceConfigModel.GenerateDefault()
         };

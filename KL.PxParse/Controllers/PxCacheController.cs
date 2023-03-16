@@ -55,4 +55,8 @@ public static class PxCacheController {
             start.GetElapsedMs()
         );
     }
+
+    public static Task<bool> IsUpdated(string symbol) {
+        return RedisLastPxController.PopUpdated(symbol);
+    }
 }
