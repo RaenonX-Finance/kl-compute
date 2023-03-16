@@ -1,7 +1,7 @@
-﻿using System.Collections.Immutable;
-using KL.Common.Controllers;
+﻿using KL.Common.Controllers;
 using KL.Common.Enums;
 using KL.Common.Events;
+using KL.Common.Extensions;
 using KL.Common.Interfaces;
 using KL.Touchance.Extensions;
 using KL.Touchance.Models;
@@ -116,7 +116,7 @@ public class HistoryDataHandler {
 
         while (!cancellationToken.IsCancellationRequested) {
             var historyData = GetPartialData(message, queryIndex);
-            if (historyData.HisData.Length == 0) {
+            if (historyData.HisData.IsEmpty()) {
                 break;
             }
 
@@ -159,7 +159,7 @@ public class HistoryDataHandler {
             },
             Data = historyDataFetched
                 .Select(r => r.Value)
-                .ToImmutableArray<IHistoryDataEntry>(),
+                .ToArray<IHistoryDataEntry>(),
             IsSubscription = isSubscription
         };
     }

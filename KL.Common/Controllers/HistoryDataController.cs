@@ -1,5 +1,5 @@
-﻿using System.Collections.Immutable;
-using KL.Common.Enums;
+﻿using KL.Common.Enums;
+using KL.Common.Extensions;
 using KL.Common.Models;
 using KL.Common.Utils;
 using MongoDB.Driver;
@@ -43,7 +43,7 @@ public static class HistoryDataController {
         IList<string> symbols,
         IList<DateTime> timestamps
     ) {
-        if (timestamps.Count == 0) {
+        if (timestamps.IsEmpty()) {
             Log.Information(
                 "Request history data of {@Symbols} does not have timestamp specified, returning empty response",
                 symbols
@@ -66,9 +66,9 @@ public static class HistoryDataController {
     public static async Task UpdateAll(
         string symbol,
         HistoryInterval interval,
-        IImmutableList<HistoryDataModel> entries
+        IList<HistoryDataModel> entries
     ) {
-        if (entries.Count == 0) {
+        if (entries.IsEmpty()) {
             Log.Warning("{Symbol} @ {Interval} has nothing to update", symbol, interval);
             return;
         }

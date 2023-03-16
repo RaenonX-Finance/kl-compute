@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using KL.Common.Interfaces;
+﻿using KL.Common.Interfaces;
 using KL.Common.Models;
 
 namespace KL.Common.Events;
@@ -8,7 +7,7 @@ namespace KL.Common.Events;
 public class HistoryEventArgs : EventArgs {
     public required IHistoryMetadata Metadata { get; init; }
 
-    public required IImmutableList<IHistoryDataEntry> Data { get; init; }
+    public required IList<IHistoryDataEntry> Data { get; init; }
 
     public required bool IsSubscription { get; init; }
 

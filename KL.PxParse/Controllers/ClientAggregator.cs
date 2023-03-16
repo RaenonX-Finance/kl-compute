@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using KL.Common.Controllers;
 using KL.Common.Events;
 using KL.Common.Extensions;
@@ -54,7 +53,7 @@ public class ClientAggregator {
         await HistoryDataController.UpdateAll(
             e.Metadata.Symbol,
             e.Metadata.Interval,
-            dataToDb.Select(r => r.ToHistoryDataModel(e.Metadata.Symbol, e.Metadata.Interval)).ToImmutableList()
+            dataToDb.Select(r => r.ToHistoryDataModel(e.Metadata.Symbol, e.Metadata.Interval)).ToArray()
         );
     }
 
@@ -71,7 +70,7 @@ public class ClientAggregator {
     private static async Task OnHistoryDataUpdated(object? sender, HistoryEventArgs e) {
         var start = Stopwatch.GetTimestamp();
 
-        if (e.Data.Count == 0) {
+        if (e.Data.IsEmpty()) {
             Log.Warning(
                 "[{Identifier}] Received empty history data, aborting further actions",
                 e.Metadata.ToIdentifier()

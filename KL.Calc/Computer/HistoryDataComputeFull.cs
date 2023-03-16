@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using KL.Calc.Computer.Models;
+﻿using KL.Calc.Computer.Models;
 using KL.Calc.Models;
 using KL.Common.Controllers;
 using KL.Common.Extensions;
@@ -9,15 +8,13 @@ namespace KL.Calc.Computer;
 
 
 public static partial class HistoryDataComputer {
-    private static IImmutableList<decimal> CalculateAllDiff(IImmutableList<GroupedHistoryDataModel> groupedHistory) {
-        return groupedHistory.Select(r => r.Close - r.Open).ToImmutableArray();
+    private static IList<decimal> CalculateAllDiff(IEnumerable<GroupedHistoryDataModel> groupedHistory) {
+        return groupedHistory.Select(r => r.Close - r.Open).ToArray();
     }
 
-    private static IImmutableList<Dictionary<int, double?>> CalculateAllEma(
-        IImmutableList<GroupedHistoryDataModel> groupedHistory
-    ) {
+    private static IList<Dictionary<int, double?>> CalculateAllEma(IList<GroupedHistoryDataModel> groupedHistory) {
         // Making EMA calculation async doesn't help much
-        var emaList = groupedHistory.Select(_ => new Dictionary<int, double?>()).ToImmutableArray();
+        var emaList = groupedHistory.Select(_ => new Dictionary<int, double?>()).ToArray();
 
         foreach (var emaPeriod in PxConfigController.EmaPeriods)
         foreach (var (emaResult, idx) in groupedHistory.GetEma(emaPeriod).Select((ema, idx) => (ema, idx))) {
@@ -28,13 +25,13 @@ public static partial class HistoryDataComputer {
     }
 
     private static async Task<TiePointDataCollection> CalculateAllTiePoint(
-        IImmutableList<GroupedHistoryDataModel> groupedHistory
+        IList<GroupedHistoryDataModel> groupedHistory
     ) {
         var marketDateHigh = Task.Run(
-            () => groupedHistory.GroupedCumulativeMax(r => r.MarketDate, r => r.High).ToImmutableArray()
+            () => groupedHistory.GroupedCumulativeMax(r => r.MarketDate, r => r.High).ToArray()
         );
         var marketDateLow = Task.Run(
-            () => groupedHistory.GroupedCumulativeMin(r => r.MarketDate, r => r.Low).ToImmutableArray()
+            () => groupedHistory.GroupedCumulativeMin(r => r.MarketDate, r => r.Low).ToArray()
         );
 
         return new TiePointDataCollection {
@@ -42,12 +39,12 @@ public static partial class HistoryDataComputer {
             MarketDateLow = await marketDateLow,
             TiePoint = (await marketDateHigh).Zip(await marketDateLow)
                 .Select(r => (r.First + r.Second) / 2)
-                .ToImmutableArray()
+                .ToArray()
         };
     }
 
-    private static IImmutableList<CandleDirectionDataPoint> CalculateAllCandleDirection(
-        IImmutableList<GroupedHistoryDataModel> groupedHistory
+    private static IList<CandleDirectionDataPoint> CalculateAllCandleDirection(
+        IEnumerable<GroupedHistoryDataModel> groupedHistory
     ) {
         var candleConfig = PxConfigController.Config.CandleDirection;
 
@@ -67,6 +64,6 @@ public static partial class HistoryDataComputer {
                     Signal = r.Signal
                 }
             )
-            .ToImmutableArray();
+            .ToArray();
     }
 }

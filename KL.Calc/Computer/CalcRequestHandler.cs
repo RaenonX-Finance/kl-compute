@@ -1,9 +1,9 @@
-﻿using System.Collections.Immutable;
-using Grpc.Core;
+﻿using Grpc.Core;
 using KL.Calc.Controller;
 using KL.Calc.Models;
 using KL.Common.Controllers;
 using KL.Common.Enums;
+using KL.Common.Extensions;
 using KL.Common.Grpc;
 using KL.Common.Models;
 using KL.Common.Utils;
@@ -33,12 +33,12 @@ public static class CalcRequestHandler {
 
     private static async Task CalcAll(
         (string Symbol, int Period) c,
-        IImmutableDictionary<string, ImmutableDictionary<int, IEnumerable<GroupedHistoryDataModel>>> groupedDict,
+        IDictionary<string, IDictionary<int, IEnumerable<GroupedHistoryDataModel>>> groupedDict,
         MongoSession session
     ) {
-        var grouped = groupedDict[c.Symbol][c.Period].ToImmutableList();
+        var grouped = groupedDict[c.Symbol][c.Period].ToArray();
 
-        if (grouped.IsEmpty) {
+        if (grouped.IsEmpty()) {
             throw new RpcException(
                 new Status(
                     StatusCode.NotFound,
@@ -47,12 +47,12 @@ public static class CalcRequestHandler {
             );
         }
 
-        var calculated = (await HistoryDataComputer.CalcAll(grouped, c.Period)).ToImmutableArray();
+        var calculated = (await HistoryDataComputer.CalcAll(grouped, c.Period)).ToArray();
         await CalculatedDataController.AddData(session, calculated);
     }
 
     public static async Task CalcAll(IList<string> symbols, CancellationToken cancellationToken) {
-        var periodMins = PxConfigController.Config.Periods.Select(r => r.PeriodMin).ToImmutableArray();
+        var periodMins = PxConfigController.Config.Periods.Select(r => r.PeriodMin).ToArray();
         var groupedDict = await HistoryDataGrouper.GetGroupedDictOfAll(
             symbols,
             periodMins
@@ -60,7 +60,7 @@ public static class CalcRequestHandler {
 
         var combinations = symbols
             .SelectMany(symbol => periodMins.Select(period => (Symbol: symbol, Period: period)))
-            .ToImmutableArray();
+            .ToArray();
 
         using var session = await MongoSession.Create();
 
@@ -84,7 +84,7 @@ public static class CalcRequestHandler {
     }
 
     private static Task<
-        IImmutableDictionary<string, ImmutableDictionary<int, IEnumerable<GroupedHistoryDataModel>>>
+        IDictionary<string, IDictionary<int, IEnumerable<GroupedHistoryDataModel>>>
     > CalcPartialGetHistory(IList<string> symbols, IList<int> periodMins, int limit) {
         return HistoryDataGrouper.GetGroupedDictOfLastN(
             symbols,
@@ -95,7 +95,7 @@ public static class CalcRequestHandler {
 
     private static async Task<
         Dictionary<(string Symbol, int Period), IEnumerable<CalculatedDataModel>>
-    > CalcPartialGetCalculated(ImmutableArray<(string Symbol, int Period)> combinations, int limit) {
+    > CalcPartialGetCalculated(IEnumerable<(string Symbol, int Period)> combinations, int limit) {
         var groupedCalculatedTasks = combinations
             .Select(
                 r => Task.Run(
@@ -115,7 +115,7 @@ public static class CalcRequestHandler {
 
     private static async Task CalcPartial(
         (string Symbol, int Period) c,
-        IImmutableDictionary<string, ImmutableDictionary<int, IEnumerable<GroupedHistoryDataModel>>> groupedHistory,
+        IDictionary<string, IDictionary<int, IEnumerable<GroupedHistoryDataModel>>> groupedHistory,
         IReadOnlyDictionary<(string Symbol, int Period), IEnumerable<CalculatedDataModel>> groupedCalculated
     ) {
         try {
@@ -123,7 +123,7 @@ public static class CalcRequestHandler {
             var cachedCalculated = groupedCalculated[c];
 
             var calculated = (await HistoryDataComputer.CalcPartial(history, cachedCalculated, c.Period))
-                .ToImmutableArray();
+                .ToArray();
             await CalculatedDataController.UpdateByEpoch(calculated);
         } catch (InvalidOperationException e) {
             Log.Error(e, "Error when attempting partial calculation for {Symbol} @ {Period}", c.Symbol, c.Period);
@@ -137,11 +137,11 @@ public static class CalcRequestHandler {
     }
 
     public static async Task CalcPartial(IList<string> symbols, int limit, CancellationToken cancellationToken) {
-        var periodMins = PxConfigController.Config.Periods.Select(r => r.PeriodMin).ToImmutableArray();
+        var periodMins = PxConfigController.Config.Periods.Select(r => r.PeriodMin).ToArray();
         var combinations = symbols
             .Where(PxConfigController.IsMarketOpened)
             .SelectMany(symbol => periodMins.Select(period => (Symbol: symbol, Period: period)))
-            .ToImmutableArray();
+            .ToArray();
 
         var historyDataTask = CalcPartialGetHistory(symbols, periodMins, limit);
         var calculatedDataTask = CalcPartialGetCalculated(combinations, limit);
@@ -167,9 +167,9 @@ public static class CalcRequestHandler {
     }
 
     private static async Task CalcLast(string symbol, int periodMin, decimal lastPx) {
-        var data = CalculatedDataController.GetData(symbol, periodMin, 2).ToImmutableArray();
+        var data = CalculatedDataController.GetData(symbol, periodMin, 2).ToArray();
 
-        if (data.IsEmpty) {
+        if (data.IsEmpty()) {
             throw new RpcException(
                 new Status(
                     StatusCode.NotFound,

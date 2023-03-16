@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using KL.Common.Models;
+﻿using KL.Common.Models;
 using KL.Common.Utils;
 using MongoDB.Driver;
 using Serilog;
@@ -13,8 +12,8 @@ public static class SourceInfoController {
     private static readonly FilterDefinitionBuilder<SourceInfoModel> FilterBuilder =
         Builders<SourceInfoModel>.Filter;
 
-    public static async Task UpdateAll(IImmutableList<SourceInfoModel> sourceInfo) {
-        var symbols = sourceInfo.Select(r => r.Symbol).ToImmutableArray();
+    public static async Task UpdateAll(IList<SourceInfoModel> sourceInfo) {
+        var symbols = sourceInfo.Select(r => r.Symbol).ToArray();
 
         using var session = await MongoSession.Create();
 

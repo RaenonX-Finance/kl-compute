@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using KL.Calc.Models;
+﻿using KL.Calc.Models;
 using KL.Common.Controllers;
 using KL.Common.Enums;
 using KL.Common.Models;
@@ -12,7 +11,7 @@ public static class HistoryDataGrouper {
     private static readonly ILogger Log = Serilog.Log.ForContext(typeof(HistoryDataGrouper));
 
     private static IEnumerable<GroupedHistoryDataModel> GetGroupedFromData(
-        IImmutableList<HistoryDataModel> historyData,
+        IEnumerable<HistoryDataModel> historyData,
         string symbol,
         HistoryInterval interval,
         int periodMin
@@ -53,7 +52,7 @@ public static class HistoryDataGrouper {
             .OrderBy(r => r.EpochSecond);
     }
 
-    private static async Task<ImmutableDictionary<int, IEnumerable<GroupedHistoryDataModel>>> GetGroupedSingleSymbol(
+    private static async Task<IDictionary<int, IEnumerable<GroupedHistoryDataModel>>> GetGroupedSingleSymbol(
         string symbol,
         IList<int> periodMinList,
         Func<HistoryInterval, IEnumerable<HistoryDataModel>> queryByInterval,
@@ -70,15 +69,15 @@ public static class HistoryDataGrouper {
             .Select(
                 interval => Task.Run(
                     () => (
-                        Interval: interval, Data: queryByInterval(interval).ToImmutableArray()
+                        Interval: interval, Data: queryByInterval(interval).ToArray()
                     )
                 )
             );
 
         var dataDict = (await Task.WhenAll(dataTasks).ConfigureAwait(false))
-            .ToImmutableDictionary(r => r.Interval, r => r.Data);
+            .ToDictionary(r => r.Interval, r => r.Data);
 
-        return periodMinList.ToImmutableDictionary(
+        return periodMinList.ToDictionary(
             periodMin => periodMin,
             periodMin => {
                 var interval = periodMin.GetHistoryInterval();
@@ -102,7 +101,7 @@ public static class HistoryDataGrouper {
     }
 
     public static async Task<
-        IImmutableDictionary<string, ImmutableDictionary<int, IEnumerable<GroupedHistoryDataModel>>>
+        IDictionary<string, IDictionary<int, IEnumerable<GroupedHistoryDataModel>>>
     > GetGroupedDictOfAll(
         IList<string> symbols,
         IList<int> periodMinList
@@ -122,11 +121,11 @@ public static class HistoryDataGrouper {
                 )
             );
         return (await Task.WhenAll(groupedDictTasks).ConfigureAwait(false))
-            .ToImmutableDictionary(r => r.Symbol, r => r.GroupedData);
+            .ToDictionary(r => r.Symbol, r => r.GroupedData);
     }
 
     public static async Task<
-        IImmutableDictionary<string, ImmutableDictionary<int, IEnumerable<GroupedHistoryDataModel>>>
+        IDictionary<string, IDictionary<int, IEnumerable<GroupedHistoryDataModel>>>
     > GetGroupedDictOfLastN(
         IList<string> symbols,
         IList<int> periodMinList,
@@ -162,6 +161,6 @@ public static class HistoryDataGrouper {
             );
 
         return (await Task.WhenAll(groupedDictTasks).ConfigureAwait(false))
-            .ToImmutableDictionary(r => r.Symbol, r => r.GroupedData);
+            .ToDictionary(r => r.Symbol, r => r.GroupedData);
     }
 }

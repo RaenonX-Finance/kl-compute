@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using KL.Calc.Models;
 using KL.Common.Controllers;
 using KL.Common.Extensions;
@@ -81,7 +80,7 @@ public static partial class HistoryDataComputer {
     }
 
     public static async Task<IEnumerable<CalculatedDataModel>> CalcAll(
-        IImmutableList<GroupedHistoryDataModel> historyData,
+        IList<GroupedHistoryDataModel> historyData,
         int periodMin
     ) {
         var start = Stopwatch.GetTimestamp();

@@ -27,7 +27,7 @@ public static partial class HistoryDataComputer {
     ) {
         var calculated = calculatedData.ToImmutableArray();
 
-        if (calculated.IsEmpty) {
+        if (calculated.IsEmpty()) {
             Log.Error("Attempted to calculate partial data but `calculatedData` is empty");
             throw new InvalidOperationException("Empty calculated data");
         }
@@ -57,13 +57,13 @@ public static partial class HistoryDataComputer {
     }
 
     private static MatchingIndex GetFirstMatchingIndex(
-        IImmutableList<GroupedHistoryDataModel> history,
-        IImmutableList<CalculatedDataModel> calculated
+        IReadOnlyCollection<GroupedHistoryDataModel> history,
+        IReadOnlyList<CalculatedDataModel> calculated
     ) {
         var lastCalculated = calculated[^1];
 
-        var revHistory = history.Reverse().ToImmutableArray();
-        var revCalculated = calculated.Reverse().ToImmutableArray();
+        var revHistory = history.Reverse().ToArray();
+        var revCalculated = calculated.Reverse().ToArray();
 
         var idxFirstSync = revHistory
             .TakeWhile(r => r.Date != lastCalculated.Date)
@@ -104,15 +104,15 @@ public static partial class HistoryDataComputer {
         };
     }
 
-    private static IImmutableList<double?> CalculateEmaFromBase<TData>(
-        IImmutableList<TData> dataList,
+    private static IList<double?> CalculateEmaFromBase<TData>(
+        ICollection<TData> dataList,
         Func<TData, double?> getCurrentValue,
         int period,
         double? startingEma
     ) {
         if (startingEma is null) {
             Log.Warning("Attempt to calculate EMA with null starting point (EMA {Period})", period);
-            return Enumerable.Repeat<double?>(null, dataList.Count).ToImmutableArray();
+            return Enumerable.Repeat<double?>(null, dataList.Count).ToArray();
         }
 
         var emaList = new List<double?> { startingEma };
@@ -124,14 +124,14 @@ public static partial class HistoryDataComputer {
         }
 
         // Starting EMA shouldn't be included in the return
-        return emaList.Skip(1).ToImmutableArray();
+        return emaList.Skip(1).ToArray();
     }
 
-    private static IImmutableList<Dictionary<int, double?>> CalculatePartialEma(
-        IImmutableList<GroupedHistoryDataModel> history,
+    private static IList<Dictionary<int, double?>> CalculatePartialEma(
+        ICollection<GroupedHistoryDataModel> history,
         CalculatedDataModel startingCalculated
     ) {
-        var emaList = history.Select(_ => new Dictionary<int, double?>()).ToImmutableArray();
+        var emaList = history.Select(_ => new Dictionary<int, double?>()).ToArray();
 
         foreach (var emaPeriod in PxConfigController.EmaPeriods) {
             var emaSingle = CalculateEmaFromBase(
@@ -150,7 +150,7 @@ public static partial class HistoryDataComputer {
     }
 
     private static async Task<TiePointDataCollection> CalculatePartialTiePoint(
-        IImmutableList<GroupedHistoryDataModel> history,
+        IList<GroupedHistoryDataModel> history,
         CalculatedDataModel startingCalculated
     ) {
         var marketDateHigh = Task.Run(
@@ -161,7 +161,7 @@ public static partial class HistoryDataComputer {
                         { startingCalculated.MarketDate, startingCalculated.MarketDateHigh }
                     }
                 )
-                .ToImmutableArray()
+                .ToArray()
         );
         var marketDateLow = Task.Run(
             () => history.GroupedCumulativeMin(
@@ -171,7 +171,7 @@ public static partial class HistoryDataComputer {
                         { startingCalculated.MarketDate, startingCalculated.MarketDateLow }
                     }
                 )
-                .ToImmutableArray()
+                .ToArray()
         );
 
         return new TiePointDataCollection {
@@ -179,19 +179,19 @@ public static partial class HistoryDataComputer {
             MarketDateLow = await marketDateLow,
             TiePoint = (await marketDateHigh).Zip(await marketDateLow)
                 .Select(r => (r.First + r.Second) / 2)
-                .ToImmutableArray()
+                .ToArray()
         };
     }
 
-    private static IImmutableList<CandleDirectionDataPoint> CalculatePartialCandleDirection(
-        IImmutableList<Dictionary<int, double?>> emaList,
+    private static IList<CandleDirectionDataPoint> CalculatePartialCandleDirection(
+        IList<Dictionary<int, double?>> emaList,
         CalculatedDataModel startingCalculated
     ) {
         var candleConfig = PxConfigController.Config.CandleDirection;
 
         var macdFast = emaList.Select(r => r[candleConfig.Fast]);
         var macdSlow = emaList.Select(r => r[candleConfig.Slow]);
-        var macd = macdFast.Zip(macdSlow).Select(r => r.First - r.Second).ToImmutableArray();
+        var macd = macdFast.Zip(macdSlow).Select(r => r.First - r.Second).ToArray();
         var signal = CalculateEmaFromBase(
             macd,
             r => r,
@@ -211,6 +211,6 @@ public static partial class HistoryDataComputer {
                     Signal = r.First
                 }
             )
-            .ToImmutableArray();
+            .ToArray();
     }
 }

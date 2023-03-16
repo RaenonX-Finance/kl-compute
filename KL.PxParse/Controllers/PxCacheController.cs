@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using KL.Common.Controllers;
 using KL.Common.Extensions;
 using KL.Common.Interfaces;
@@ -22,7 +21,7 @@ public static class PxCacheController {
 
         var entriesToProcess = entries
             .TakeLast(PxConfigController.Config.Cache.InitCount)
-            .ToImmutableArray();
+            .ToArray();
 
         await RedisLastPxController.Set(symbol, entriesToProcess, isCreate: true);
 
@@ -38,7 +37,7 @@ public static class PxCacheController {
     public static async Task Update(string symbol, IEnumerable<IHistoryDataEntry> entries) {
         var entriesToProcess = entries
             .TakeLast(PxConfigController.Config.Cache.UpdateCount)
-            .ToImmutableArray();
+            .ToArray();
 
         await RedisLastPxController.Set(symbol, entriesToProcess);
     }

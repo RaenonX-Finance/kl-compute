@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using KL.Common.Extensions;
 using KL.Common.Models;
 using KL.Common.Utils;
@@ -28,11 +27,12 @@ public static class CalculatedDataController {
             .Where(r => r.Symbol == symbol && r.PeriodMin == periodMin)
             .OrderByDescending(r => r.EpochSecond)
             .Take(limit)
-            .ToImmutableArray()
+            // `IMongoQueryable` does not support `.OrderByDescending()` with `.Reverse()`
+            .ToArray()
             .Reverse();
     }
 
-    public static async Task UpdateByEpoch(IImmutableList<CalculatedDataModel> calculatedData) {
+    public static async Task UpdateByEpoch(IList<CalculatedDataModel> calculatedData) {
         using var session = await MongoSession.Create();
 
         Log.Debug(

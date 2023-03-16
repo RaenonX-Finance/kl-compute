@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using KL.Common.Enums;
+﻿using KL.Common.Enums;
 using KL.Common.Extensions;
 using KL.Common.Models;
 using KL.Common.Models.Config;
@@ -16,8 +15,8 @@ public static class PxConfigController {
 
     public static readonly int[] EmaPeriods = GetEmaPeriods();
 
-    public static readonly IImmutableDictionary<string, ProductCategory> SymbolToCategory
-        = Config.Sources.ToImmutableDictionary(
+    public static readonly IDictionary<string, ProductCategory> SymbolToCategory
+        = Config.Sources.ToDictionary(
             r => r.InternalSymbol,
             r => r.ProductCategory
         );

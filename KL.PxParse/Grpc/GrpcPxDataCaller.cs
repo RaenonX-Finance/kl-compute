@@ -46,7 +46,7 @@ public class GrpcPxDataCaller {
         var request = new PxCalcRequestMulti();
         request.Symbols.AddRange(symbols);
 
-        if (request.Symbols.Count == 0) {
+        if (request.Symbols.IsEmpty()) {
             Log.Error("gRPC call {GrpcCallEndpoint} should have symbols for calculation", endpointName);
             return;
         }

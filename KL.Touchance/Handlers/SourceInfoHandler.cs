@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using KL.Common.Controllers;
+﻿using KL.Common.Controllers;
 using KL.Common.Models;
 using KL.Common.Models.Config;
 using KL.Touchance.Extensions;
@@ -13,7 +12,7 @@ namespace KL.Touchance.Handlers;
 public static class SourceInfoHandler {
     private static readonly ILogger Log = Serilog.Log.ForContext(typeof(SourceInfoHandler));
 
-    public static async Task CheckSourceInfo(this TouchanceClient client, IImmutableList<PxSourceConfigModel> sources) {
+    public static async Task CheckSourceInfo(this TouchanceClient client, IEnumerable<PxSourceConfigModel> sources) {
         var sourceInfo = sources.Select(
             r => {
                 Log.Information("Checking source info of {Symbol}", r.ExternalSymbol);
@@ -42,6 +41,6 @@ public static class SourceInfoHandler {
             }
         );
 
-        await SourceInfoController.UpdateAll(sourceInfo.ToImmutableArray());
+        await SourceInfoController.UpdateAll(sourceInfo.ToArray());
     }
 }

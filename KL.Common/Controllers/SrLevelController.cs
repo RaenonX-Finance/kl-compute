@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+﻿using KL.Common.Extensions;
 using KL.Common.Models;
 using KL.Common.Utils;
 using MongoDB.Driver;
@@ -14,12 +14,12 @@ public static class SrLevelController {
         FilterBuilder = Builders<SrLevelDataModel>.Filter;
 
     public static async Task UpdateAll(IList<SrLevelDataModel> data) {
-        if (data.Count == 0) {
+        if (data.IsEmpty()) {
             Log.Warning("No SR level data to update");
             return;
         }
 
-        var symbols = data.Select(r => r.Symbol).Distinct().ToImmutableSortedSet();
+        var symbols = data.Select(r => r.Symbol).Distinct().ToArray();
         using var session = await MongoSession.Create();
 
         Log.Information(

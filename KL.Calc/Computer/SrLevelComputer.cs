@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using KL.Common.Controllers;
+﻿using KL.Common.Controllers;
 using KL.Common.Enums;
 using KL.Common.Extensions;
 using KL.Common.Models;
@@ -37,16 +36,16 @@ public static class SrLevelComputer {
             date = date.AddBusinessDay(-1);
         }
 
-        return dates.OrderDescending().ToImmutableArray();
+        return dates.OrderDescending().ToArray();
     }
 
-    private static IImmutableList<SrLevelDataModel> GetSrLevelModels(
+    private static IEnumerable<SrLevelDataModel> GetSrLevelModels(
         string symbol,
-        IImmutableList<HistoryDataModel> dataOpenCloseCrossed,
+        ICollection<HistoryDataModel> dataOpenCloseCrossed,
         SrLevelTimingModel srLevelTiming,
         int pairCount
     ) {
-        if (dataOpenCloseCrossed.Count == 0) {
+        if (dataOpenCloseCrossed.IsEmpty()) {
             var e = new InvalidOperationException($"No data of {symbol} to calculate SR level");
             Log.Error(
                 e,
@@ -64,7 +63,8 @@ public static class SrLevelComputer {
 
         while (srLevelModels.Count < pairCount && dataEnumeratorMoved) {
             var currentOpen = dataEnumerator.Current;
-            var currentOpenTime = TimeOnly.FromDateTime(currentOpen.Timestamp.ToTimezoneFromUtc(srLevelTiming.Timezone));
+            var currentOpenTime
+                = TimeOnly.FromDateTime(currentOpen.Timestamp.ToTimezoneFromUtc(srLevelTiming.Timezone));
 
             if (currentOpenTime != srLevelTiming.Open) {
                 dataEnumeratorMoved = dataEnumerator.MoveNext();
@@ -109,7 +109,7 @@ public static class SrLevelComputer {
             );
         }
 
-        return srLevelModels.ToImmutableArray();
+        return srLevelModels.ToArray();
     }
 
     private static IEnumerable<SrLevelDataModel> CalcLevelsByProductCategory(
@@ -122,9 +122,9 @@ public static class SrLevelComputer {
                 GetKeyTimestamps(pairCount + 1, category)
             )
             .GroupBy(r => r.Symbol)
-            .ToImmutableDictionary(
+            .ToDictionary(
                 r => r.Key,
-                r => r.ToImmutableArray()
+                r => r.ToArray()
             );
 
         var models = new List<SrLevelDataModel>();
@@ -144,11 +144,11 @@ public static class SrLevelComputer {
             .GroupBy(r => r.ProductCategory)
             .SelectMany(
                 r => CalcLevelsByProductCategory(
-                    r.Select(source => source.InternalSymbol).ToImmutableArray(),
+                    r.Select(source => source.InternalSymbol).ToArray(),
                     r.Key,
                     PxConfigController.Config.SrLevel.PairCount
                 )
             )
-            .ToImmutableArray();
+            .ToArray();
     }
 }

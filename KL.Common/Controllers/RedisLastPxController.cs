@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using KL.Common.Enums;
+﻿using KL.Common.Enums;
 using KL.Common.Extensions;
 using KL.Common.Interfaces;
 using KL.Common.Utils;
@@ -51,11 +50,7 @@ public static class RedisLastPxController {
         return RedisHelper.GetDb(RedisDbId.LastPxAndMomentum);
     }
 
-    private static async Task UpdateEpochSec(
-        IDatabaseAsync db,
-        string symbol,
-        IImmutableList<IHistoryDataEntry> entries
-    ) {
+    private static async Task UpdateEpochSec(IDatabaseAsync db, string symbol, IList<IHistoryDataEntry> entries) {
         var epochSecEntries = entries
             .Select(
                 r => {
@@ -69,11 +64,7 @@ public static class RedisLastPxController {
         await db.SortedSetAddAsync(symbol, epochSecEntries);
     }
 
-    private static async Task UpdatePx(
-        IDatabaseAsync db,
-        string symbol,
-        IImmutableList<IHistoryDataEntry> entries
-    ) {
+    private static async Task UpdatePx(IDatabaseAsync db, string symbol, IList<IHistoryDataEntry> entries) {
         var lastPxValues = entries.Select(
                 r => new KeyValuePair<RedisKey, RedisValue>(
                     KeyOfPxAtEpoch(symbol, r.Timestamp.ToEpochSeconds()),
@@ -103,7 +94,7 @@ public static class RedisLastPxController {
         var meta = (await db.HashGetAllAsync(key))
             .ToDictionary(r => r.Name, r => r.Value);
 
-        if (meta.Count == 0) {
+        if (meta.IsEmpty()) {
             await CreateLastMeta(db, symbol, px);
             return;
         }
@@ -156,7 +147,7 @@ public static class RedisLastPxController {
         return updated;
     }
 
-    public static async Task Set(string symbol, IImmutableList<IHistoryDataEntry> entries, bool isCreate = false) {
+    public static async Task Set(string symbol, IList<IHistoryDataEntry> entries, bool isCreate = false) {
         var db = GetDatabase();
 
         if (isCreate) {

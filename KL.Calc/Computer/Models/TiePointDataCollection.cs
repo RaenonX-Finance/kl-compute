@@ -1,12 +1,10 @@
-﻿using System.Collections.Immutable;
-
-namespace KL.Calc.Computer.Models;
+﻿namespace KL.Calc.Computer.Models;
 
 
 public class TiePointDataCollection {
-    public required IImmutableList<decimal> MarketDateHigh { get; init; }
+    public required IList<decimal> MarketDateHigh { get; init; }
 
-    public required IImmutableList<decimal> MarketDateLow { get; init; }
+    public required IList<decimal> MarketDateLow { get; init; }
 
-    public required IImmutableList<decimal> TiePoint { get; init; }
+    public required IList<decimal> TiePoint { get; init; }
 }

@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using KL.Common.Controllers;
+﻿using KL.Common.Controllers;
 using KL.Common.Enums;
 using KL.Common.Events;
 using KL.Common.Models.Config;
@@ -84,7 +83,7 @@ public class TouchanceClient : PxParseClient {
         await Initialize();
     }
 
-    private async Task InitializeHistoryData(IImmutableList<PxSourceConfigModel> sources) {
+    private async Task InitializeHistoryData(IEnumerable<PxSourceConfigModel> sources) {
         var isAnyPeriodDaily = PxConfigController.Config.Periods.Any(
             period => period.PeriodMin.GetHistoryInterval() == HistoryInterval.Daily
         );
@@ -166,7 +165,7 @@ public class TouchanceClient : PxParseClient {
     private async Task Initialize() {
         var sources = PxConfigController.Config.Sources
             .Where(r => r is { Enabled: true, Source: PxSource.Touchance })
-            .ToImmutableList();
+            .ToArray();
 
         await Task.WhenAll(
             this.CheckSourceInfo(sources),
