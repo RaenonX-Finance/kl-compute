@@ -69,7 +69,7 @@ public abstract class PxParseClient {
             return;
         }
 
-        if (HistoryDataUpdatedEventAsync != null) {
+        if (HistoryDataUpdatedEventAsync is not null) {
             await HistoryDataUpdatedEventAsync.Invoke(this, e);
             OnHistoryDataUpdatedCompleted(e);
         }

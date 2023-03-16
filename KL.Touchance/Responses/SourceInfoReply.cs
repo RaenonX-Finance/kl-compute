@@ -21,7 +21,7 @@ public record SourceInfoReply : TcActionReply {
 
     public int Decimals {
         get {
-            if (_decimals != null) {
+            if (_decimals is not null) {
                 return (int)_decimals;
             }
             

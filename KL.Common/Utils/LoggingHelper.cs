@@ -38,14 +38,14 @@ public static class LoggingHelper {
             loggerConfig = loggerConfig.WriteTo.Console(outputTemplate: OutputTemplate);
         }
 
-        if (EnvironmentConfigHelper.Config.Logging.NewRelicApiKey != null) {
+        if (EnvironmentConfigHelper.Config.Logging.NewRelicApiKey is not null) {
             loggerConfig = loggerConfig.WriteTo.NewRelicLogs(
                 applicationName: appName,
                 licenseKey: EnvironmentConfigHelper.Config.Logging.NewRelicApiKey
             );
         }
 
-        if (logDir != null) {
+        if (logDir is not null) {
             loggerConfig = loggerConfig.WriteTo.File(
                 Path.Combine(logDir, $"{appName}-.log"),
                 rollingInterval: RollingInterval.Day,

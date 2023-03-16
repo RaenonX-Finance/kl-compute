@@ -178,7 +178,7 @@ public class TouchanceClient : PxParseClient {
     }
 
     protected override void OnHistoryDataUpdatedCompleted(HistoryEventArgs e) {
-        if (_semaphore != null && !e.IsSubscription) {
+        if (_semaphore is not null && !e.IsSubscription) {
             _semaphore.Release();
         }
     }

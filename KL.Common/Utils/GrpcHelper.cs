@@ -115,7 +115,7 @@ public static class GrpcHelper {
                 timeoutExtension: timeoutExtension
             ),
             exception => {
-                if (exception != null) {
+                if (exception is not null) {
                     throw exception;
                 }
 
