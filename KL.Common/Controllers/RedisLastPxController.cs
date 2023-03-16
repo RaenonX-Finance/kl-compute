@@ -44,7 +44,7 @@ public static class RedisLastPxController {
     }
 
     private static string KeyOfLastMeta(string symbol) {
-        return $"{symbol}:LastMeta";
+        return $"LastMeta:{symbol}";
     }
 
     private static IDatabase GetDatabase() {

@@ -11,7 +11,7 @@ public static class RedisMomentumController {
     }
 
     private static string KeyOfSingleData(string symbol) {
-        return $"{symbol}:Momentum";
+        return $"Momentum:{symbol}";
     }
 
     public static async Task Set(string symbol, Momentum momentum) {
