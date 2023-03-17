@@ -34,7 +34,7 @@ internal class SubscriptionHandler {
     ) {
         var tcSubscription = messageJson.ToTcSubscription();
 
-        Log.Information("Received subscription message of type {Type}", tcSubscription.GetType());
+        Log.Debug("Received subscription message of type {Type}", tcSubscription.GetType());
 
         switch (tcSubscription) {
             case PingMessage:
