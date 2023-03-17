@@ -17,21 +17,10 @@ internal class HistoryDataHandler {
     private static readonly ILogger Log = Serilog.Log.ForContext(typeof(HistoryDataHandler));
 
     // Has key = request to handle; value is true = is history data subscription
-    private static readonly IDictionary<PxHistoryRequestIdentifier, bool> SubscribedRequests
+    private readonly IDictionary<PxHistoryRequestIdentifier, bool> _subscribedRequests
         = new Dictionary<PxHistoryRequestIdentifier, bool>();
 
     internal required TouchanceClient Client { get; init; }
-
-    private void SendHandshakeRequest(
-        PxHistoryRequestIdentifier identifier,
-        PxHistoryHandshakeRequestParams @params,
-        bool isSubscription
-    ) {
-        SubscribedRequests.Add(identifier, isSubscription);
-        Client.RequestSocket.SendTcRequest<PxHistoryHandshakeRequest, PxHistoryHandshakeReply>(
-            new PxHistoryHandshakeRequest { SessionKey = Client.SessionKey, Param = @params }
-        );
-    }
 
     internal void SendHandshakeRequest(
         string touchanceSymbol,
@@ -40,57 +29,42 @@ internal class HistoryDataHandler {
         DateTime end,
         bool isSubscription
     ) {
-        if (start > end) {
-            Log.Error("Start time ({Start}) must be earlier than the end time ({End})", start, end);
-            throw new InvalidOperationException($"Start time ({start}) must be earlier than the end time ({end})");
-        }
+        SendHandshakeRequest(
+            new PxHistoryRequestIdentifier {
+                Symbol = touchanceSymbol,
+                Interval = interval,
+                Start = start,
+                End = end
+            },
+            isSubscription
+        );
+    }
 
-        var startTime = start.ToTouchanceHourlyPrecision();
-        var endTime = end.ToTouchanceHourlyPrecision();
-
-        var identifier = new PxHistoryRequestIdentifier {
-            Symbol = touchanceSymbol,
-            Interval = interval,
-            Start = startTime.FromTouchanceHourlyPrecision(),
-            End = endTime.FromTouchanceHourlyPrecision()
-        };
-        var @params = new PxHistoryHandshakeRequestParams {
-            Symbol = touchanceSymbol,
-            SubDataType = interval.GetTouchanceType(),
-            StartTime = startTime,
-            EndTime = endTime
-        };
+    private void SendHandshakeRequest(PxHistoryRequestIdentifier identifier, bool isSubscription) {
+        // Unsubscribe first to ensure successful subscription
+        SendUnsubscribeRequest(identifier);
 
         Log.Information(
             "[{Identifier}] {Action} history data",
             ((IHistoryMetadata)identifier).ToIdentifier(),
             isSubscription ? "Subscribing" : "Requesting"
         );
-
-        // Send unsubscribe first to ensure successful subscription
-        SendUnsubscribeRequest(identifier, @params);
-        SendHandshakeRequest(identifier, @params, isSubscription);
-    }
-
-    private void SendUnsubscribeRequest(PxHistoryReadyMessage message) {
-        SendUnsubscribeRequest(
-            message.Identifier,
-            new PxHistoryHandshakeRequestParams {
-                Symbol = message.Symbol,
-                SubDataType = message.SubDataType,
-                StartTime = message.StartTime,
-                EndTime = message.EndTime
-            }
+        _subscribedRequests[identifier] = isSubscription;
+        Client.RequestSocket.SendTcRequest<PxHistoryHandshakeRequest, PxHistoryHandshakeReply>(
+            new PxHistoryHandshakeRequest { SessionKey = Client.SessionKey, Param = identifier.ToHandshakeParams() }
         );
     }
 
-    private void SendUnsubscribeRequest(
-        PxHistoryRequestIdentifier identifier,
-        PxHistoryRequestParams @params
-    ) {
-        SubscribedRequests.Remove(identifier);
+    private void SendUnsubscribeRequest(PxHistoryRequestIdentifier identifier) {
+        // Print the log if `identifier` is really subscribed
+        if (_subscribedRequests.Remove(identifier)) {
+            Log.Information("[{Identifier}] Unsubscribe history data", ((IHistoryMetadata)identifier).ToIdentifier());
+        }
+
+        // Still sends `PxHistoryUnsubscribeRequest`
+        // because the request of `identifier` could be initiated by other run
         Client.RequestSocket.SendTcRequest<PxHistoryUnsubscribeRequest, PxHistoryUnsubscribeReply>(
-            new PxHistoryUnsubscribeRequest { SessionKey = Client.SessionKey, Param = @params }
+            new PxHistoryUnsubscribeRequest { SessionKey = Client.SessionKey, Param = identifier.ToHandshakeParams() }
         );
     }
 
@@ -116,7 +90,7 @@ internal class HistoryDataHandler {
             return null;
         }
 
-        if (!SubscribedRequests.TryGetValue(message.Identifier, out var isSubscription)) {
+        if (!_subscribedRequests.TryGetValue(message.Identifier, out var isSubscription)) {
             Log.Warning("[{Identifier}] Skipped processing unrequested history data", message.IdentifierString);
             return null;
         }
@@ -159,8 +133,8 @@ internal class HistoryDataHandler {
 
         // If not subscribed
         // ReSharper disable once InvertIf
-        if (SubscribedRequests.TryGetValue(message.Identifier, out var subscribed) && !subscribed) {
-            SendUnsubscribeRequest(message);
+        if (_subscribedRequests.TryGetValue(message.Identifier, out var subscribed) && !subscribed) {
+            SendUnsubscribeRequest(message.Identifier);
 
             Log.Information("[{Identifier}] Completed history data request", message.IdentifierString);
         }
