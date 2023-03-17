@@ -16,7 +16,8 @@ public static class JsonHelper {
     private static readonly ILogger Log = Serilog.Log.ForContext(typeof(JsonHelper));
 
     public static readonly JsonSerializerOptions SerializingOptions = new() {
-        Converters = { new JsonStringEnumConverter(new JsonAllCapsNamingPolicy()) }
+        Converters = { new JsonStringEnumConverter(new JsonAllCapsNamingPolicy()) },
+        NumberHandling = JsonNumberHandling.AllowReadingFromString
     };
 
     public static T Deserialize<T>(this string message) {
