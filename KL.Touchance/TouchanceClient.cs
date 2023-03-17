@@ -142,7 +142,7 @@ public class TouchanceClient : PxParseClient {
     public void OnSymbolCleared(SymbolClearMessage message) {
         Log.Information("Received symbol clear for {Symbol}, resubscribing...", message.Data.Symbol);
 
-        // Should not do duplicated FITX subscription 
+        // Should not try to resubscribe FITX in same symbol clear event
         if (message.Data.Symbol != "TC.F.TWF.FITX") {
             // `TWF` symbols need manual re-subscription for the open before 8:45 AM (UTC +8)
             // according to Touchance Customer Service
