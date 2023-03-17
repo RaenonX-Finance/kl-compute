@@ -13,12 +13,12 @@ using Serilog;
 namespace KL.Touchance.Handlers;
 
 
-public class SubscriptionHandler {
+internal class SubscriptionHandler {
     private static readonly ILogger Log = Serilog.Log.ForContext(typeof(SubscriptionHandler));
 
-    public required TouchanceClient Client { get; init; }
+    internal required TouchanceClient Client { get; init; }
 
-    public required HistoryDataHandler HistoryDataHandler { get; init; }
+    internal required HistoryDataHandler HistoryDataHandler { get; init; }
 
     public required MinuteChangedHandler MinuteChangedHandler { get; init; }
 

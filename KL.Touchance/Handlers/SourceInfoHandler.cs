@@ -9,10 +9,10 @@ using Serilog;
 namespace KL.Touchance.Handlers;
 
 
-public static class SourceInfoHandler {
+internal static class SourceInfoHandler {
     private static readonly ILogger Log = Serilog.Log.ForContext(typeof(SourceInfoHandler));
 
-    public static async Task CheckSourceInfo(this TouchanceClient client, IEnumerable<PxSourceConfigModel> sources) {
+    internal static async Task CheckSourceInfo(this TouchanceClient client, IEnumerable<PxSourceConfigModel> sources) {
         var sourceInfo = sources.Select(
             r => {
                 Log.Information("Checking source info of {Symbol}", r.ExternalSymbol);

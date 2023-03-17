@@ -13,15 +13,14 @@ using Serilog;
 namespace KL.Touchance.Handlers;
 
 
-public class HistoryDataHandler {
+internal class HistoryDataHandler {
     private static readonly ILogger Log = Serilog.Log.ForContext(typeof(HistoryDataHandler));
 
-    // Has key = request to handle
-    // Value is true = is history data subscription
+    // Has key = request to handle; value is true = is history data subscription
     private static readonly IDictionary<PxHistoryRequestIdentifier, bool> SubscribedRequests
         = new Dictionary<PxHistoryRequestIdentifier, bool>();
 
-    public required TouchanceClient Client { get; init; }
+    internal required TouchanceClient Client { get; init; }
 
     private void SendHandshakeRequest(
         PxHistoryRequestIdentifier identifier,
@@ -111,7 +110,7 @@ public class HistoryDataHandler {
         );
     }
 
-    public HistoryEventArgs? GetHistoryData(PxHistoryReadyMessage message, CancellationToken cancellationToken) {
+    internal HistoryEventArgs? GetHistoryData(PxHistoryReadyMessage message, CancellationToken cancellationToken) {
         if (!message.IsReady) {
             Log.Warning("[{Identifier}] History data not ready ({Status})", message.IdentifierString, message.Status);
             return null;

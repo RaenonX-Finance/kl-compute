@@ -28,15 +28,6 @@ public class TouchanceClient : PxParseClient {
 
     private string? _sessionKeyInternal;
 
-    public TouchanceClient(CancellationToken cancellationToken) : base(true, cancellationToken) {
-        _historyDataHandler = new HistoryDataHandler { Client = this };
-        _subscriptionHandler = new SubscriptionHandler {
-            Client = this,
-            HistoryDataHandler = _historyDataHandler,
-            MinuteChangedHandler = new MinuteChangedHandler { Client = this }
-        };
-    }
-
     public string SessionKey {
         get {
             if (_sessionKeyInternal is null) {
@@ -45,6 +36,15 @@ public class TouchanceClient : PxParseClient {
 
             return _sessionKeyInternal;
         }
+    }
+
+    public TouchanceClient(CancellationToken cancellationToken) : base(true, cancellationToken) {
+        _historyDataHandler = new HistoryDataHandler { Client = this };
+        _subscriptionHandler = new SubscriptionHandler {
+            Client = this,
+            HistoryDataHandler = _historyDataHandler,
+            MinuteChangedHandler = new MinuteChangedHandler { Client = this }
+        };
     }
 
     public async Task Start() {

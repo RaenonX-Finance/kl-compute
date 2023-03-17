@@ -3,12 +3,12 @@
 namespace KL.Touchance.Handlers;
 
 
-public class MinuteChangedHandler {
+internal class MinuteChangedHandler {
     private readonly Dictionary<string, DateTime> _prevTimestamp = new();
 
-    public required TouchanceClient Client { get; init; }
+    internal required TouchanceClient Client { get; init; }
 
-    public void CheckMinuteChangedEvent(string symbol, DateTime timestamp) {
+    internal void CheckMinuteChangedEvent(string symbol, DateTime timestamp) {
         if (_prevTimestamp.TryGetValue(symbol, out var prevTimestamp) && prevTimestamp.Minute == timestamp.Minute) {
             return;
         }
