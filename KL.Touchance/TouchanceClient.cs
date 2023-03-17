@@ -87,7 +87,7 @@ public class TouchanceClient : PxParseClient {
     }
 
     private async Task Initialize() {
-        var sources = PxConfigController.Config.Sources
+        var sources = PxConfigController.Config.SourceList
             .Where(r => r is { Enabled: true, Source: PxSource.Touchance })
             .ToArray();
 
@@ -162,7 +162,7 @@ public class TouchanceClient : PxParseClient {
 
     private void SendRealtimeSubscriptionRequest(IEnumerable<string> touchanceSymbols) {
         foreach (var symbol in touchanceSymbols) {
-            if (!PxConfigController.Config.Sources
+            if (!PxConfigController.Config.SourceList
                     .First(r => r.ExternalSymbol == symbol && r.Source == PxSource.Touchance)
                     .EnableRealtime) {
                 continue;
@@ -178,7 +178,7 @@ public class TouchanceClient : PxParseClient {
         if (message.Data.Symbol != "TC.F.TWF.FITX") {
             // `TWF` symbols need manual re-subscription for the open before 8:45 AM (UTC +8)
             // according to Touchance Customer Service
-            var twfSymbols = PxConfigController.Config.Sources
+            var twfSymbols = PxConfigController.Config.SourceList
                 .Where(r => r.Source == PxSource.Touchance && r.ExternalSymbol.Contains("TWF"))
                 .Select(r => r.ExternalSymbol);
             SendHistorySubscriptionRequest(twfSymbols);
@@ -188,7 +188,7 @@ public class TouchanceClient : PxParseClient {
         // `message.Data.Symbol` is in the format of `TC.F.CME.NQ`,
         // but the symbol to subscribe needs to be `TC.F.CME.NQ.HOT`
         SendHistorySubscriptionRequest(
-            PxConfigController.Config.Sources
+            PxConfigController.Config.SourceList
                 .Where(r => r.Source == PxSource.Touchance && r.ExternalSymbol.Contains(message.Data.Symbol))
                 .Select(r => r.ExternalSymbol)
         );

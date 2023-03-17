@@ -140,7 +140,7 @@ public static class SrLevelComputer {
 
     public static IList<SrLevelDataModel> CalcLevels(IEnumerable<string> symbols) {
         return symbols
-            .Select(symbol => PxConfigController.Config.Sources.First(source => source.InternalSymbol == symbol))
+            .Select(symbol => PxConfigController.Config.Sources[symbol])
             .GroupBy(r => r.ProductCategory)
             .SelectMany(
                 r => CalcLevelsByProductCategory(

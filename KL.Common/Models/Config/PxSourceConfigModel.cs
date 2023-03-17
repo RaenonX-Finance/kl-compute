@@ -35,52 +35,63 @@ public record PxSourceConfigModel {
     [UsedImplicitly]
     public required string Name { get; init; }
 
-    public static PxSourceConfigModel[] GenerateDefault() {
-        return new[] {
-            new PxSourceConfigModel {
-                Source = PxSource.Touchance,
-                Enabled = true,
-                EnableRealtime = true,
-                InternalSymbol = "NQ",
-                ExternalSymbol = "TC.F.CME.NQ.HOT",
-                Name = "小那",
-                ProductCategory = ProductCategory.UsIndexFutures
-            },
-            new PxSourceConfigModel {
-                Source = PxSource.Touchance,
-                Enabled = true,
-                EnableRealtime = true,
-                InternalSymbol = "YM",
-                ExternalSymbol = "TC.F.CBOT.YM.HOT",
-                Name = "小道",
-                ProductCategory = ProductCategory.UsIndexFutures
-            },
-            new PxSourceConfigModel {
-                Source = PxSource.Touchance,
-                Enabled = false,
-                EnableRealtime = true,
-                InternalSymbol = "ES",
-                ExternalSymbol = "TC.F.CME.ES.HOT",
-                Name = "SP",
-                ProductCategory = ProductCategory.UsIndexFutures
-            },
-            new PxSourceConfigModel {
-                Source = PxSource.Touchance,
-                Enabled = false,
-                EnableRealtime = true,
-                InternalSymbol = "RTY",
-                ExternalSymbol = "TC.F.CME.RTY.HOT",
-                Name = "羅素",
-                ProductCategory = ProductCategory.UsIndexFutures
-            },
-            new PxSourceConfigModel {
-                Source = PxSource.Touchance,
-                Enabled = true,
-                EnableRealtime = false,
-                InternalSymbol = "FITX",
-                ExternalSymbol = "TC.F.TWF.FITX.HOT",
-                Name = "台指",
-                ProductCategory = ProductCategory.TaiwanIndexFutures
+    public static IDictionary<string, PxSourceConfigModel> GenerateDefault() {
+        return new Dictionary<string, PxSourceConfigModel> {
+            {
+                "NQ",
+                new PxSourceConfigModel {
+                    Source = PxSource.Touchance,
+                    Enabled = true,
+                    EnableRealtime = true,
+                    InternalSymbol = "NQ",
+                    ExternalSymbol = "TC.F.CME.NQ.HOT",
+                    Name = "小那",
+                    ProductCategory = ProductCategory.UsIndexFutures
+                }
+            }, {
+                "YM",
+                new PxSourceConfigModel {
+                    Source = PxSource.Touchance,
+                    Enabled = true,
+                    EnableRealtime = true,
+                    InternalSymbol = "YM",
+                    ExternalSymbol = "TC.F.CBOT.YM.HOT",
+                    Name = "小道",
+                    ProductCategory = ProductCategory.UsIndexFutures
+                }
+            }, {
+                "ES",
+                new PxSourceConfigModel {
+                    Source = PxSource.Touchance,
+                    Enabled = false,
+                    EnableRealtime = true,
+                    InternalSymbol = "ES",
+                    ExternalSymbol = "TC.F.CME.ES.HOT",
+                    Name = "SP",
+                    ProductCategory = ProductCategory.UsIndexFutures
+                }
+            }, {
+                "RTY",
+                new PxSourceConfigModel {
+                    Source = PxSource.Touchance,
+                    Enabled = false,
+                    EnableRealtime = true,
+                    InternalSymbol = "RTY",
+                    ExternalSymbol = "TC.F.CME.RTY.HOT",
+                    Name = "羅素",
+                    ProductCategory = ProductCategory.UsIndexFutures
+                }
+            }, {
+                "FITX",
+                new PxSourceConfigModel {
+                    Source = PxSource.Touchance,
+                    Enabled = true,
+                    EnableRealtime = false,
+                    InternalSymbol = "FITX",
+                    ExternalSymbol = "TC.F.TWF.FITX.HOT",
+                    Name = "台指",
+                    ProductCategory = ProductCategory.TaiwanIndexFutures
+                }
             }
         };
     }

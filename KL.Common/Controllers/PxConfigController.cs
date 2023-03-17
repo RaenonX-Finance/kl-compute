@@ -15,12 +15,6 @@ public static class PxConfigController {
 
     public static readonly int[] EmaPeriods = GetEmaPeriods();
 
-    public static readonly IDictionary<string, ProductCategory> SymbolToCategory
-        = Config.Sources.ToDictionary(
-            r => r.InternalSymbol,
-            r => r.ProductCategory
-        );
-
     private static PxConfigModel GetConfig() {
         var config = MongoConst.PxCalcConfig.AsQueryable().FirstOrDefault();
 
@@ -52,7 +46,7 @@ public static class PxConfigController {
 
     public static string GetInternalSymbol(string externalSymbol, PxSource source) {
         try {
-            return Config.Sources
+            return Config.SourceList
                 .First(r => r.ExternalSymbol == externalSymbol && r.Source == source)
                 .InternalSymbol;
         } catch (InvalidOperationException) {
@@ -66,11 +60,11 @@ public static class PxConfigController {
     }
 
     public static bool IsMarketOpened(string symbol) {
-        return Config.MarketSessionMap[SymbolToCategory[symbol]].Any(r => r.IsNowTradingSession());
+        return Config.MarketSessionMap[Config.Sources[symbol].ProductCategory].Any(r => r.IsNowTradingSession());
     }
 
     public static bool IsTimestampMarketDateCutoff(string symbol, DateTime timestamp) {
-        var cutoff = Config.MarketDateCutoffMap[SymbolToCategory[symbol]];
+        var cutoff = Config.MarketDateCutoffMap[Config.Sources[symbol].ProductCategory];
 
         return TimeOnly
             .FromDateTime(timestamp.ToTimezoneFromUtc(cutoff.Timezone))

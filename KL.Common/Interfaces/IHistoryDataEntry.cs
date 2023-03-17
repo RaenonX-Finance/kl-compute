@@ -21,7 +21,7 @@ public interface IHistoryDataEntry {
 
     public HistoryDataModel ToHistoryDataModel(string symbol, HistoryInterval interval) {
         var epochSecond = Timestamp.ToEpochSeconds();
-        var category = PxConfigController.SymbolToCategory[symbol];
+        var category = PxConfigController.Config.Sources[symbol].ProductCategory;
 
         return new HistoryDataModel {
             Timestamp = Timestamp,

@@ -44,7 +44,10 @@ public record PxConfigModel {
     public required PxCacheConfigModel Cache { get; init; }
 
     [UsedImplicitly]
-    public required PxSourceConfigModel[] Sources { get; init; }
+    // Storing as `Dictionary` for better setting update
+    public required IDictionary<string, PxSourceConfigModel> Sources { get; init; }
+
+    public IEnumerable<PxSourceConfigModel> SourceList => Sources.Values;
 
     public static PxConfigModel GenerateDefault() {
         return new PxConfigModel {
