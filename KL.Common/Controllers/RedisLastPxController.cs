@@ -9,8 +9,6 @@ namespace KL.Common.Controllers;
 
 internal record PxAtEpochMeta {
     public required string Key { get; init; }
-
-    public required long EpochSec { get; init; }
 }
 
 internal static class PxCloseDataExtension {
@@ -22,7 +20,7 @@ internal static class PxCloseDataExtension {
         var epochSec = (long)entry.Value.Score;
         var key = RedisLastPxController.KeyOfPxAtEpoch(symbol, epochSec);
 
-        return new PxAtEpochMeta { Key = key, EpochSec = epochSec };
+        return new PxAtEpochMeta { Key = key };
     }
 }
 
@@ -31,6 +29,7 @@ public static class RedisLastPxController {
 
     private const string LastMetaMinName = "Min";
     private const string LastMetaMaxName = "Max";
+    private const string LastMetaLastName = "Last";
     private const string LastMetaEpochMsName = "EpochMs";
     private const string LastMetaUpdatedName = "Updated";
 
@@ -82,7 +81,7 @@ public static class RedisLastPxController {
 
     private static async Task UpdatePx(IDatabaseAsync db, string symbol, double px) {
         var latestEpochEntry = (await db.SortedSetRangeByScoreAsync(symbol, order: Order.Descending, take: 1)).First();
-        
+
         if (!latestEpochEntry.TryParse(out long epochSec)) {
             throw new InvalidDataException($"Failed to parse epoch second of {symbol}");
         }
@@ -97,6 +96,7 @@ public static class RedisLastPxController {
             new[] {
                 new HashEntry(LastMetaMinName, px),
                 new HashEntry(LastMetaMaxName, px),
+                new HashEntry(LastMetaLastName, px),
                 new HashEntry(LastMetaEpochMsName, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()),
                 new HashEntry(LastMetaUpdatedName, true)
             }
@@ -115,16 +115,17 @@ public static class RedisLastPxController {
 
         var update = false;
         var nowEpochMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        var redisEntries = new List<HashEntry>();
+        var redisEntries = new List<HashEntry> { new(LastMetaLastName, px) };
 
-        // Using `else if` because this only sets `updated`
-        // If the 1st condition matches, the result of 2nd one doesn't matter
-        // Could use `||`, but it's harder to read
-        if (meta[LastMetaUpdatedName].TryParse(out int updatedInt) && Convert.ToBoolean(updatedInt)) {
-            update = true;
-        } else if (
-            meta[LastMetaEpochMsName].TryParse(out long epochMs)
-            && nowEpochMs - epochMs > PxConfigController.Config.Cache.MarketUpdateGapMs
+        if (
+            // Updated flag not popped yet
+            (meta[LastMetaUpdatedName].TryParse(out int updatedInt) && Convert.ToBoolean(updatedInt))
+            // Price changed and over certain period of time not updated
+            || (meta[LastMetaEpochMsName].TryParse(out long last)
+                && Math.Abs(last - px) > 1E-6
+                && meta[LastMetaEpochMsName].TryParse(out long epochMs)
+                && nowEpochMs - epochMs > PxConfigController.Config.Cache.MarketUpdateGapMs
+            )
         ) {
             update = true;
         }
@@ -191,12 +192,9 @@ public static class RedisLastPxController {
         var db = GetDatabase();
 
         var earliest = (await db.SortedSetPopAsync(symbol)).ToPxAtEpochMeta(symbol);
-        var latest = (await db.SortedSetPopAsync(symbol, Order.Descending)).ToPxAtEpochMeta(symbol);
 
-        if (!(await db.StringGetAsync(latest.Key)).TryParse(out double lastClose)) {
-            throw new InvalidDataException(
-                $"Failed to get the Px of {symbol} at {latest.EpochSec.ToDateTime().ToShortIso8601()}"
-            );
+        if (!(await db.HashGetAsync(KeyOfLastMeta(symbol), LastMetaLastName)).TryParse(out double lastClose)) {
+            throw new InvalidDataException($"Failed to get the Px of {symbol} from last meta");
         }
 
         await Task.WhenAll(
