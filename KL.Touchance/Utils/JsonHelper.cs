@@ -28,8 +28,8 @@ public static class JsonHelper {
             }
 
             return deserialized;
-        } catch (JsonException) {
-            Log.Error("Failed to deserialize message: {Message}", message);
+        } catch (JsonException ex) {
+            Log.Error(ex, "Failed to deserialize message: {Message}", message);
             throw;
         }
     }

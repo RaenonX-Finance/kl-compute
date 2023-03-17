@@ -49,8 +49,9 @@ public static class PxConfigController {
             return Config.SourceList
                 .First(r => r.ExternalSymbol == externalSymbol && r.Source == source)
                 .InternalSymbol;
-        } catch (InvalidOperationException) {
+        } catch (InvalidOperationException ex) {
             Log.Error(
+                ex,
                 "Unable to get internal symbol of {ExternalSymbol} sourced from {Source}",
                 externalSymbol,
                 source

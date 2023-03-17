@@ -104,13 +104,13 @@ internal class SubscriptionHandler {
 
             try {
                 await HandleSubscriptionMessage(messageJson, cancellationToken);
-            } catch (JsonException) {
+            } catch (JsonException ex) {
                 client.OnPxError(
                     new PxErrorEventArgs {
                         Message = "Unable to process JSON message"
                     }
                 );
-                Log.Error("Unable to process JSON message: {Message}", messageJson);
+                Log.Error(ex, "Unable to process JSON message: {Message}", messageJson);
                 throw;
             }
         }
