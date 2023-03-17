@@ -50,20 +50,23 @@ internal class HistoryDataHandler {
             isSubscription ? "Subscribing" : "Requesting"
         );
         _subscribedRequests[identifier] = isSubscription;
-        Client.RequestSocket.SendTcRequest<PxHistoryHandshakeRequest, PxHistoryHandshakeReply>(
+        Client.RequestSocket.SendTcRequest<PxHistoryHandshakeRequest, PxSubscribedReply>(
             new PxHistoryHandshakeRequest { SessionKey = Client.SessionKey, Param = identifier.ToHandshakeParams() }
         );
     }
 
     private void SendUnsubscribeRequest(PxHistoryRequestIdentifier identifier) {
-        // Print the log if `identifier` is really subscribed
+        // Print the log only if `identifier` is really subscribed
         if (_subscribedRequests.Remove(identifier)) {
-            Log.Information("[{Identifier}] Unsubscribe history data", ((IHistoryMetadata)identifier).ToIdentifier());
+            Log.Information(
+                "[{Identifier}] Unsubscribing history data",
+                ((IHistoryMetadata)identifier).ToIdentifier()
+            );
         }
 
         // Still sends `PxHistoryUnsubscribeRequest`
         // because the request of `identifier` could be initiated by other run
-        Client.RequestSocket.SendTcRequest<PxHistoryUnsubscribeRequest, PxHistoryUnsubscribeReply>(
+        Client.RequestSocket.SendTcRequest<PxHistoryUnsubscribeRequest, PxUnsubscribedReply>(
             new PxHistoryUnsubscribeRequest { SessionKey = Client.SessionKey, Param = identifier.ToHandshakeParams() }
         );
     }
@@ -74,7 +77,7 @@ internal class HistoryDataHandler {
                 SessionKey = Client.SessionKey,
                 Param = new PxHistoryDataRequestParams {
                     Symbol = message.Symbol,
-                    SubDataType = message.SubDataType,
+                    Interval = message.Interval,
                     StartTime = message.StartTime,
                     EndTime = message.EndTime,
                     QryIndex = queryIndex

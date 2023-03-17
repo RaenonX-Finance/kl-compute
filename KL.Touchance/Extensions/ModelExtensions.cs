@@ -15,7 +15,7 @@ public static class ModelExtensions {
 
         return new PxHistoryHandshakeRequestParams {
             Symbol = identifier.Symbol,
-            SubDataType = identifier.Interval.GetTouchanceType(),
+            Interval = identifier.Interval,
             StartTime = identifier.Start.ToTouchanceHourlyPrecision(),
             EndTime = identifier.End.ToTouchanceHourlyPrecision()
         };

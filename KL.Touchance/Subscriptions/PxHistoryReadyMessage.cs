@@ -22,8 +22,6 @@ public abstract record PxHistoryReadyMessage : TcSubscription, IHistoryMetadata 
 
     public bool IsReady => Status == "Ready";
 
-    public string SubDataType => Interval.GetTouchanceType();
-
     public PxHistoryRequestIdentifier Identifier =>
         _identifier ??= new PxHistoryRequestIdentifier {
             Start = Start,

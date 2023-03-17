@@ -1,4 +1,5 @@
 ﻿using JetBrains.Annotations;
+using KL.Touchance.Enums;
 
 namespace KL.Touchance.Requests;
 
@@ -14,4 +15,6 @@ public record LoginRequestParams {
 public record LoginRequest : TcRequest {
     [UsedImplicitly]
     public required LoginRequestParams Param { get; init; }
+
+    public override string Request => RequestType.Login;
 }

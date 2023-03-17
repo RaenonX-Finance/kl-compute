@@ -8,6 +8,6 @@ namespace KL.Touchance.Responses;
 [JsonDerivedType(typeof(LoginReply), RequestType.Login)]
 [JsonDerivedType(typeof(PongReply), RequestType.Pong)]
 [JsonDerivedType(typeof(SourceInfoReply), RequestType.SourceInfo)]
-[JsonDerivedType(typeof(PxHistoryHandshakeReply), RequestType.HistoryHandshake)]
-[JsonDerivedType(typeof(PxHistoryUnsubscribeReply), RequestType.HistoryUnsubscribe)]
+[JsonDerivedType(typeof(PxSubscribedReply), RequestType.PxSubscribe)]
+[JsonDerivedType(typeof(PxUnsubscribedReply), RequestType.PxUnsubscribe)]
 public abstract record TcReply;

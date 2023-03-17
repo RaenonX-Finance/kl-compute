@@ -14,6 +14,9 @@ public record PxSourceConfigModel {
     [UsedImplicitly]
     public required bool Enabled { get; init; }
 
+    [UsedImplicitly]
+    public required bool EnableRealtime { get; init; }
+
     /// <summary>
     ///     Symbol used internally for handling data.
     ///     This is used in various calculation processes, also stored in the database.
@@ -37,6 +40,7 @@ public record PxSourceConfigModel {
             new PxSourceConfigModel {
                 Source = PxSource.Touchance,
                 Enabled = true,
+                EnableRealtime = true,
                 InternalSymbol = "NQ",
                 ExternalSymbol = "TC.F.CME.NQ.HOT",
                 Name = "小那",
@@ -45,6 +49,7 @@ public record PxSourceConfigModel {
             new PxSourceConfigModel {
                 Source = PxSource.Touchance,
                 Enabled = true,
+                EnableRealtime = true,
                 InternalSymbol = "YM",
                 ExternalSymbol = "TC.F.CBOT.YM.HOT",
                 Name = "小道",
@@ -53,6 +58,7 @@ public record PxSourceConfigModel {
             new PxSourceConfigModel {
                 Source = PxSource.Touchance,
                 Enabled = false,
+                EnableRealtime = true,
                 InternalSymbol = "ES",
                 ExternalSymbol = "TC.F.CME.ES.HOT",
                 Name = "SP",
@@ -61,6 +67,7 @@ public record PxSourceConfigModel {
             new PxSourceConfigModel {
                 Source = PxSource.Touchance,
                 Enabled = false,
+                EnableRealtime = true,
                 InternalSymbol = "RTY",
                 ExternalSymbol = "TC.F.CME.RTY.HOT",
                 Name = "羅素",
@@ -69,6 +76,7 @@ public record PxSourceConfigModel {
             new PxSourceConfigModel {
                 Source = PxSource.Touchance,
                 Enabled = true,
+                EnableRealtime = false,
                 InternalSymbol = "FITX",
                 ExternalSymbol = "TC.F.TWF.FITX.HOT",
                 Name = "台指",

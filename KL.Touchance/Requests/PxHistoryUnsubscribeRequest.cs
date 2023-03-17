@@ -1,4 +1,4 @@
 ﻿namespace KL.Touchance.Requests;
 
 
-public record PxHistoryUnsubscribeRequest : PxHistoryRequest<PxHistoryRequestParams>;
+public record PxHistoryUnsubscribeRequest : PxUnsubscribeRequest<PxHistoryRequestParams>;

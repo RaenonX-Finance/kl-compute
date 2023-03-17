@@ -4,14 +4,16 @@ namespace KL.Touchance.Extensions;
 
 
 public static class DateTimeExtensions {
-    // ReSharper disable once StringLiteralTypo
     public static string ToTouchanceHourlyPrecision(this DateTime dateTime) {
         return dateTime.ToString("yyyyMMddHH");
     }
 
-    // ReSharper disable once StringLiteralTypo
     public static DateTime FromTouchanceHourlyPrecision(this string dateTime) {
         return dateTime.ToUtcDateTime("yyyyMMddHH");
+    }
+
+    public static DateTime FromTouchanceRealtime(this string dateTime) {
+        return dateTime.ToUtcDateTime("yyyyMMdd HHmmssffffff");
     }
 
     public static DateTime ToTouchanceDatetime(this DateTime dateTime) {

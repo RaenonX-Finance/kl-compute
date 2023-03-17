@@ -8,6 +8,7 @@ namespace KL.Touchance.Subscriptions;
 [JsonDerivedType(typeof(PingMessage), SubscriptionType.Ping)]
 [JsonDerivedType(typeof(PxHistoryMinuteReadyMessage), SubscriptionType.HistoryMinute)]
 [JsonDerivedType(typeof(PxHistoryDailyReadyMessage), SubscriptionType.HistoryDaily)]
+[JsonDerivedType(typeof(PxRealtimeMessage), SubscriptionType.Realtime)]
 [JsonDerivedType(typeof(SymbolClearMessage), SubscriptionType.SymbolClear)]
 [JsonDerivedType(typeof(MinuteChangeMessage), SubscriptionType.MinuteChange)]
 public abstract record TcSubscription;

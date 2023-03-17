@@ -1,6 +1,11 @@
-﻿namespace KL.Touchance.Requests;
+﻿using KL.Touchance.Extensions;
+
+namespace KL.Touchance.Requests;
 
 
-public record PxHistoryHandshakeRequestParams : PxHistoryRequestParams;
+public record PxHistoryHandshakeRequestParams : PxHistoryRequestParams {
 
-public record PxHistoryHandshakeRequest : PxHistoryRequest<PxHistoryHandshakeRequestParams>;
+    public override string SubDataType => Interval.GetTouchanceType();
+}
+
+public record PxHistoryHandshakeRequest : PxSubscribeRequest<PxHistoryHandshakeRequestParams>;
