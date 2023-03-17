@@ -20,4 +20,4 @@ public record GrpcConfigModel {
     
     [UsedImplicitly]
     public required GrpcTimeoutConfig Timeout { get; init; }
-};
+}

@@ -73,6 +73,7 @@ public record PxHistoryEntry : ITimestamp, IHistoryDataEntry {
 [JsonDerivedType(typeof(PxHistoryMinuteDataReply), HistoryDataType.Minute)]
 [JsonDerivedType(typeof(PxHistoryDailyDataReply), HistoryDataType.Daily)]
 public abstract record PxHistoryDataReply : TcReply {
+    [UsedImplicitly]
     public abstract HistoryInterval Interval { get; }
 
     [UsedImplicitly]

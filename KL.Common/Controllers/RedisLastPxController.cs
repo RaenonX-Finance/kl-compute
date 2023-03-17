@@ -50,7 +50,11 @@ public static class RedisLastPxController {
         return RedisHelper.GetDb(RedisDbId.LastPxAndMomentum);
     }
 
-    private static async Task UpdateEpochSec(IDatabaseAsync db, string symbol, IList<IHistoryDataEntry> entries) {
+    private static async Task UpdateEpochSec(
+        IDatabaseAsync db,
+        string symbol,
+        IEnumerable<IHistoryDataEntry> entries
+    ) {
         var epochSecEntries = entries
             .Select(
                 r => {
@@ -64,7 +68,7 @@ public static class RedisLastPxController {
         await db.SortedSetAddAsync(symbol, epochSecEntries);
     }
 
-    private static async Task UpdatePx(IDatabaseAsync db, string symbol, IList<IHistoryDataEntry> entries) {
+    private static async Task UpdatePx(IDatabaseAsync db, string symbol, IEnumerable<IHistoryDataEntry> entries) {
         var lastPxValues = entries.Select(
                 r => new KeyValuePair<RedisKey, RedisValue>(
                     KeyOfPxAtEpoch(symbol, r.Timestamp.ToEpochSeconds()),

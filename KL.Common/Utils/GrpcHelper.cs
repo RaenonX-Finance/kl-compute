@@ -68,15 +68,15 @@ public static class GrpcHelper {
                 cancellationToken: cancellationToken
             );
         } catch (RpcException e) {
-            switch (e.StatusCode) {
-                case StatusCode.DeadlineExceeded:
+            switch (e) {
+                case { StatusCode: StatusCode.DeadlineExceeded }:
                     Log.Warning(
                         "Call to gRPC `{GrpcCallEndpoint}` deadline exceeded (Timeout: {Timeout} ms)",
                         endpointName,
                         timeout
                     );
                     return;
-                case StatusCode.Unavailable:
+                case { StatusCode: StatusCode.Unavailable }:
                     Log.Warning(
                         e,
                         "gRPC server unavailable for `{GrpcCallEndpoint}` (Call body: {@GrpcCallBody})",

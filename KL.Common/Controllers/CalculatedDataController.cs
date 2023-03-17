@@ -108,7 +108,7 @@ public static class CalculatedDataController {
         Log.Information(
             "Session {Session}: Removed calculated data of {SymbolPeriodPair} in {Elapsed:0.00} ms",
             session.SessionId,
-            @symbolPeriodPair,
+            symbolPeriodPair,
             start.GetElapsedMs()
         );
     }

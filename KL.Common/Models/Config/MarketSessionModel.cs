@@ -1,16 +1,21 @@
-﻿using KL.Common.Enums;
+﻿using JetBrains.Annotations;
+using KL.Common.Enums;
 using KL.Common.Extensions;
 
 namespace KL.Common.Models.Config;
 
 
 public record MarketSessionModel {
+    [UsedImplicitly]
     public required TimeZoneInfo Timezone { get; init; }
 
+    [UsedImplicitly]
     public required DayOfWeek[] TradingDays { get; init; }
 
+    [UsedImplicitly]
     public required TimeOnly Start { get; init; }
 
+    [UsedImplicitly]
     public required TimeOnly End { get; init; }
     
     public bool IsNowTradingSession() {
