@@ -54,7 +54,7 @@ public abstract class PxParseClient {
 
     public event AsyncEventHandler<RealtimeEventArgs>? RealtimeDataUpdatedEventAsync;
 
-    private void OnRealtimeDataUpdated(RealtimeEventArgs e) {
+    public void OnRealtimeDataUpdated(RealtimeEventArgs e) {
         InvokeAsyncEvent(RealtimeDataUpdatedEventAsync, e);
     }
 

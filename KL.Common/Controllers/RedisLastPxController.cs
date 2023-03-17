@@ -80,6 +80,16 @@ public static class RedisLastPxController {
         await db.StringSetAsync(lastPxValues);
     }
 
+    private static async Task UpdatePx(IDatabaseAsync db, string symbol, double px) {
+        var latestEpochEntry = (await db.SortedSetRangeByScoreAsync(symbol, order: Order.Descending, take: 1)).First();
+        
+        if (!latestEpochEntry.TryParse(out long epochSec)) {
+            throw new InvalidDataException($"Failed to parse epoch second of {symbol}");
+        }
+
+        await db.StringSetAsync(KeyOfPxAtEpoch(symbol, epochSec), px);
+    }
+
     private static async Task CreateLastMeta(IDatabaseAsync db, string symbol, double px) {
         // Overwrites `lastMeta` - this is expected to call for every minute change
         await db.HashSetAsync(
@@ -162,6 +172,17 @@ public static class RedisLastPxController {
             UpdatePx(db, symbol, entries),
             UpdateEpochSec(db, symbol, entries),
             UpdateLastMeta(db, symbol, Convert.ToDouble(entries[^1].Close)),
+            db.SetAddAsync(SourcesInUseKey, symbol)
+        );
+    }
+
+    public static async Task Set(string symbol, decimal px) {
+        var db = GetDatabase();
+        var pxDouble = Convert.ToDouble(px);
+
+        await Task.WhenAll(
+            UpdatePx(db, symbol, pxDouble),
+            UpdateLastMeta(db, symbol, pxDouble),
             db.SetAddAsync(SourcesInUseKey, symbol)
         );
     }

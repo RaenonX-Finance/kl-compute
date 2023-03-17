@@ -25,7 +25,8 @@ public class HistoryEventArgs : EventArgs {
                 High = lastBar.High,
                 Low = lastBar.Low,
                 Close = lastBar.Close
-            }
+            },
+            IsTriggeredByHistory = true
         };
     }
 }

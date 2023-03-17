@@ -7,4 +7,6 @@ public class RealtimeEventArgs : EventArgs {
     public required string Symbol { get; init; }
 
     public required PxRealtimeModel Data { get; init; }
+
+    public required bool IsTriggeredByHistory { get; init; }
 }

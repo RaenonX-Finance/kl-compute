@@ -41,6 +41,10 @@ public static class PxCacheController {
 
         await RedisLastPxController.Set(symbol, entriesToProcess);
     }
+    
+    public static async Task Update(string symbol, decimal px) {
+        await RedisLastPxController.Set(symbol, px);
+    }
 
     public static async Task CreateNewBar(string symbol, DateTime timestamp) {
         var start = Stopwatch.GetTimestamp();

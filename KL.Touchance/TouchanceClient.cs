@@ -20,11 +20,11 @@ public class TouchanceClient : PxParseClient {
     public readonly RequestSocket RequestSocket
         = new($">tcp://127.0.0.1:{EnvironmentConfigHelper.Config.Source.Touchance.ZmqPort}");
 
-    private readonly SubscriptionHandler _subscriptionHandler;
-
     private readonly HistoryDataHandler _historyDataHandler;
 
     private readonly RealtimeHandler _realtimeHandler;
+    
+    private readonly SubscriptionHandler _subscriptionHandler;
 
     private static SemaphoreSlim? _semaphore;
 
@@ -42,12 +42,13 @@ public class TouchanceClient : PxParseClient {
 
     public TouchanceClient(CancellationToken cancellationToken) : base(true, cancellationToken) {
         _historyDataHandler = new HistoryDataHandler { Client = this };
+        _realtimeHandler = new RealtimeHandler { Client = this };
         _subscriptionHandler = new SubscriptionHandler {
             Client = this,
             HistoryDataHandler = _historyDataHandler,
+            RealtimeHandler = _realtimeHandler,
             MinuteChangedHandler = new MinuteChangedHandler { Client = this }
         };
-        _realtimeHandler = new RealtimeHandler { Client = this };
     }
 
     public async Task Start() {
@@ -99,7 +100,7 @@ public class TouchanceClient : PxParseClient {
         await OnInitCompleted(new InitCompletedEventArgs { SourcesInUse = sources });
 
         var symbols = sources.Select(r => r.ExternalSymbol).ToArray();
-        
+
         SendHistorySubscriptionRequest(symbols);
         SendRealtimeSubscriptionRequest(symbols);
     }
@@ -167,6 +168,7 @@ public class TouchanceClient : PxParseClient {
                     .EnableRealtime) {
                 continue;
             }
+
             _realtimeHandler.SubscribeRealtime(symbol);
         }
     }

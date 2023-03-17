@@ -18,6 +18,8 @@ internal class SubscriptionHandler {
 
     internal required TouchanceClient Client { get; init; }
 
+    internal required RealtimeHandler RealtimeHandler { get; init; }
+
     internal required HistoryDataHandler HistoryDataHandler { get; init; }
 
     public required MinuteChangedHandler MinuteChangedHandler { get; init; }
@@ -43,21 +45,30 @@ internal class SubscriptionHandler {
                     }
                 );
                 return;
+            case PxRealtimeMessage message:
+                var realtimeEventArgs = RealtimeHandler.ToEventArgs(message);
+                
+                if (realtimeEventArgs is null) {
+                    return;
+                }
+                
+                Client.OnRealtimeDataUpdated(realtimeEventArgs);
+                return;
             case PxHistoryReadyMessage message:
-                var eventArgs = HistoryDataHandler.GetHistoryData(message, cancellationToken);
+                var historyEventArgs = HistoryDataHandler.GetHistoryData(message, cancellationToken);
 
-                if (eventArgs is null) {
+                if (historyEventArgs is null) {
                     return;
                 }
 
-                await Client.OnHistoryDataUpdated(eventArgs);
+                await Client.OnHistoryDataUpdated(historyEventArgs);
 
                 // Minute change needs to be placed AFTER history event
                 // History event handler could add a new bar, which is to be used by minute changed event 
-                if (eventArgs.Data.Count > 0) {
+                if (historyEventArgs.Data.Count > 0) {
                     MinuteChangedHandler.CheckMinuteChangedEvent(
-                        eventArgs.Metadata.Symbol,
-                        eventArgs.Data[^1].Timestamp
+                        historyEventArgs.Metadata.Symbol,
+                        historyEventArgs.Data[^1].Timestamp
                     );
                 }
 

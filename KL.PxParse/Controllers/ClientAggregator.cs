@@ -102,7 +102,11 @@ public class ClientAggregator {
     }
 
     private async Task OnRealtimeDataUpdated(object? sender, RealtimeEventArgs e) {
-        // Not putting cache updating call here because this event is currently triggered on receiving history data
+        var start = Stopwatch.GetTimestamp();
+        
+        if (!e.IsTriggeredByHistory) {
+            await PxCacheController.Update(e.Symbol, e.Data.Close);
+        }
 
         var isPxUpdated = await PxCacheController.IsUpdated(e.Symbol);
 
@@ -114,9 +118,10 @@ public class ClientAggregator {
         }
 
         Log.Information(
-            "Realtime data of {Symbol} {WillHandle}",
+            "Realtime data of {Symbol} {WillHandle} in {Elapsed:0.00} ms",
             e.Symbol,
-            isPxUpdated ? "handled" : "skipped"
+            isPxUpdated ? "handled" : "skipped",
+            start.GetElapsedMs()
         );
     }
 

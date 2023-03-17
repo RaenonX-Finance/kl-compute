@@ -1,6 +1,8 @@
-﻿using KL.Touchance.Extensions;
+﻿using KL.Common.Events;
+using KL.Touchance.Extensions;
 using KL.Touchance.Requests;
 using KL.Touchance.Responses;
+using KL.Touchance.Subscriptions;
 using Serilog;
 
 namespace KL.Touchance.Handlers;
@@ -46,7 +48,11 @@ internal class RealtimeHandler {
         );
     }
 
-    internal bool IsSubscribing(string touchanceSymbol) {
+    private bool IsSubscribing(string touchanceSymbol) {
         return _subscribedSymbols.Contains(touchanceSymbol);
     }
+
+    internal RealtimeEventArgs? ToEventArgs(PxRealtimeMessage message) {
+        return IsSubscribing(message.Quote.Symbol) ? message.ToRealtimeEventArgs() : null;
+    } 
 }
