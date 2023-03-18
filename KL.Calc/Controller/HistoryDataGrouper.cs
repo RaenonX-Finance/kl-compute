@@ -39,7 +39,7 @@ public static class HistoryDataGrouper {
                     Open = r.Open,
                     High = r.High,
                     Low = r.Low,
-                    Close = r.Low,
+                    Close = r.Close,
                     Volume = r.Volume,
                     Symbol = r.Symbol,
                     Interval = r.Interval,

@@ -83,16 +83,6 @@ public static class CalcRequestHandler {
         );
     }
 
-    private static Task<
-        IDictionary<string, IDictionary<int, IEnumerable<GroupedHistoryDataModel>>>
-    > CalcPartialGetHistory(IList<string> symbols, IList<int> periodMins, int limit) {
-        return HistoryDataGrouper.GetGroupedDictOfLastN(
-            symbols,
-            periodMins,
-            limit
-        );
-    }
-
     private static async Task<
         Dictionary<(string Symbol, int Period), IEnumerable<CalculatedDataModel>>
     > CalcPartialGetCalculated(IEnumerable<(string Symbol, int Period)> combinations, int limit) {
@@ -143,7 +133,7 @@ public static class CalcRequestHandler {
             .SelectMany(symbol => periodMins.Select(period => (Symbol: symbol, Period: period)))
             .ToArray();
 
-        var historyDataTask = CalcPartialGetHistory(symbols, periodMins, limit);
+        var historyDataTask = HistoryDataGrouper.GetGroupedDictOfLastN(symbols, periodMins, limit);
         var calculatedDataTask = CalcPartialGetCalculated(combinations, limit);
 
         await Task.WhenAll(historyDataTask, calculatedDataTask);
