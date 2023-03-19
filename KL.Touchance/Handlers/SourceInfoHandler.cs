@@ -16,18 +16,21 @@ internal static class SourceInfoHandler {
         var sourceInfo = sources.Select(
             r => {
                 Log.Information("Checking source info of {Symbol}", r.ExternalSymbol);
-                var reply = client.RequestSocket.SendTcRequest<SourceInfoRequest, SourceInfoReply>(
-                    new SourceInfoRequest {
-                        SessionKey = client.SessionKey,
-                        Symbol = r.ExternalSymbol
-                    }
-                );
 
                 try {
+                    var reply = client.RequestSocket.SendTcRequest<SourceInfoRequest, SourceInfoReply>(
+                        new SourceInfoRequest {
+                            SessionKey = client.SessionKey,
+                            Symbol = r.ExternalSymbol
+                        }
+                    );
+
                     return new SourceInfoModel {
                         Symbol = r.InternalSymbol,
-                        MinTick = reply.Tick,
-                        Decimals = reply.Decimals
+                        MinTick = reply.ProductInfo.TickSize,
+                        Decimals = reply.ProductInfo.Decimals,
+                        ExchangeSymbol = reply.ProductInfo.ExchangeSymbol,
+                        ExchangeName = reply.ProductInfo.ExchangeName
                     };
                 } catch (InvalidOperationException e) {
                     Log.Error(

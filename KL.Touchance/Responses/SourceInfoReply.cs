@@ -1,38 +1,52 @@
-﻿using JetBrains.Annotations;
+﻿using System.Text.Json.Serialization;
+using JetBrains.Annotations;
+using KL.Touchance.Extensions;
 
 namespace KL.Touchance.Responses;
 
 
-public record SourceInfoReply : TcActionReply {
-    private Dictionary<string, string>? _productInfo;
-    private decimal? _tick;
+public record ProductInfo {
     private int? _decimals;
 
     [UsedImplicitly]
-    public required Dictionary<string, Dictionary<string, string>> Info { get; init; }
+    public decimal TickSize { get; init; }
 
-    private Dictionary<string, string> ProductInfo {
-        get { return _productInfo ??= Info.First(r => r.Key.Count(c => c == '.') == 3).Value; }
-    }
+    [UsedImplicitly]
+    public required int TicksPerPoint { get; init; }
 
-    public decimal Tick {
-        get { return _tick ??= Convert.ToDecimal(ProductInfo["TickSize"]); }
-    }
+    [UsedImplicitly]
+    [JsonPropertyName("EXG")]
+    public required string ExchangeSymbol { get; init; }
+
+    [UsedImplicitly]
+    [JsonPropertyName("EXGName.CHT")]
+    public required string ExchangeName { get; init; }
 
     public int Decimals {
         get {
             if (_decimals is not null) {
                 return (int)_decimals;
             }
-            
-            var ticksPerPoint = Convert.ToInt32(ProductInfo["TicksPerPoint"]);
-            
+
+            var ticksPerPoint = TicksPerPoint;
+
             var decimals = 0;
             while ((ticksPerPoint /= 10) >= 1) {
                 decimals++;
             }
-            
+
             return _decimals ??= decimals;
         }
+    }
+}
+
+public record SourceInfoReply : TcActionReply {
+    private ProductInfo? _productInfo;
+
+    [UsedImplicitly]
+    public required Dictionary<string, Dictionary<string, string>> Info { get; init; }
+
+    public ProductInfo ProductInfo {
+        get { return _productInfo ??= Info.First(r => r.Key.Count(c => c == '.') == 3).Value.ToModel<ProductInfo>(); }
     }
 }

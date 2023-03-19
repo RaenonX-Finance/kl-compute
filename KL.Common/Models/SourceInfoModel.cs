@@ -9,7 +9,13 @@ public record SourceInfoModel {
 
     [UsedImplicitly]
     public required decimal MinTick { get; init; }
-    
+
     [UsedImplicitly]
     public required int Decimals { get; init; }
+
+    [UsedImplicitly]
+    public required string ExchangeSymbol { get; init; }
+
+    [UsedImplicitly]
+    public required string ExchangeName { get; init; }
 }
