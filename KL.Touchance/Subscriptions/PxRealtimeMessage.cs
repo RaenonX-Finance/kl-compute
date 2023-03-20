@@ -18,13 +18,16 @@ public record PxRealtimeData {
 
     public decimal Low => LowPrice;
 
-    public decimal Close => string.IsNullOrEmpty(ClosingPrice) ? TradingPrice : Convert.ToDecimal(ClosingPrice);
+    public decimal Close => string.IsNullOrEmpty(ClosingPrice) ? 
+        string.IsNullOrEmpty(TradingPrice) ? 0 : Convert.ToDecimal(TradingPrice) : 
+        Convert.ToDecimal(ClosingPrice);
 
     [UsedImplicitly]
     public required string Symbol { get; init; }
 
     [UsedImplicitly]
-    public required decimal TradingPrice { get; init; }
+    // Taking string and convert later because the JSON value might be empty
+    public required string TradingPrice { get; init; }
 
     [UsedImplicitly]
     // Taking string and convert later because the JSON value might be empty
