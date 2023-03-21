@@ -6,11 +6,10 @@ using MongoDB.Bson.Serialization.Attributes;
 namespace KL.Common.Models;
 
 
+// To ignore `_id`
+[BsonIgnoreExtraElements]
 public class CalculatedDataModel : IGroupedHistoryDataModel {
     private decimal _close;
-
-    [UsedImplicitly]
-    public ObjectId Id { get; init; }
 
     [UsedImplicitly]
     public required int PeriodMin { get; init; }
