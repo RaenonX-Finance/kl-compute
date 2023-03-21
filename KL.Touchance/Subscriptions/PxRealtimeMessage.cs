@@ -18,9 +18,10 @@ public record PxRealtimeData {
 
     public decimal Low => string.IsNullOrEmpty(LowPrice) ? 0 : Convert.ToDecimal(LowPrice);
 
-    public decimal Close => string.IsNullOrEmpty(ClosingPrice) ? 
-        string.IsNullOrEmpty(TradingPrice) ? 0 : Convert.ToDecimal(TradingPrice) : 
-        Convert.ToDecimal(ClosingPrice);
+    // Needs to take `TradingPrice` first because `ClosingPrice` of FITX will not update during US market hours
+    public decimal Close => string.IsNullOrEmpty(TradingPrice) ? 
+        string.IsNullOrEmpty(ClosingPrice) ? 0 : Convert.ToDecimal(ClosingPrice) : 
+        Convert.ToDecimal(TradingPrice);
 
     [UsedImplicitly]
     public required string Symbol { get; init; }
