@@ -14,9 +14,9 @@ public record PxRealtimeData {
     // US futures use `ReferencePrice` as open instead
     public decimal Open => string.IsNullOrEmpty(OpeningPrice) ? ReferencePrice : Convert.ToDecimal(OpeningPrice);
 
-    public decimal High => HighPrice;
+    public decimal High => string.IsNullOrEmpty(HighPrice) ? 0 : Convert.ToDecimal(HighPrice);
 
-    public decimal Low => LowPrice;
+    public decimal Low => string.IsNullOrEmpty(LowPrice) ? 0 : Convert.ToDecimal(LowPrice);
 
     public decimal Close => string.IsNullOrEmpty(ClosingPrice) ? 
         string.IsNullOrEmpty(TradingPrice) ? 0 : Convert.ToDecimal(TradingPrice) : 
@@ -34,10 +34,12 @@ public record PxRealtimeData {
     public required string OpeningPrice { get; init; }
 
     [UsedImplicitly]
-    public required decimal HighPrice { get; init; }
+    // Taking string and convert later because the JSON value might be empty
+    public required string HighPrice { get; init; }
 
     [UsedImplicitly]
-    public required decimal LowPrice { get; init; }
+    // Taking string and convert later because the JSON value might be empty
+    public required string LowPrice { get; init; }
 
     [UsedImplicitly]
     // Taking string and convert later because the JSON value might be empty

@@ -105,6 +105,7 @@ public class ClientAggregator {
         var start = Stopwatch.GetTimestamp();
         
         if (!e.IsTriggeredByHistory) {
+            // Avoid duplicated cache update because `onHistory` handler also stores px to cache
             await PxCacheController.Update(e.Symbol, e.Data.Close);
         }
 
