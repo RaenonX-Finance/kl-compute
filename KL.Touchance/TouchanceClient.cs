@@ -101,8 +101,7 @@ public class TouchanceClient : PxParseClient {
 
         var symbols = sources.Select(r => r.ExternalSymbol).ToArray();
 
-        SendHistorySubscriptionRequest(symbols);
-        SendRealtimeSubscriptionRequest(symbols);
+        SendDataSubscriptionRequest(symbols);
     }
 
     private async Task InitializeHistoryData(IEnumerable<PxSourceConfigModel> sources) {
@@ -146,8 +145,22 @@ public class TouchanceClient : PxParseClient {
         _semaphore = null;
     }
 
-    private void SendHistorySubscriptionRequest(IEnumerable<string> touchanceSymbols) {
+    private void SendDataSubscriptionRequest(IEnumerable<string> touchanceSymbols) {
         foreach (var symbol in touchanceSymbols) {
+            var source = PxConfigController.Config.SourceList
+                .First(r => r.ExternalSymbol == symbol && r.Source == PxSource.Touchance);
+            
+            Log.Information("Skipped sending data subscription request of {Symbol}", symbol);
+            if (!source.Enabled) {
+                continue;
+            }
+            
+            if (source.EnableRealtime) {
+                Log.Information("Subscribing realtime data of {Symbol}", symbol);
+                _realtimeHandler.SubscribeRealtime(source.ExternalSymbol);
+            }
+            
+            Log.Information("Subscribing history data of {Symbol}", symbol);
             _historyDataHandler.SendHandshakeRequest(
                 symbol,
                 HistoryInterval.Minute,
@@ -161,18 +174,6 @@ public class TouchanceClient : PxParseClient {
         }
     }
 
-    private void SendRealtimeSubscriptionRequest(IEnumerable<string> touchanceSymbols) {
-        foreach (var symbol in touchanceSymbols) {
-            if (!PxConfigController.Config.SourceList
-                    .First(r => r.ExternalSymbol == symbol && r.Source == PxSource.Touchance)
-                    .EnableRealtime) {
-                continue;
-            }
-
-            _realtimeHandler.SubscribeRealtime(symbol);
-        }
-    }
-
     public void OnSymbolCleared(SymbolClearMessage message) {
         Log.Information("Received symbol clear for {Symbol}, resubscribing...", message.Data.Symbol);
 
@@ -183,13 +184,13 @@ public class TouchanceClient : PxParseClient {
             var twfSymbols = PxConfigController.Config.SourceList
                 .Where(r => r.Source == PxSource.Touchance && r.ExternalSymbol.Contains("TWF"))
                 .Select(r => r.ExternalSymbol);
-            SendHistorySubscriptionRequest(twfSymbols);
+            SendDataSubscriptionRequest(twfSymbols);
         }
 
         // Searching symbols to resubscribe because
         // `message.Data.Symbol` is in the format of `TC.F.CME.NQ`,
         // but the symbol to subscribe needs to be `TC.F.CME.NQ.HOT`
-        SendHistorySubscriptionRequest(
+        SendDataSubscriptionRequest(
             PxConfigController.Config.SourceList
                 .Where(r => r.Source == PxSource.Touchance && r.ExternalSymbol.Contains(message.Data.Symbol))
                 .Select(r => r.ExternalSymbol)
