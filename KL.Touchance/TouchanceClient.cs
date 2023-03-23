@@ -23,7 +23,7 @@ public class TouchanceClient : PxParseClient {
     private readonly HistoryDataHandler _historyDataHandler;
 
     private readonly RealtimeHandler _realtimeHandler;
-    
+
     private readonly SubscriptionHandler _subscriptionHandler;
 
     private static SemaphoreSlim? _semaphore;
@@ -149,17 +149,20 @@ public class TouchanceClient : PxParseClient {
         foreach (var symbol in touchanceSymbols) {
             var source = PxConfigController.Config.SourceList
                 .First(r => r.ExternalSymbol == symbol && r.Source == PxSource.Touchance);
-            
-            Log.Information("Skipped sending data subscription request of {Symbol}", symbol);
+
             if (!source.Enabled) {
+                Log.Information(
+                    "Skipped sending data subscription request of {Symbol} (source not enabled)",
+                    symbol
+                );
                 continue;
             }
-            
+
             if (source.EnableRealtime) {
                 Log.Information("Subscribing realtime data of {Symbol}", symbol);
                 _realtimeHandler.SubscribeRealtime(source.ExternalSymbol);
             }
-            
+
             Log.Information("Subscribing history data of {Symbol}", symbol);
             _historyDataHandler.SendHandshakeRequest(
                 symbol,
