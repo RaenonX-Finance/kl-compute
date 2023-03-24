@@ -1,26 +1,26 @@
 ﻿using System.Diagnostics;
 using KL.Common.Controllers;
+using KL.Common.Enums;
 using KL.Common.Events;
 using KL.Common.Extensions;
 using KL.Common.Grpc;
 using KL.Common.Interfaces;
 using KL.PxParse.Grpc;
+using KL.PxParse.Interfaces;
 using KL.Touchance;
 using ILogger = Serilog.ILogger;
 
 namespace KL.PxParse.Controllers;
 
 
-public class ClientAggregator {
+public class ClientAggregator : IClientAggregator {
     private static readonly ILogger Log = Serilog.Log.ForContext(typeof(ClientAggregator));
+
+    private readonly CancellationToken _cancellationToken = new CancellationTokenSource().Token;
 
     private readonly TouchanceClient _touchanceClient;
 
-    private readonly CancellationToken _cancellationToken;
-
-    public ClientAggregator(CancellationToken cancellationToken) {
-        _cancellationToken = cancellationToken;
-
+    public ClientAggregator() {
         _touchanceClient = new TouchanceClient(_cancellationToken);
 
         _touchanceClient.HistoryDataUpdatedEventAsync += OnHistoryDataUpdated;
@@ -35,7 +35,7 @@ public class ClientAggregator {
     }
 
     private async Task OnInitCompleted(object? sender, InitCompletedEventArgs e) {
-        await GrpcPxDataCaller.CalcAll(e.SourcesInUse.Select(r => r.InternalSymbol), _cancellationToken);
+        await GrpcPxDataCaller.CalcAll(e.Sources.Select(r => r.InternalSymbol), _cancellationToken);
 
         // --- Attaching these after the client has initialized ---
         // `OnMinuteChanged` might invoke before `GrpcPxDataCaller.CalcAll`.
@@ -103,7 +103,7 @@ public class ClientAggregator {
 
     private async Task OnRealtimeDataUpdated(object? sender, RealtimeEventArgs e) {
         var start = Stopwatch.GetTimestamp();
-        
+
         if (!e.IsTriggeredByHistory) {
             // Avoid duplicated cache update because `onHistory` handler also stores px to cache
             await PxCacheController.Update(e.Symbol, e.Data.Close);
@@ -154,5 +154,13 @@ public class ClientAggregator {
         Log.Information("Received error message: {Message}", e.Message);
 
         return Task.CompletedTask;
+    }
+
+    public Task<bool> Subscribe(IEnumerable<string> symbols) {
+        return _touchanceClient.InitializeSources(
+            PxConfigController.Config.SourceList
+                .Where(r => r is { Enabled: true, Source: PxSource.Touchance } && symbols.Contains(r.InternalSymbol))
+                .ToArray()
+        );
     }
 }

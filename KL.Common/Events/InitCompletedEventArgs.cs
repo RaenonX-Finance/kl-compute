@@ -4,5 +4,5 @@ namespace KL.Common.Events;
 
 
 public class InitCompletedEventArgs : EventArgs {
-    public required IList<PxSourceConfigModel> SourcesInUse { get; init; }
+    public required IList<PxSourceConfigModel> Sources { get; init; }
 }

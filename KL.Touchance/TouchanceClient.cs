@@ -1,6 +1,7 @@
 ﻿using KL.Common.Controllers;
 using KL.Common.Enums;
 using KL.Common.Events;
+using KL.Common.Extensions;
 using KL.Common.Models.Config;
 using KL.Common.Utils;
 using KL.Touchance.Extensions;
@@ -92,16 +93,24 @@ public class TouchanceClient : PxParseClient {
             .Where(r => r is { Enabled: true, Source: PxSource.Touchance })
             .ToArray();
 
+        await InitializeSources(sources);
+    }
+
+    public async Task<bool> InitializeSources(IList<PxSourceConfigModel> sources) {
+        if (sources.IsEmpty()) {
+            Log.Warning("Attempt to subscribe data but `sources` is empty");
+            return false;
+        }
+        
         await Task.WhenAll(
             this.CheckSourceInfo(sources),
             InitializeHistoryData(sources)
         );
 
-        await OnInitCompleted(new InitCompletedEventArgs { SourcesInUse = sources });
+        await OnInitCompleted(new InitCompletedEventArgs { Sources = sources });
 
-        var symbols = sources.Select(r => r.ExternalSymbol).ToArray();
-
-        SendDataSubscriptionRequest(symbols);
+        SendDataSubscriptionRequest(sources);
+        return true;
     }
 
     private async Task InitializeHistoryData(IEnumerable<PxSourceConfigModel> sources) {
@@ -145,27 +154,24 @@ public class TouchanceClient : PxParseClient {
         _semaphore = null;
     }
 
-    private void SendDataSubscriptionRequest(IEnumerable<string> touchanceSymbols) {
-        foreach (var symbol in touchanceSymbols) {
-            var source = PxConfigController.Config.SourceList
-                .First(r => r.ExternalSymbol == symbol && r.Source == PxSource.Touchance);
-
+    private void SendDataSubscriptionRequest(IEnumerable<PxSourceConfigModel> sources) {
+        foreach (var source in sources) {
             if (!source.Enabled) {
                 Log.Information(
                     "Skipped sending data subscription request of {Symbol} (source not enabled)",
-                    symbol
+                    source.ExternalSymbol
                 );
                 continue;
             }
 
             if (source.EnableRealtime) {
-                Log.Information("Subscribing realtime data of {Symbol}", symbol);
+                Log.Information("Subscribing realtime data of {Symbol}", source.ExternalSymbol);
                 _realtimeHandler.SubscribeRealtime(source.ExternalSymbol);
             }
 
-            Log.Information("Subscribing history data of {Symbol}", symbol);
+            Log.Information("Subscribing history data of {Symbol}", source.ExternalSymbol);
             _historyDataHandler.SendHandshakeRequest(
-                symbol,
+                source.ExternalSymbol,
                 HistoryInterval.Minute,
                 DateTime.UtcNow.AddHours(-PxConfigController.Config.HistorySubscription.InitialBufferHrs),
                 // Needs to be 2 because symbol clear happens before the trading hour starts
@@ -184,10 +190,10 @@ public class TouchanceClient : PxParseClient {
         if (message.Data.Symbol != "TC.F.TWF.FITX") {
             // `TWF` symbols need manual re-subscription for the open before 8:45 AM (UTC +8)
             // according to Touchance Customer Service
-            var twfSymbols = PxConfigController.Config.SourceList
-                .Where(r => r.Source == PxSource.Touchance && r.ExternalSymbol.Contains("TWF"))
-                .Select(r => r.ExternalSymbol);
-            SendDataSubscriptionRequest(twfSymbols);
+            SendDataSubscriptionRequest(
+                PxConfigController.Config.SourceList
+                    .Where(r => r.Source == PxSource.Touchance && r.ExternalSymbol.Contains("TWF"))
+            );
         }
 
         // Searching symbols to resubscribe because
@@ -196,7 +202,6 @@ public class TouchanceClient : PxParseClient {
         SendDataSubscriptionRequest(
             PxConfigController.Config.SourceList
                 .Where(r => r.Source == PxSource.Touchance && r.ExternalSymbol.Contains(message.Data.Symbol))
-                .Select(r => r.ExternalSymbol)
         );
     }
 

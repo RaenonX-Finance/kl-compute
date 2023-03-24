@@ -1,11 +1,12 @@
 ﻿{
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
-    "KL-Site-PxParse": {
+    "http": {
       "commandName": "Project",
       "dotnetRunMessages": true,
+      "launchBrowser": false,
       "environmentVariables": {
-        "DOTNET_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development"
       }
     }
   }

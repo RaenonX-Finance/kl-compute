@@ -14,6 +14,9 @@ public record GrpcTimeoutConfig {
 public record GrpcConfigModel {
     [UsedImplicitly]
     public required int CalcPort { get; init; }
+    
+    [UsedImplicitly]
+    public required int PxParsePort { get; init; }
 
     [UsedImplicitly]
     public required int SysPort { get; init; }
