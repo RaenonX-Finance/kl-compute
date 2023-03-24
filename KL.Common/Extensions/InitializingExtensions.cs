@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Reflection;
 using KL.Common.Utils;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;

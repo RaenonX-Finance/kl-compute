@@ -19,10 +19,10 @@ public static class LoggingHelper {
         + "{SourceContext,50} [{Level:u1}] {Message:lj}{NewLine}{Exception}";
 
     public static void Initialize(string? logDir, IHostEnvironment? environment) {
-        var appName = Assembly.GetCallingAssembly().GetName().FullName.Split(',')[0];
+        var appName = Assembly.GetEntryAssembly()?.FullName?.Split(',')[0] ?? "(Unmanaged)";
         var isDevelopment = environment?.IsDevelopment() ?? true;
         var isProduction = environment?.IsProduction() ?? false;
-        
+
         if (isDevelopment) {
             appName += ".Development";
         } else if (isProduction) {
