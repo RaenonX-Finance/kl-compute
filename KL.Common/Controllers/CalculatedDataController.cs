@@ -77,37 +77,34 @@ public static class CalculatedDataController {
         Log.Debug("Updated calculated data of {Symbol} at {DataTime}", calculatedData.Symbol, calculatedData.Date);
     }
 
-    public static async Task AddData(MongoSession session, IEnumerable<CalculatedDataModel> calculatedData) {
+    public static async Task AddData(IEnumerable<CalculatedDataModel> calculatedData) {
         var start = Stopwatch.GetTimestamp();
 
-        Log.Information("Session {Session}: To add calculated data", session.SessionId);
+        Log.Information("To add calculated data");
 
-        await MongoConst.PxCalculated.InsertManyAsync(session.Session, calculatedData);
+        await MongoConst.PxCalculated.InsertManyAsync(calculatedData);
 
         Log.Information(
-            "Session {Session}: Added calculated data in {Elapsed:0.00} ms",
-            session.SessionId,
+            "Added calculated data in {Elapsed:0.00} ms",
             start.GetElapsedMs()
         );
     }
 
-    public static async Task RemoveData(MongoSession session, IList<(string Symbol, int PeriodMin)> symbolPeriodPair) {
+    public static async Task RemoveData(IList<(string Symbol, int PeriodMin)> symbolPeriodPair) {
         var start = Stopwatch.GetTimestamp();
 
         Log.Information(
-            "Session {Session}: To remove calculated data of {@SymbolPeriodPair}",
-            session.SessionId,
+            "To remove calculated data of {@SymbolPeriodPair}",
             symbolPeriodPair
         );
 
         var filter = symbolPeriodPair
             .Distinct()
             .Select(pair => FilterBuilder.Where(r => r.Symbol == pair.Symbol && r.PeriodMin == pair.PeriodMin));
-        await MongoConst.PxCalculated.DeleteManyAsync(session.Session, FilterBuilder.Or(filter));
+        await MongoConst.PxCalculated.DeleteManyAsync(FilterBuilder.Or(filter));
 
         Log.Information(
-            "Session {Session}: Removed calculated data of {SymbolPeriodPair} in {Elapsed:0.00} ms",
-            session.SessionId,
+            "Removed calculated data of {SymbolPeriodPair} in {Elapsed:0.00} ms",
             symbolPeriodPair,
             start.GetElapsedMs()
         );

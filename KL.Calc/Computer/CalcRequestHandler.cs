@@ -6,7 +6,6 @@ using KL.Common.Enums;
 using KL.Common.Extensions;
 using KL.Common.Grpc;
 using KL.Common.Models;
-using KL.Common.Utils;
 using ILogger = Serilog.ILogger;
 
 namespace KL.Calc.Computer;
@@ -33,8 +32,7 @@ public static class CalcRequestHandler {
 
     private static async Task CalcAll(
         (string Symbol, int Period) c,
-        IDictionary<string, IDictionary<int, IEnumerable<GroupedHistoryDataModel>>> groupedDict,
-        MongoSession session
+        IDictionary<string, IDictionary<int, IEnumerable<GroupedHistoryDataModel>>> groupedDict
     ) {
         var grouped = groupedDict[c.Symbol][c.Period].ToArray();
 
@@ -47,8 +45,8 @@ public static class CalcRequestHandler {
             );
         }
 
-        var calculated = (await HistoryDataComputer.CalcAll(grouped, c.Period)).ToArray();
-        await CalculatedDataController.AddData(session, calculated);
+        Log.Information("Calculating data of {Symbol} @ {Period} from `CalcAll`", c.Symbol, c.Period);
+        await CalculatedDataController.AddData(await HistoryDataComputer.CalcAll(grouped, c.Period));
     }
 
     public static async Task CalcAll(IList<string> symbols, CancellationToken cancellationToken) {
@@ -62,17 +60,24 @@ public static class CalcRequestHandler {
             .SelectMany(symbol => periodMins.Select(period => (Symbol: symbol, Period: period)))
             .ToArray();
 
-        using var session = await MongoSession.Create();
+        await CalculatedDataController.RemoveData(combinations);
 
-        await CalculatedDataController.RemoveData(session, combinations);
-        // ReSharper disable once AccessToDisposedClosure
-        await Task.WhenAll(
-            combinations
-                .Select(r => CalcAll(r, groupedDict, session))
-                .Concat(CalcGlobal(symbols))
-        );
+        // Calculating data one-by-one because it stores the data after calculation,
+        // and simultaneous data storing causes Mongo write conflict
+        foreach (var combination in combinations) {
+            if (cancellationToken.IsCancellationRequested) {
+                Log.Warning(
+                    "Cancelling `CalcAll` operation for {Symbol} @ {Period}",
+                    combination.Symbol,
+                    combination.Period
+                );
+                return;
+            }
 
-        await session.Session.CommitTransactionAsync(cancellationToken);
+            await CalcAll(combination, groupedDict);
+        }
+
+        await Task.WhenAll(CalcGlobal(symbols));
 
         GrpcSystemEventCaller.OnCalculatedAsync(symbols, cancellationToken);
 
