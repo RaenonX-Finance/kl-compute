@@ -109,7 +109,7 @@ public class TouchanceClient : PxParseClient {
 
         await OnInitCompleted(new InitCompletedEventArgs { Sources = sources });
 
-        SendDataSubscriptionRequest(sources);
+        await SendDataSubscriptionRequest(sources);
         return true;
     }
 
@@ -124,7 +124,7 @@ public class TouchanceClient : PxParseClient {
             // Request all history data
             foreach (var source in sources) {
                 await _semaphore.WaitAsync();
-                _historyDataHandler.SendHandshakeRequest(
+                await _historyDataHandler.SendHandshakeRequest(
                     source.ExternalSymbol,
                     HistoryInterval.Minute,
                     DateTime.UtcNow.AddDays(-PxConfigController.Config.InitDataBacktrackDays[HistoryInterval.Minute]),
@@ -138,7 +138,7 @@ public class TouchanceClient : PxParseClient {
                 }
 
                 await _semaphore.WaitAsync();
-                _historyDataHandler.SendHandshakeRequest(
+                await _historyDataHandler.SendHandshakeRequest(
                     source.ExternalSymbol,
                     HistoryInterval.Daily,
                     DateTime.UtcNow.AddDays(-PxConfigController.Config.InitDataBacktrackDays[HistoryInterval.Daily]),
@@ -154,7 +154,7 @@ public class TouchanceClient : PxParseClient {
         _semaphore = null;
     }
 
-    private void SendDataSubscriptionRequest(IEnumerable<PxSourceConfigModel> sources) {
+    private async Task SendDataSubscriptionRequest(IEnumerable<PxSourceConfigModel> sources) {
         foreach (var source in sources) {
             if (!source.Enabled) {
                 Log.Information(
@@ -170,7 +170,7 @@ public class TouchanceClient : PxParseClient {
             }
 
             Log.Information("Subscribing history data of {Symbol}", source.ExternalSymbol);
-            _historyDataHandler.SendHandshakeRequest(
+            await _historyDataHandler.SendHandshakeRequest(
                 source.ExternalSymbol,
                 HistoryInterval.Minute,
                 DateTime.UtcNow.AddHours(-PxConfigController.Config.HistorySubscription.InitialBufferHrs),
@@ -183,14 +183,14 @@ public class TouchanceClient : PxParseClient {
         }
     }
 
-    public void OnSymbolCleared(SymbolClearMessage message) {
+    public async Task OnSymbolCleared(SymbolClearMessage message) {
         Log.Information("Received symbol clear for {Symbol}, resubscribing...", message.Data.Symbol);
 
         // Should not try to resubscribe FITX in same symbol clear event
         if (message.Data.Symbol != "TC.F.TWF.FITX") {
             // `TWF` symbols need manual re-subscription for the open before 8:45 AM (UTC +8)
             // according to Touchance Customer Service
-            SendDataSubscriptionRequest(
+            await SendDataSubscriptionRequest(
                 PxConfigController.Config.SourceList
                     .Where(r => r.Source == PxSource.Touchance && r.ExternalSymbol.Contains("TWF"))
             );
@@ -199,7 +199,7 @@ public class TouchanceClient : PxParseClient {
         // Searching symbols to resubscribe because
         // `message.Data.Symbol` is in the format of `TC.F.CME.NQ`,
         // but the symbol to subscribe needs to be `TC.F.CME.NQ.HOT`
-        SendDataSubscriptionRequest(
+        await SendDataSubscriptionRequest(
             PxConfigController.Config.SourceList
                 .Where(r => r.Source == PxSource.Touchance && r.ExternalSymbol.Contains(message.Data.Symbol))
         );

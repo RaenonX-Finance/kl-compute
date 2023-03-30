@@ -22,22 +22,66 @@ internal class HistoryDataHandler {
 
     internal required TouchanceClient Client { get; init; }
 
-    internal void SendHandshakeRequest(
+    internal async Task SendHandshakeRequest(
         string touchanceSymbol,
         HistoryInterval interval,
         DateTime start,
         DateTime end,
         bool isSubscription
     ) {
-        SendHandshakeRequest(
-            new PxHistoryRequestIdentifier {
-                Symbol = touchanceSymbol,
-                Interval = interval,
-                Start = start,
-                End = end
-            },
-            isSubscription
+        Log.Information(
+            "Sending history data handshake to {Action} {Symbol} @ {Interval}: {Start} ~ {End}",
+            isSubscription ? "subscribe" : "request",
+            touchanceSymbol,
+            interval,
+            start,
+            end
         );
+
+        var dataRange = await HistoryDataController.GetStoredDataRange(
+            PxConfigController.GetInternalSymbol(touchanceSymbol, PxSource.Touchance),
+            interval
+        );
+
+        if (start < dataRange?.Start) {
+            Log.Information(
+                "Missing history of {Symbol} @ {Interval} from {Start} to {End}",
+                touchanceSymbol,
+                interval,
+                start,
+                dataRange.Value.Start
+            );
+            SendHandshakeRequest(
+                new PxHistoryRequestIdentifier {
+                    Symbol = touchanceSymbol,
+                    Interval = interval,
+                    Start = start,
+                    // Add additional 1 hour to guarantee data range overlap
+                    End = dataRange.Value.Start.AddHours(1)
+                },
+                isSubscription
+            );
+        }
+
+        if (end > dataRange?.End) {
+            Log.Information(
+                "Missing history of {Symbol} @ {Interval} from {Start} to {End}",
+                touchanceSymbol,
+                interval,
+                dataRange.Value.End.AddHours(-1),
+                end
+            );
+            SendHandshakeRequest(
+                new PxHistoryRequestIdentifier {
+                    Symbol = touchanceSymbol,
+                    Interval = interval,
+                    // Move back additional 1 hour to guarantee data range overlap
+                    Start = dataRange.Value.End.AddHours(-1),
+                    End = end
+                },
+                isSubscription
+            );
+        }
     }
 
     private void SendHandshakeRequest(PxHistoryRequestIdentifier identifier, bool isSubscription) {

@@ -81,7 +81,7 @@ internal class SubscriptionHandler {
                 // causing minute freeze in calculated data, but not on history data
                 return;
             case SymbolClearMessage message:
-                Client.OnSymbolCleared(message);
+                await Client.OnSymbolCleared(message);
                 return;
             default:
                 Log.Warning("Unhandled subscription message: {Message}", messageJson);

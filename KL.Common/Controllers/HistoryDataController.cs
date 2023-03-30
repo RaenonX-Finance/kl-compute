@@ -1,4 +1,5 @@
-﻿using KL.Common.Enums;
+﻿using System.Linq.Expressions;
+using KL.Common.Enums;
 using KL.Common.Extensions;
 using KL.Common.Models;
 using KL.Common.Utils;
@@ -61,6 +62,41 @@ public static class HistoryDataController {
         return MongoConst.PxHistory.AsQueryable()
             .Where(r => symbols.Contains(r.Symbol) && timestamps.Contains(r.Timestamp))
             .OrderByDescending(r => r.Timestamp);
+    }
+
+    public static async Task<DateTimeRangeModel?> GetStoredDataRange(string symbol, HistoryInterval interval) {
+        Log.Information("Requesting available data range of {Symbol} @ {Interval}", symbol, interval);
+
+        Expression<Func<HistoryDataModel, bool>> filter = r => r.Symbol == symbol && r.Interval == interval;
+        Expression<Func<HistoryDataModel, object>> sort = r => r.Timestamp;
+
+        try { 
+            var range = await Task.WhenAll(
+                MongoConst.PxHistory
+                    .Find(filter)
+                    .SortBy(sort)
+                    .Limit(1)
+                    .SingleAsync(),
+                MongoConst.PxHistory
+                    .Find(filter)
+                    .SortByDescending(sort)
+                    .Limit(1)
+                    .SingleAsync()
+            );
+
+            var start = range[0];
+            var end = range[1];
+
+            return new DateTimeRangeModel {
+                Start = start.Timestamp,
+                End = end.Timestamp
+            };
+        } catch (InvalidOperationException e) {
+            if (e.Message == "Sequence contains no elements") {
+                return null;
+            }
+            throw;
+        }
     }
 
     public static async Task UpdateAll(
