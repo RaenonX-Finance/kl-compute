@@ -12,12 +12,10 @@ public class PxDataService : PxData.PxDataBase {
         _logger = logger;
     }
 
-    public override async Task<PxCalcReply> CalcAll(PxCalcRequestMulti request, ServerCallContext context) {
+    public override async Task CalcAll(PxCalcRequestMulti request, IServerStreamWriter<PxCalcReply> responseStream, ServerCallContext context) {
         _logger.LogInformation("Received gRPC request to calculate all data: {Symbols}", request.Symbols);
 
-        await CalcRequestHandler.CalcAll(request.Symbols, context.CancellationToken);
-
-        return new PxCalcReply { Message = "Done" };
+        await CalcRequestHandler.CalcAll(request.Symbols, responseStream, context.CancellationToken);
     }
 
     public override async Task<PxCalcReply> CalcPartial(PxCalcRequestMulti request, ServerCallContext context) {

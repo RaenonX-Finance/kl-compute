@@ -41,7 +41,7 @@ public class GrpcPxDataCaller {
     public static async Task CalcAll(IEnumerable<string> symbols, CancellationToken cancellationToken) {
         var start = Stopwatch.GetTimestamp();
 
-        const string endpointName = nameof(Client.CalcAllAsync);
+        const string endpointName = nameof(Client.CalcAll);
 
         var request = new PxCalcRequestMulti();
         request.Symbols.AddRange(symbols);
@@ -51,8 +51,13 @@ public class GrpcPxDataCaller {
             return;
         }
 
-        await GrpcHelper.CallWithDeadline(
-            Client.CalcAllAsync,
+        await GrpcHelper.ServerStream(
+            Client.CalcAll,
+            reply => Log.Information(
+                "gRPC stream message of {GrpcCallEndpoint}: {Message}",
+                endpointName,
+                reply.Message
+            ),
             request,
             endpointName,
             cancellationToken,

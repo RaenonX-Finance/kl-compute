@@ -9,7 +9,7 @@ public static class GrpcHelper {
 
     private static readonly ChronoGate<string> ChronoGate = new();
 
-    public delegate AsyncUnaryCall<TReply> GrpcCall<in TRequest, TReply>(
+    public delegate AsyncUnaryCall<TReply> GrpcUnaryCall<in TRequest, TReply>(
         TRequest request,
         Metadata? metadata = null,
         DateTime? deadline = null,
@@ -17,7 +17,7 @@ public static class GrpcHelper {
     );
 
     public static Task CallWithDeadline<TRequest, TReply>(
-        GrpcCall<TRequest, TReply> grpcCall,
+        GrpcUnaryCall<TRequest, TReply> grpcCall,
         TRequest request,
         string endpointName,
         CancellationToken cancellationToken,
@@ -36,7 +36,7 @@ public static class GrpcHelper {
     }
 
     private static async Task CallWithDeadline<TRequest, TReply>(
-        GrpcCall<TRequest, TReply> grpcCall,
+        GrpcUnaryCall<TRequest, TReply> grpcCall,
         TRequest request,
         string endpointName,
         bool isFireAndForget,
@@ -45,7 +45,7 @@ public static class GrpcHelper {
         int timeoutExtension = 0
     ) {
         Log.Information(
-            "Calling gRPC `{GrpcCallEndpoint}` {GrpcCallType}",
+            "Calling gRPC unary `{GrpcCallEndpoint}` {GrpcCallType}",
             endpointName,
             isFireAndForget ? "in fire and forget" : "asynchronously"
         );
@@ -71,7 +71,7 @@ public static class GrpcHelper {
             switch (e) {
                 case { StatusCode: StatusCode.DeadlineExceeded }:
                     Log.Warning(
-                        "Call to gRPC `{GrpcCallEndpoint}` deadline exceeded (Timeout: {Timeout} ms)",
+                        "Unary call to gRPC `{GrpcCallEndpoint}` deadline exceeded (Timeout: {Timeout} ms)",
                         endpointName,
                         timeout
                     );
@@ -97,7 +97,7 @@ public static class GrpcHelper {
     }
 
     public static void CallWithDeadlineAsync<TRequest, TReply>(
-        GrpcCall<TRequest, TReply> grpcCall,
+        GrpcUnaryCall<TRequest, TReply> grpcCall,
         TRequest request,
         string endpointName,
         CancellationToken cancellationToken,
@@ -124,5 +124,83 @@ public static class GrpcHelper {
             },
             cancellationToken
         );
+    }
+
+    public delegate AsyncServerStreamingCall<TReply> GrpcServerStreamCall<in TRequest, TReply>(
+        TRequest request,
+        CallOptions options
+    );
+    
+    public delegate void OnGrpcStreamReply<in TReply>(TReply reply);
+
+    public static async Task ServerStream<TRequest, TReply>(
+        GrpcServerStreamCall<TRequest, TReply> grpcCall,
+        OnGrpcStreamReply<TReply> onReply,
+        TRequest request,
+        string endpointName,
+        CancellationToken cancellationToken,
+        bool useTimeout = true,
+        int timeoutExtension = 0
+    ) {
+        Log.Information("Calling gRPC server stream `{GrpcCallEndpoint}`", endpointName);
+
+        var timeout = EnvironmentConfigHelper.Config.Grpc.Timeout.Default + timeoutExtension;
+
+        if (useTimeout && !ChronoGate.IsGateOpened(endpointName, timeout, out var nextOpen)) {
+            Log.Warning(
+                "`{GrpcCallEndpoint}` still in cooldown, next available call at {GrpcGateAllowTime}",
+                endpointName,
+                nextOpen
+            );
+            return;
+        }
+
+        try {
+            using var streamingCall = grpcCall(
+                request,
+                new CallOptions(
+                    deadline: useTimeout ? DateTime.UtcNow.AddMilliseconds(timeout) : null,
+                    cancellationToken: cancellationToken
+                )
+            );
+            
+            await foreach (var reply in streamingCall.ResponseStream.ReadAllAsync(cancellationToken: cancellationToken)) {
+                onReply(reply);
+            }
+        } catch (RpcException e) {
+            switch (e) {
+                case { StatusCode: StatusCode.DeadlineExceeded }:
+                    Log.Warning(
+                        "Server streaming call to gRPC `{GrpcCallEndpoint}` deadline exceeded (Timeout: {Timeout} ms)",
+                        endpointName,
+                        timeout
+                    );
+                    return;
+                case { StatusCode: StatusCode.Unavailable }:
+                    Log.Warning(
+                        e,
+                        "gRPC server unavailable for `{GrpcCallEndpoint}` (Call body: {@GrpcCallBody})",
+                        endpointName,
+                        request
+                    );
+                    return;
+                case { StatusCode: StatusCode.Cancelled }:
+                    Log.Warning(
+                        e,
+                        "gRPC server stream call cancelled for `{GrpcCallEndpoint}` (Call body: {@GrpcCallBody})",
+                        endpointName,
+                        request
+                    );
+                    return;
+                default:
+                    Log.Error(
+                        e,
+                        "Error on gRPC call to `{GrpcCallEndpoint}` (Call body: {@GrpcCallBody})",
+                        endpointName,
+                        request
+                    );
+                    throw;
+            }
+        }
     }
 }

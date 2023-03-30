@@ -6,6 +6,7 @@ using KL.Common.Enums;
 using KL.Common.Extensions;
 using KL.Common.Grpc;
 using KL.Common.Models;
+using KL.Proto;
 using ILogger = Serilog.ILogger;
 
 namespace KL.Calc.Computer;
@@ -49,7 +50,15 @@ public static class CalcRequestHandler {
         await CalculatedDataController.AddData(await HistoryDataComputer.CalcAll(grouped, c.Period));
     }
 
-    public static async Task CalcAll(IList<string> symbols, CancellationToken cancellationToken) {
+    public static async Task CalcAll(
+        IList<string> symbols,
+        IServerStreamWriter<PxCalcReply> responseStream,
+        CancellationToken cancellationToken
+    ) {
+        await responseStream.WriteAsync(
+            new PxCalcReply { Message = $"Requesting history data of {symbols} for calculation" },
+            cancellationToken
+        );
         var periodMins = PxConfigController.Config.Periods.Select(r => r.PeriodMin).ToArray();
         var groupedDict = await HistoryDataGrouper.GetGroupedDictOfAll(
             symbols,
@@ -60,6 +69,10 @@ public static class CalcRequestHandler {
             .SelectMany(symbol => periodMins.Select(period => (Symbol: symbol, Period: period)))
             .ToArray();
 
+        await responseStream.WriteAsync(
+            new PxCalcReply { Message = $"Removing history data of {symbols}" },
+            cancellationToken
+        );
         await CalculatedDataController.RemoveData(combinations);
 
         // Calculating data one-by-one because it stores the data after calculation,
@@ -74,13 +87,26 @@ public static class CalcRequestHandler {
                 return;
             }
 
+            await responseStream.WriteAsync(
+                new PxCalcReply {
+                    Message = $"Calculating history data of {combination.Symbol} @ {combination.Period}"
+                },
+                cancellationToken
+            );
             await CalcAll(combination, groupedDict);
         }
 
+        await responseStream.WriteAsync(
+            new PxCalcReply {
+                Message = $"Performing global calculation tasks of {symbols}"
+            },
+            cancellationToken
+        );
         await Task.WhenAll(CalcGlobal(symbols));
 
         GrpcSystemEventCaller.OnCalculatedAsync(symbols, cancellationToken);
 
+        await responseStream.WriteAsync(new PxCalcReply { Message = "Done calculating all data" }, cancellationToken);
         Log.Information(
             "Completed indicator calculation of calc all request of {@Symbols} x {@Periods}",
             symbols,
