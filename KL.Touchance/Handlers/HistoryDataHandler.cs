@@ -43,7 +43,27 @@ internal class HistoryDataHandler {
             interval
         );
 
-        if (start < dataRange?.Start) {
+        if (dataRange is null) {
+            Log.Information(
+                "Missing all history of {Symbol} @ {Interval} from {Start} to {End}",
+                touchanceSymbol,
+                interval,
+                start,
+                end
+            );
+            SendHandshakeRequest(
+                new PxHistoryRequestIdentifier {
+                    Symbol = touchanceSymbol,
+                    Interval = interval,
+                    Start = start,
+                    End = end
+                },
+                isSubscription
+            );
+            return;
+        }
+
+        if (start < dataRange.Value.Start) {
             Log.Information(
                 "Missing history of {Symbol} @ {Interval} from {Start} to {End}",
                 touchanceSymbol,
@@ -63,7 +83,7 @@ internal class HistoryDataHandler {
             );
         }
 
-        if (end > dataRange?.End) {
+        if (end > dataRange.Value.End) {
             Log.Information(
                 "Missing history of {Symbol} @ {Interval} from {Start} to {End}",
                 touchanceSymbol,
