@@ -37,9 +37,13 @@ public class ClientAggregator : IClientAggregator {
     private async Task OnInitCompleted(object? sender, InitCompletedEventArgs e) {
         await GrpcPxDataCaller.CalcAll(e.Sources.Select(r => r.InternalSymbol), _cancellationToken);
 
-        // --- Attaching these after the client has initialized ---
-        // `OnMinuteChanged` might invoke before `GrpcPxDataCaller.CalcAll`.
-        // When this happen, `OnMinuteChanged` might not have data to calculate because calculated data is unavailable.
+        // --- Attaching event handlers after the client has initialized ---
+        // `OnMinuteChanged` might invoke before `GrpcPxDataCaller.CalcAll`
+        // if data fetch is still in progress but minute changed
+        // When this happen, `OnMinuteChanged` might not have data to calculate because calculated data is unavailable
+        // --- Remove then add back to avoid duplicated event handling ---
+        // If `subscribe` is called, `OnInitCompleted` is also called, so the event handler might be hooked twice
+        _touchanceClient.MinuteChangeEventAsync -= OnMinuteChanged;
         _touchanceClient.MinuteChangeEventAsync += OnMinuteChanged;
     }
 
