@@ -56,7 +56,7 @@ public static class CalcRequestHandler {
         CancellationToken cancellationToken
     ) {
         await responseStream.WriteAsync(
-            new PxCalcReply { Message = $"Requesting history data of {symbols} for calculation" },
+            new PxCalcReply { Message = $"Requesting grouped history data of {symbols} for calculation" },
             cancellationToken
         );
         var periodMins = PxConfigController.Config.Periods.Select(r => r.PeriodMin).ToArray();
@@ -70,7 +70,7 @@ public static class CalcRequestHandler {
             .ToArray();
 
         await responseStream.WriteAsync(
-            new PxCalcReply { Message = $"Removing history data of {symbols}" },
+            new PxCalcReply { Message = $"Removing calculated data of {symbols}" },
             cancellationToken
         );
         await CalculatedDataController.RemoveData(combinations);
@@ -104,7 +104,7 @@ public static class CalcRequestHandler {
         );
         await Task.WhenAll(CalcGlobal(symbols));
 
-        GrpcSystemEventCaller.OnCalculatedAsync(symbols, cancellationToken);
+        GrpcSystemEventCaller.OnCalculatedAsync(symbols, $"CalcAll of `{symbols}` completed", cancellationToken);
 
         await responseStream.WriteAsync(new PxCalcReply { Message = "Done calculating all data" }, cancellationToken);
         Log.Information(
@@ -178,7 +178,7 @@ public static class CalcRequestHandler {
                 .Concat(CalcGlobal(symbols))
         );
 
-        GrpcSystemEventCaller.OnCalculatedAsync(symbols, cancellationToken);
+        GrpcSystemEventCaller.OnCalculatedAsync(symbols, $"CalcPartial of {symbols} completed", cancellationToken);
 
         Log.Information(
             "Completed calc partial request {@Symbols} x {@Periods}",
@@ -213,7 +213,7 @@ public static class CalcRequestHandler {
                 .Select(r => CalcLast(symbol, r.PeriodMin, lastPx))
                 .Concat(CalcGlobal(symbol))
         );
-        GrpcSystemEventCaller.OnCalculatedAsync(symbol, cancellationToken);
+        GrpcSystemEventCaller.OnCalculatedAsync(symbol, $"CalcLast of {symbol} completed", cancellationToken);
 
         Log.Information(
             "Completed calc last request of {Symbol} @ {@Periods}",

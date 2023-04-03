@@ -19,7 +19,8 @@ public class GrpcPxDataCaller {
             Client.CalcLastAsync,
             new PxCalcRequestSingle { Symbol = symbol },
             nameof(Client.CalcLastAsync),
-            cancellationToken
+            cancellationToken,
+            reason: $"{symbol} received realtime data (GrpcPxData)"
         );
     }
 
@@ -34,7 +35,8 @@ public class GrpcPxDataCaller {
             request,
             endpointName,
             cancellationToken,
-            useTimeout: false
+            useTimeout: false,
+            reason: $"{symbol} minute changed"
         );
     }
 

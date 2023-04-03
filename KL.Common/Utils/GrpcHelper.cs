@@ -16,13 +16,14 @@ public static class GrpcHelper {
         CancellationToken cancellationToken = default
     );
 
-    public static Task CallWithDeadline<TRequest, TReply>(
+    public static Task<TReply?> CallWithDeadline<TRequest, TReply>(
         GrpcUnaryCall<TRequest, TReply> grpcCall,
         TRequest request,
         string endpointName,
         CancellationToken cancellationToken,
         bool useTimeout = true,
-        int timeoutExtension = 0
+        int timeoutExtension = 0,
+        string reason = "(Unknown)"
     ) {
         return CallWithDeadline(
             grpcCall,
@@ -31,23 +32,26 @@ public static class GrpcHelper {
             false,
             cancellationToken,
             useTimeout: useTimeout,
-            timeoutExtension: timeoutExtension
+            timeoutExtension: timeoutExtension,
+            reason: reason
         );
     }
 
-    private static async Task CallWithDeadline<TRequest, TReply>(
+    private static async Task<TReply?> CallWithDeadline<TRequest, TReply>(
         GrpcUnaryCall<TRequest, TReply> grpcCall,
         TRequest request,
         string endpointName,
         bool isFireAndForget,
         CancellationToken cancellationToken,
         bool useTimeout = true,
-        int timeoutExtension = 0
+        int timeoutExtension = 0,
+        string reason = "(Unknown)"
     ) {
         Log.Information(
-            "Calling gRPC unary `{GrpcCallEndpoint}` {GrpcCallType}",
+            "Calling gRPC unary `{GrpcCallEndpoint}` {GrpcCallType} ({Reason})",
             endpointName,
-            isFireAndForget ? "in fire and forget" : "asynchronously"
+            isFireAndForget ? "in fire and forget" : "asynchronously",
+            reason
         );
 
         var timeout = EnvironmentConfigHelper.Config.Grpc.Timeout.Default + timeoutExtension;
@@ -58,11 +62,11 @@ public static class GrpcHelper {
                 endpointName,
                 nextOpen
             );
-            return;
+            return default;
         }
 
         try {
-            await grpcCall(
+            return await grpcCall(
                 request,
                 deadline: useTimeout ? DateTime.UtcNow.AddMilliseconds(timeout) : null,
                 cancellationToken: cancellationToken
@@ -75,7 +79,7 @@ public static class GrpcHelper {
                         endpointName,
                         timeout
                     );
-                    return;
+                    return default;
                 case { StatusCode: StatusCode.Unavailable }:
                     Log.Warning(
                         e,
@@ -83,7 +87,7 @@ public static class GrpcHelper {
                         endpointName,
                         request
                     );
-                    return;
+                    return default;
                 default:
                     Log.Error(
                         e,
@@ -102,7 +106,8 @@ public static class GrpcHelper {
         string endpointName,
         CancellationToken cancellationToken,
         bool useTimeout = false,
-        int timeoutExtension = 0
+        int timeoutExtension = 0,
+        string reason = "(Unknown)"
     ) {
         // Cannot use `nameof(grpcRequestFunc)` because it would return literally `grpcRequestFunc`
         TaskHelper.FireAndForget(
@@ -112,7 +117,8 @@ public static class GrpcHelper {
                 endpointName,
                 cancellationToken,
                 useTimeout: useTimeout,
-                timeoutExtension: timeoutExtension
+                timeoutExtension: timeoutExtension,
+                reason: reason
             ),
             exception => {
                 if (exception is not null) {
@@ -130,7 +136,7 @@ public static class GrpcHelper {
         TRequest request,
         CallOptions options
     );
-    
+
     public delegate void OnGrpcStreamReply<in TReply>(TReply reply);
 
     public static async Task ServerStream<TRequest, TReply>(
@@ -163,8 +169,9 @@ public static class GrpcHelper {
                     cancellationToken: cancellationToken
                 )
             );
-            
-            await foreach (var reply in streamingCall.ResponseStream.ReadAllAsync(cancellationToken: cancellationToken)) {
+
+            await foreach (var reply in
+                           streamingCall.ResponseStream.ReadAllAsync(cancellationToken: cancellationToken)) {
                 onReply(reply);
             }
         } catch (RpcException e) {

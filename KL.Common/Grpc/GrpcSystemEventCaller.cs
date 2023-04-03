@@ -34,7 +34,8 @@ public static class GrpcSystemEventCaller {
                 }
             },
             nameof(Client.RealtimeAsync),
-            cancellationToken
+            cancellationToken,
+            reason: $"{symbol} received realtime data (GrpcSystemEvent)"
         );
     }
 
@@ -47,15 +48,16 @@ public static class GrpcSystemEventCaller {
             request,
             nameof(Client.MinuteChangeAsync),
             cancellationToken,
-            useTimeout: false
+            useTimeout: false,
+            reason: $"`{symbol}` minute changed to {epochSec}"
         );
     }
 
-    public static void OnCalculatedAsync(string symbol, CancellationToken cancellationToken) {
-        OnCalculatedAsync(new[] { symbol }, cancellationToken);
+    public static void OnCalculatedAsync(string symbol, string reason, CancellationToken cancellationToken) {
+        OnCalculatedAsync(new[] { symbol }, reason, cancellationToken);
     }
 
-    public static void OnCalculatedAsync(IEnumerable<string> symbols, CancellationToken cancellationToken) {
+    public static void OnCalculatedAsync(IEnumerable<string> symbols, string reason, CancellationToken cancellationToken) {
         var requestBody = new CalculatedData();
         requestBody.Symbols.AddRange(symbols);
 
@@ -63,7 +65,8 @@ public static class GrpcSystemEventCaller {
             Client.CalculatedAsync,
             requestBody,
             nameof(Client.CalculatedAsync),
-            cancellationToken
+            cancellationToken,
+            reason: reason
         );
     }
 
@@ -84,7 +87,8 @@ public static class GrpcSystemEventCaller {
             Client.MarketDateCutoffAsync,
             request,
             nameof(Client.MarketDateCutoffAsync),
-            cancellationToken
+            cancellationToken,
+            reason: $"{symbol} market date cutoff"
         );
     }
 }
