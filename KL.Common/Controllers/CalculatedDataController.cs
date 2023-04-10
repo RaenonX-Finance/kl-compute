@@ -90,28 +90,15 @@ public static class CalculatedDataController {
         );
     }
 
-    public static async Task RemoveData(IList<(string Symbol, int PeriodMin)> symbolPeriodPair) {
+    public static async Task RemoveData((string Symbol, int PeriodMin) c) {
         var start = Stopwatch.GetTimestamp();
 
-        Log.Information(
-            "To remove calculated data of {@SymbolPeriodPair}",
-            symbolPeriodPair
-        );
+        Log.Information("To remove calculated data of {@SymbolPeriodPair}", c);
 
-        await Task.WhenAll(
-            symbolPeriodPair
-                .Distinct()
-                .Select(
-                    pair => MongoConst
-                        .GetCalculatedCollection(pair.Symbol)
-                        .DeleteManyAsync(r => r.PeriodMin == pair.PeriodMin)
-                )
-        );
+        await MongoConst
+            .GetCalculatedCollection(c.Symbol)
+            .DeleteManyAsync(r => r.PeriodMin == c.PeriodMin);
 
-        Log.Information(
-            "Removed calculated data of {SymbolPeriodPair} in {Elapsed:0.00} ms",
-            symbolPeriodPair,
-            start.GetElapsedMs()
-        );
+        Log.Information("Removed calculated data of {@SymbolPeriodPair} in {Elapsed:0.00} ms", c, start.GetElapsedMs());
     }
 }

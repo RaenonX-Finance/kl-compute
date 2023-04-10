@@ -30,13 +30,26 @@ internal class HistoryDataHandler {
         bool isSubscription
     ) {
         Log.Information(
-            "Sending history data handshake to {Action} {Symbol} @ {Interval}: {Start} ~ {End}",
-            isSubscription ? "subscribe" : "request",
+            "{Action} history data of {Symbol} @ {Interval}: {Start} ~ {End}",
+            isSubscription ? "Subscribing" : "Requesting",
             touchanceSymbol,
             interval,
             start,
             end
         );
+
+        if (isSubscription) {
+            SendHandshakeRequest(
+                new PxHistoryRequestIdentifier {
+                    Symbol = touchanceSymbol,
+                    Interval = interval,
+                    Start = start,
+                    End = end
+                },
+                true
+            );
+            return;
+        }
 
         var dataRange = await HistoryDataController.GetStoredDataRange(
             PxConfigController.GetInternalSymbol(touchanceSymbol, PxSource.Touchance),
@@ -58,7 +71,7 @@ internal class HistoryDataHandler {
                     Start = start,
                     End = end
                 },
-                isSubscription
+                false
             );
             return;
         }
@@ -79,7 +92,7 @@ internal class HistoryDataHandler {
                     // Add additional 1 hour to guarantee data range overlap
                     End = dataRange.Value.Start.AddHours(1)
                 },
-                isSubscription
+                false
             );
         }
 
@@ -99,7 +112,7 @@ internal class HistoryDataHandler {
                     Start = dataRange.Value.End.AddHours(-1),
                     End = end
                 },
-                isSubscription
+                false
             );
         }
     }
@@ -109,9 +122,9 @@ internal class HistoryDataHandler {
         SendUnsubscribeRequest(identifier);
 
         Log.Information(
-            "[{Identifier}] {Action} history data",
+            "[{Identifier}] Handshake to {Action} history data",
             ((IHistoryMetadata)identifier).ToIdentifier(),
-            isSubscription ? "Subscribing" : "Requesting"
+            isSubscription ? "subscribe" : "request"
         );
         _subscribedRequests[identifier] = isSubscription;
         Client.RequestSocket.SendTcRequest<PxHistoryHandshakeRequest, PxSubscribedReply>(

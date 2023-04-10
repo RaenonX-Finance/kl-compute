@@ -33,7 +33,9 @@ public static class CalcRequestHandler {
 
     private static async Task CalcAll(
         (string Symbol, int Period) c,
-        IDictionary<string, IDictionary<int, IEnumerable<GroupedHistoryDataModel>>> groupedDict
+        IDictionary<string, IDictionary<int, IEnumerable<GroupedHistoryDataModel>>> groupedDict,
+        IServerStreamWriter<PxCalcReply> responseStream,
+        CancellationToken cancellationToken
     ) {
         var grouped = groupedDict[c.Symbol][c.Period].ToArray();
 
@@ -46,8 +48,28 @@ public static class CalcRequestHandler {
             );
         }
 
-        Log.Information("Calculating data of {Symbol} @ {Period} from `CalcAll`", c.Symbol, c.Period);
-        await CalculatedDataController.AddData(c.Symbol, await HistoryDataComputer.CalcAll(grouped, c.Period));
+        var removeDataTask = CalculatedDataController.RemoveData(c);
+
+        Log.Information("Calculating data of {Symbol} @ {Period} in `CalcAll`", c.Symbol, c.Period);
+        await responseStream.WriteAsync(
+            new PxCalcReply { Message = $"Calculating data of {c.Symbol} @ {c.Period} in `CalcAll`" },
+            cancellationToken
+        );
+        var calculatedData = await HistoryDataComputer.CalcAll(grouped, c.Period);
+
+        Log.Information("Removing data of {Symbol} @ {Period} in `CalcAll`", c.Symbol, c.Period);
+        await responseStream.WriteAsync(
+            new PxCalcReply { Message = $"Removing data of {c.Symbol} @ {c.Period} in `CalcAll`" },
+            cancellationToken
+        );
+        await removeDataTask;
+
+        Log.Information("Storing data of {Symbol} @ {Period} in `CalcAll`", c.Symbol, c.Period);
+        await responseStream.WriteAsync(
+            new PxCalcReply { Message = $"Storing data of {c.Symbol} @ {c.Period} in `CalcAll`" },
+            cancellationToken
+        );
+        await CalculatedDataController.AddData(c.Symbol, calculatedData);
     }
 
     public static async Task CalcAll(
@@ -69,32 +91,7 @@ public static class CalcRequestHandler {
             .SelectMany(symbol => periodMins.Select(period => (Symbol: symbol, Period: period)))
             .ToArray();
 
-        await responseStream.WriteAsync(
-            new PxCalcReply { Message = $"Removing calculated data of {symbols}" },
-            cancellationToken
-        );
-        await CalculatedDataController.RemoveData(combinations);
-
-        // Calculating data one-by-one because it stores the data after calculation,
-        // and simultaneous data storing causes Mongo write conflict
-        foreach (var combination in combinations) {
-            if (cancellationToken.IsCancellationRequested) {
-                Log.Warning(
-                    "Cancelling `CalcAll` operation for {Symbol} @ {Period}",
-                    combination.Symbol,
-                    combination.Period
-                );
-                return;
-            }
-
-            await responseStream.WriteAsync(
-                new PxCalcReply {
-                    Message = $"Calculating history data of {combination.Symbol} @ {combination.Period}"
-                },
-                cancellationToken
-            );
-            await CalcAll(combination, groupedDict);
-        }
+        await Task.WhenAll(combinations.Select(r => CalcAll(r, groupedDict, responseStream, cancellationToken)));
 
         await responseStream.WriteAsync(
             new PxCalcReply {

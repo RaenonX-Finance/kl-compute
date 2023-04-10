@@ -165,7 +165,6 @@ public class TouchanceClient : PxParseClient {
             }
 
             if (source.EnableRealtime) {
-                Log.Information("Subscribing realtime data of {Symbol}", source.ExternalSymbol);
                 _realtimeHandler.SubscribeRealtime(source.ExternalSymbol);
             }
 
