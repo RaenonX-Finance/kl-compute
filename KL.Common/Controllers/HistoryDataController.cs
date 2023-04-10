@@ -74,6 +74,24 @@ public static class HistoryDataController {
         );
     }
 
+    public static IEnumerable<HistoryDataModel> GetBeforeTime(string symbol, HistoryInterval interval, DateTime maxTimeExclusive, int limit) {
+        Log.Information(
+            "Request {limit} history data of {Symbol} @ {Interval} before {MaxTimeExclusive}",
+            limit,
+            symbol,
+            interval,
+            maxTimeExclusive
+        );
+
+        return MongoConst.GetHistoryCollection(symbol)
+            .AsQueryable()
+            .Where(r => r.Interval == interval && r.Timestamp < maxTimeExclusive)
+            .OrderByDescending(r => r.Timestamp)
+            .Take(limit)
+            .ToEnumerable()
+            .OrderBy(r => r.Timestamp);
+    }
+
     public static async Task<DateTimeRangeModel?> GetStoredDataRange(string symbol, HistoryInterval interval) {
         Log.Information("Requesting available data range of {Symbol} @ {Interval}", symbol, interval);
 

@@ -1,12 +1,13 @@
 ﻿using JetBrains.Annotations;
 using KL.Common.Enums;
+using KL.Common.Interfaces;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace KL.Common.Models;
 
 
-public record HistoryDataModel {
+public record HistoryDataModel : IHistoryDataEntry {
     [UsedImplicitly]
     public ObjectId Id { get; init; }
 

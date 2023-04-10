@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using KL.Common.Controllers;
+using KL.Common.Enums;
 using KL.Common.Extensions;
 using KL.Common.Interfaces;
 using ILogger = Serilog.ILogger;
@@ -21,14 +22,31 @@ public static class PxCacheController {
 
         var entriesToProcess = entries
             .TakeLast(PxConfigController.Config.Cache.InitCount)
-            .ToArray();
+            .ToList();
+
+        if (entriesToProcess.Count < PxConfigController.Config.Cache.InitCount) {
+            var dbGetLimit = PxConfigController.Config.Cache.InitCount - entriesToProcess.Count;
+            var dbGetMaxTime = entriesToProcess.Select(r => r.Timestamp).Min();
+
+            Log.Information(
+                "Insufficient data to create Px cache of {Symbol} ({CountInEntries}), "
+                + "getting {CountFromDB} history data before {MaxTimeInEntries} from DB",
+                symbol,
+                entriesToProcess.Count,
+                dbGetLimit,
+                dbGetMaxTime
+            );
+            entriesToProcess.AddRange(
+                HistoryDataController.GetBeforeTime(symbol, HistoryInterval.Minute, dbGetMaxTime, dbGetLimit)
+            );
+        }
 
         await RedisLastPxController.Set(symbol, entriesToProcess, isCreate: true);
 
         Log.Information(
-            "Created Px Cache of {Symbol} ({Count} - last at {LastTimestamp}) in {Elapsed:0.00} ms",
+            "Created Px cache of {Symbol} ({Count} - last at {LastTimestamp}) in {Elapsed:0.00} ms",
             symbol,
-            entriesToProcess.Length,
+            entriesToProcess.Count,
             entriesToProcess.Max(r => r.Timestamp),
             start.GetElapsedMs()
         );
@@ -41,7 +59,7 @@ public static class PxCacheController {
 
         await RedisLastPxController.Set(symbol, entriesToProcess);
     }
-    
+
     public static async Task Update(string symbol, decimal px) {
         await RedisLastPxController.Set(symbol, px);
     }
