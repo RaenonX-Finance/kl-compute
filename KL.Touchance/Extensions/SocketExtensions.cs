@@ -1,13 +1,17 @@
-﻿using KL.Touchance.Requests;
+﻿using KL.Common.Utils;
+using KL.Touchance.Requests;
 using KL.Touchance.Responses;
 using KL.Touchance.Utils;
 using NetMQ;
 using NetMQ.Sockets;
+using Serilog;
 
 namespace KL.Touchance.Extensions;
 
 
 public static class SocketExtensions {
+    private static readonly ILogger Log = Serilog.Log.ForContext(typeof(SocketExtensions));
+
     public static TReply SendTcRequest<TRequest, TReply>(
         this RequestSocket socket,
         TRequest request,
@@ -15,9 +19,27 @@ public static class SocketExtensions {
     )
         where TRequest : TcRequest
         where TReply : TcReply {
-        socket.SendFrame(request.ToJson());
+        var timeout = EnvironmentConfigHelper.Config.Source.Touchance.Timeout.Request;
+        var response = socket.SendTcRequest<TRequest, TReply>(
+            request,
+            new TimeSpan(0, 0, 0, timeout),
+            hasPrefix
+        );
 
-        return ParseReplyToJson<TReply>(socket.ReceiveFrameString(), hasPrefix);
+        if (response is not null) {
+            return response;
+        }
+
+        var exception = new TimeoutException($"Request ({request.ToJson()}) timed out after {timeout} seconds");
+
+        Log.Error(
+            exception,
+            "Request {Type} timed out after {TimeoutSec} seconds",
+            request.GetType(),
+            timeout
+        );
+
+        throw exception;
     }
 
     public static TReply? SendTcRequest<TRequest, TReply>(

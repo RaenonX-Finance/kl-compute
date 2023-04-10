@@ -61,14 +61,14 @@ public class TouchanceClient : PxParseClient {
                     ServiceKey = "8076c9867a372d2a9a814ae710c256e2"
                 }
             },
-            new TimeSpan(0, 0, 0, EnvironmentConfigHelper.Config.Source.Touchance.LoginTimeout)
+            new TimeSpan(0, 0, 0, EnvironmentConfigHelper.Config.Source.Touchance.Timeout.Login)
         );
 
         if (loginReply is null) {
             Log.Error(
                 "Touchance did not respond from port {TouchancePort} in {LoginTimeoutSec} seconds, terminating",
                 EnvironmentConfigHelper.Config.Source.Touchance.ZmqPort,
-                EnvironmentConfigHelper.Config.Source.Touchance.LoginTimeout
+                EnvironmentConfigHelper.Config.Source.Touchance.Timeout.Login
             );
             Environment.Exit(1);
         }
@@ -101,7 +101,7 @@ public class TouchanceClient : PxParseClient {
             Log.Warning("Attempt to subscribe data but `sources` is empty");
             return false;
         }
-        
+
         await Task.WhenAll(
             this.CheckSourceInfo(sources),
             InitializeHistoryData(sources)
