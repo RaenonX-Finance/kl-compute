@@ -11,22 +11,22 @@ public static class MomentumComputer {
         var lastPxSeriesRev = await RedisLastPxController.GetRev(symbol, 51);
 
         var momentum = DataInterval
-            .Select(r => CalcMomentumPair(lastPxSeriesRev.ToArray(), r * 5, r * 10))
+            .Select(r => CalcMomentumPair(symbol, lastPxSeriesRev.ToArray(), r * 5, r * 10))
             .Sum(r => (int)r);
 
         return (Momentum)momentum;
     }
 
-    private static Momentum CalcMomentumPair(double[] pxRev, int shortPeriod, int longPeriod) {
+    private static Momentum CalcMomentumPair(string symbol, double[] pxRev, int shortPeriod, int longPeriod) {
         if (shortPeriod > pxRev.Length) {
             throw new InvalidOperationException(
-                $"Data not enough to calculate MA of short period ({shortPeriod} / {pxRev.Length})"
+                $"Data not enough to calculate short period MA of {symbol} ({shortPeriod} / {pxRev.Length})"
             );
         }
 
         if (longPeriod > pxRev.Length) {
             throw new InvalidOperationException(
-                $"Data not enough to calculate MA of long period ({longPeriod} / {pxRev.Length})"
+                $"Data not enough to calculate long period MA of {symbol} ({longPeriod} / {pxRev.Length})"
             );
         }
 
