@@ -118,21 +118,16 @@ public static class SrLevelComputer {
         int pairCount
     ) {
         var groupedData = HistoryDataController.GetAtTime(
-                symbols,
-                GetKeyTimestamps(pairCount + 1, category)
-            )
-            .GroupBy(r => r.Symbol)
-            .ToDictionary(
-                r => r.Key,
-                r => r.ToArray()
-            );
+            symbols,
+            GetKeyTimestamps(pairCount + 1, category)
+        );
 
         var models = new List<SrLevelDataModel>();
 
         foreach (var symbol in symbols) {
             var timing = PxConfigController.Config.SrLevelTimingMap[category];
 
-            models.AddRange(GetSrLevelModels(symbol, groupedData[symbol], timing, pairCount));
+            models.AddRange(GetSrLevelModels(symbol, groupedData[symbol].ToList(), timing, pairCount));
         }
 
         return models;

@@ -30,9 +30,6 @@ public record HistoryDataModel {
     public required int Volume { get; init; }
 
     [UsedImplicitly]
-    public required string Symbol { get; init; }
-
-    [UsedImplicitly]
     public required HistoryInterval Interval { get; init; }
 
     [UsedImplicitly]

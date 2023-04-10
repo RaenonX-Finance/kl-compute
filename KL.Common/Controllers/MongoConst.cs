@@ -12,11 +12,9 @@ public static class MongoConst {
 
     private static readonly IMongoDatabase PxDatabase = Client.GetDatabase("px");
 
-    public static readonly IMongoCollection<HistoryDataModel> PxHistory =
-        PxDatabase.GetCollection<HistoryDataModel>("data");
+    public static readonly IMongoDatabase PxHistDatabase = Client.GetDatabase("pxHist");
 
-    public static readonly IMongoCollection<CalculatedDataModel> PxCalculated =
-        PxDatabase.GetCollection<CalculatedDataModel>("calc");
+    public static readonly IMongoDatabase PxCalcDatabase = Client.GetDatabase("pxCalc");
 
     public static readonly IMongoCollection<SrLevelDataModel> PxSrLevel =
         PxDatabase.GetCollection<SrLevelDataModel>("srLevel");
@@ -26,4 +24,12 @@ public static class MongoConst {
 
     public static readonly IMongoCollection<PxConfigModel> PxCalcConfig =
         PxDatabase.GetCollection<PxConfigModel>("config");
+
+    public static IMongoCollection<HistoryDataModel> GetHistoryCollection(string symbol) {
+        return PxHistDatabase.GetCollection<HistoryDataModel>(symbol);
+    }
+    
+    public static IMongoCollection<CalculatedDataModel> GetCalculatedCollection(string symbol) {
+        return PxCalcDatabase.GetCollection<CalculatedDataModel>(symbol);
+    }
 }

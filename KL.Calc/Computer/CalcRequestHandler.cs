@@ -47,7 +47,7 @@ public static class CalcRequestHandler {
         }
 
         Log.Information("Calculating data of {Symbol} @ {Period} from `CalcAll`", c.Symbol, c.Period);
-        await CalculatedDataController.AddData(await HistoryDataComputer.CalcAll(grouped, c.Period));
+        await CalculatedDataController.AddData(c.Symbol, await HistoryDataComputer.CalcAll(grouped, c.Period));
     }
 
     public static async Task CalcAll(
@@ -143,9 +143,9 @@ public static class CalcRequestHandler {
             var history = groupedHistory[c.Symbol][c.Period];
             var cachedCalculated = groupedCalculated[c];
 
-            var calculated = (await HistoryDataComputer.CalcPartial(history, cachedCalculated, c.Period))
+            var calculated = (await HistoryDataComputer.CalcPartial(c, history, cachedCalculated))
                 .ToArray();
-            await CalculatedDataController.UpdateByEpoch(calculated);
+            await CalculatedDataController.UpdateByEpoch(c.Symbol, calculated);
         } catch (InvalidOperationException e) {
             Log.Error(e, "Error when attempting partial calculation for {Symbol} @ {Period}", c.Symbol, c.Period);
             throw new RpcException(
@@ -202,7 +202,7 @@ public static class CalcRequestHandler {
         data[^1].Close = lastPx;
 
         var calculated = HistoryDataComputer.CalcLast(data[^1], data[^2]);
-        await CalculatedDataController.UpdateByEpoch(calculated);
+        await CalculatedDataController.UpdateByEpoch(symbol, calculated);
     }
 
     public static async Task CalcLast(string symbol, CancellationToken cancellationToken) {

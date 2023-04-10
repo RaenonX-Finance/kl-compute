@@ -34,7 +34,6 @@ public class GroupedHistoryDataModel : IGroupedHistoryDataModel {
         Dictionary<int, double?> ema
     ) {
         return new CalculatedDataModel {
-            Symbol = Symbol,
             PeriodMin = periodMin,
             Date = Date,
             Open = Open,
@@ -73,7 +72,7 @@ public class GroupedHistoryDataModel : IGroupedHistoryDataModel {
 }
 
 public static class GroupedHistoryDataModelHelper {
-    public static GroupedHistoryDataModel ToGroupedHistoryDataModel(this HistoryDataModel r) {
+    public static GroupedHistoryDataModel ToGroupedHistoryDataModel(this HistoryDataModel r, string symbol) {
         return new GroupedHistoryDataModel {
             Date = r.Timestamp,
             Open = r.Open,
@@ -81,7 +80,7 @@ public static class GroupedHistoryDataModelHelper {
             Low = r.Low,
             Close = r.Close,
             Volume = r.Volume,
-            Symbol = r.Symbol,
+            Symbol = symbol,
             EpochSecond = r.EpochSecond,
             MarketDate = r.MarketDate
         };

@@ -1,6 +1,5 @@
 ﻿using JetBrains.Annotations;
 using KL.Common.Interfaces;
-using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace KL.Common.Models;
@@ -34,9 +33,6 @@ public class CalculatedDataModel : IGroupedHistoryDataModel {
 
     [UsedImplicitly]
     public required Dictionary<int, double?> Ema { get; init; }
-
-    [UsedImplicitly]
-    public required string Symbol { get; init; }
 
     [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
     [UsedImplicitly]

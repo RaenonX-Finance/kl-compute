@@ -26,7 +26,7 @@ public static class HistoryDataGrouper {
             || (periodMin == 1440 && interval == HistoryInterval.Daily)
         ) {
             return historyData
-                .Select(r => r.ToGroupedHistoryDataModel())
+                .Select(r => r.ToGroupedHistoryDataModel(symbol))
                 .OrderBy(r => r.EpochSecond);
         }
 
@@ -41,7 +41,6 @@ public static class HistoryDataGrouper {
                     Low = r.Low,
                     Close = r.Close,
                     Volume = r.Volume,
-                    Symbol = r.Symbol,
                     Interval = r.Interval,
                     EpochSecond = r.EpochSecond / periodSec * periodSec,
                     MarketDate = r.MarketDate

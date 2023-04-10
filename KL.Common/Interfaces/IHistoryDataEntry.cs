@@ -30,7 +30,6 @@ public interface IHistoryDataEntry {
             Low = Low,
             Close = Close,
             Volume = Volume,
-            Symbol = symbol,
             Interval = interval,
             EpochSecond = epochSecond,
             MarketDate = Timestamp.ToMarketDate(PxConfigController.Config.MarketDateCutoffMap[category])

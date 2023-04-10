@@ -1,4 +1,5 @@
-﻿using KL.Common.Models;
+﻿using KL.Common.Extensions;
+using KL.Common.Models;
 using MongoDB.Driver;
 
 namespace KL.Common.Controllers;
@@ -14,32 +15,36 @@ public static class MongoIndexManager {
         };
     }
 
-    private static Task<string> HistoryLookup() {
+    private static async Task HistoryLookup() {
         var indexOptions = new CreateIndexOptions {
             Unique = true,
             Name = "HistoryLookup"
         };
         var indexKeys = Builders<HistoryDataModel>.IndexKeys
-            .Ascending(data => data.Symbol)
             .Ascending(data => data.Interval)
             .Descending(data => data.Timestamp);
         var indexModel = new CreateIndexModel<HistoryDataModel>(indexKeys, indexOptions);
 
-        return MongoConst.PxHistory.Indexes.CreateOneAsync(indexModel);
+        await Task.WhenAll(
+            (await MongoConst.PxHistDatabase.GetCollectionNames())
+            .Select(symbol => MongoConst.GetHistoryCollection(symbol).Indexes.CreateOneAsync(indexModel))
+        );
     }
 
-    private static Task<string> CalculatedLookup() {
+    private static async Task CalculatedLookup() {
         var indexOptions = new CreateIndexOptions {
             Unique = true,
             Name = "CalculatedLookup"
         };
         var indexKeys = Builders<CalculatedDataModel>.IndexKeys
-            .Ascending(data => data.Symbol)
             .Ascending(data => data.PeriodMin)
             .Descending(data => data.EpochSecond);
         var indexModel = new CreateIndexModel<CalculatedDataModel>(indexKeys, indexOptions);
 
-        return MongoConst.PxCalculated.Indexes.CreateOneAsync(indexModel);
+        await Task.WhenAll(
+            (await MongoConst.PxCalcDatabase.GetCollectionNames())
+            .Select(symbol => MongoConst.GetCalculatedCollection(symbol).Indexes.CreateOneAsync(indexModel))
+        );
     }
 
     private static Task<string> SrLevelLookup() {

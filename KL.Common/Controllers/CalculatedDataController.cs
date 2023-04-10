@@ -23,8 +23,9 @@ public static class CalculatedDataController {
             periodMin
         );
 
-        return MongoConst.PxCalculated.AsQueryable()
-            .Where(r => r.Symbol == symbol && r.PeriodMin == periodMin)
+        return MongoConst.GetCalculatedCollection(symbol)
+            .AsQueryable()
+            .Where(r => r.PeriodMin == periodMin)
             .OrderByDescending(r => r.EpochSecond)
             .Take(limit)
             // `IMongoQueryable` does not support `.OrderByDescending()` with `.Reverse()`
@@ -32,7 +33,7 @@ public static class CalculatedDataController {
             .Reverse();
     }
 
-    public static async Task UpdateByEpoch(IList<CalculatedDataModel> calculatedData) {
+    public static async Task UpdateByEpoch(string symbol, IList<CalculatedDataModel> calculatedData) {
         using var session = await MongoSession.Create();
 
         Log.Debug(
@@ -42,18 +43,17 @@ public static class CalculatedDataController {
         );
 
         var filter = calculatedData
-            .Select(r => (r.Symbol, r.PeriodMin, r.EpochSecond))
+            .Select(r => (r.PeriodMin, r.EpochSecond))
             .Distinct()
             .Select(
                 pair => FilterBuilder.Where(
                     r =>
-                        r.Symbol == pair.Symbol
-                        && r.PeriodMin == pair.PeriodMin
+                        r.PeriodMin == pair.PeriodMin
                         && r.EpochSecond == pair.EpochSecond
                 )
             );
-        await MongoConst.PxCalculated.DeleteManyAsync(session.Session, FilterBuilder.Or(filter));
-        await MongoConst.PxCalculated.InsertManyAsync(session.Session, calculatedData);
+        await MongoConst.GetCalculatedCollection(symbol).DeleteManyAsync(session.Session, FilterBuilder.Or(filter));
+        await MongoConst.GetCalculatedCollection(symbol).InsertManyAsync(session.Session, calculatedData);
 
         await session.Session.CommitTransactionAsync();
 
@@ -64,25 +64,25 @@ public static class CalculatedDataController {
         );
     }
 
-    public static async Task UpdateByEpoch(CalculatedDataModel calculatedData) {
-        Log.Debug("To update calculated data of {Symbol} at {DataTime}", calculatedData.Symbol, calculatedData.Date);
+    public static async Task UpdateByEpoch(string symbol, CalculatedDataModel calculatedData) {
+        Log.Debug("To update calculated data of {Symbol} at {DataTime}", symbol, calculatedData.Date);
 
-        await MongoConst.PxCalculated.ReplaceOneAsync(
-            r => r.Symbol == calculatedData.Symbol
-                 && r.PeriodMin == calculatedData.PeriodMin
-                 && r.EpochSecond == calculatedData.EpochSecond,
-            calculatedData
-        );
+        await MongoConst.GetCalculatedCollection(symbol)
+            .ReplaceOneAsync(
+                r => r.PeriodMin == calculatedData.PeriodMin
+                     && r.EpochSecond == calculatedData.EpochSecond,
+                calculatedData
+            );
 
-        Log.Debug("Updated calculated data of {Symbol} at {DataTime}", calculatedData.Symbol, calculatedData.Date);
+        Log.Debug("Updated calculated data of {Symbol} at {DataTime}", symbol, calculatedData.Date);
     }
 
-    public static async Task AddData(IEnumerable<CalculatedDataModel> calculatedData) {
+    public static async Task AddData(string symbol, IEnumerable<CalculatedDataModel> calculatedData) {
         var start = Stopwatch.GetTimestamp();
 
         Log.Information("To add calculated data");
 
-        await MongoConst.PxCalculated.InsertManyAsync(calculatedData);
+        await MongoConst.GetCalculatedCollection(symbol).InsertManyAsync(calculatedData);
 
         Log.Information(
             "Added calculated data in {Elapsed:0.00} ms",
@@ -98,10 +98,15 @@ public static class CalculatedDataController {
             symbolPeriodPair
         );
 
-        var filter = symbolPeriodPair
-            .Distinct()
-            .Select(pair => FilterBuilder.Where(r => r.Symbol == pair.Symbol && r.PeriodMin == pair.PeriodMin));
-        await MongoConst.PxCalculated.DeleteManyAsync(FilterBuilder.Or(filter));
+        await Task.WhenAll(
+            symbolPeriodPair
+                .Distinct()
+                .Select(
+                    pair => MongoConst
+                        .GetCalculatedCollection(pair.Symbol)
+                        .DeleteManyAsync(r => r.PeriodMin == pair.PeriodMin)
+                )
+        );
 
         Log.Information(
             "Removed calculated data of {SymbolPeriodPair} in {Elapsed:0.00} ms",

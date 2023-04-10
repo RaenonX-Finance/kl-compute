@@ -22,6 +22,12 @@ public static class MongoExtensions {
 
         return client;
     }
+    
+    public static async Task<IEnumerable<string>> GetCollectionNames(this IMongoDatabase database) {
+        var cursor = await database.ListCollectionNamesAsync();
+        
+        return await cursor.ToListAsync();
+    } 
 
     private static void RegisterConvention() {
         ConventionRegistry.Register(

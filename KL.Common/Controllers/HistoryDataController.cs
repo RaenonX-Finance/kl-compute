@@ -19,8 +19,9 @@ public static class HistoryDataController {
     public static IEnumerable<HistoryDataModel> GetAll(string symbol, HistoryInterval interval) {
         Log.Information("Request all history data of {Symbol} @ {Interval}", symbol, interval);
 
-        return MongoConst.PxHistory.AsQueryable()
-            .Where(r => r.Symbol == symbol && r.Interval == interval)
+        return MongoConst.GetHistoryCollection(symbol)
+            .AsQueryable()
+            .Where(r => r.Interval == interval)
             .OrderBy(r => r.Timestamp);
     }
 
@@ -32,15 +33,16 @@ public static class HistoryDataController {
             interval
         );
 
-        return MongoConst.PxHistory.AsQueryable()
-            .Where(r => r.Symbol == symbol && r.Interval == interval)
+        return MongoConst.GetHistoryCollection(symbol)
+            .AsQueryable()
+            .Where(r => r.Interval == interval)
             .OrderByDescending(r => r.Timestamp)
             .Take(limit)
             .ToEnumerable()
             .OrderBy(r => r.Timestamp);
     }
 
-    public static IEnumerable<HistoryDataModel> GetAtTime(
+    public static IDictionary<string, IEnumerable<HistoryDataModel>> GetAtTime(
         IList<string> symbols,
         IList<DateTime> timestamps
     ) {
@@ -49,7 +51,10 @@ public static class HistoryDataController {
                 "Request history data of {@Symbols} does not have timestamp specified, returning empty response",
                 symbols
             );
-            return Array.Empty<HistoryDataModel>();
+            return symbols.ToDictionary(
+                symbol => symbol,
+                _ => Enumerable.Empty<HistoryDataModel>()
+            );
         }
 
         Log.Information(
@@ -59,25 +64,30 @@ public static class HistoryDataController {
             timestamps.Count
         );
 
-        return MongoConst.PxHistory.AsQueryable()
-            .Where(r => symbols.Contains(r.Symbol) && timestamps.Contains(r.Timestamp))
-            .OrderByDescending(r => r.Timestamp);
+        return symbols.ToDictionary(
+            symbol => symbol,
+            symbol => MongoConst.GetHistoryCollection(symbol)
+                .AsQueryable()
+                .Where(r => timestamps.Contains(r.Timestamp))
+                .OrderByDescending(r => r.Timestamp)
+                .ToEnumerable()
+        );
     }
 
     public static async Task<DateTimeRangeModel?> GetStoredDataRange(string symbol, HistoryInterval interval) {
         Log.Information("Requesting available data range of {Symbol} @ {Interval}", symbol, interval);
 
-        Expression<Func<HistoryDataModel, bool>> filter = r => r.Symbol == symbol && r.Interval == interval;
+        Expression<Func<HistoryDataModel, bool>> filter = r => r.Interval == interval;
         Expression<Func<HistoryDataModel, object>> sort = r => r.Timestamp;
 
-        try { 
+        try {
             var range = await Task.WhenAll(
-                MongoConst.PxHistory
+                MongoConst.GetHistoryCollection(symbol)
                     .Find(filter)
                     .SortBy(sort)
                     .Limit(1)
                     .SingleAsync(),
-                MongoConst.PxHistory
+                MongoConst.GetHistoryCollection(symbol)
                     .Find(filter)
                     .SortByDescending(sort)
                     .Limit(1)
@@ -95,6 +105,7 @@ public static class HistoryDataController {
             if (e.Message == "Sequence contains no elements") {
                 return null;
             }
+
             throw;
         }
     }
@@ -125,14 +136,13 @@ public static class HistoryDataController {
 
         var filter = FilterBuilder.Where(
             r =>
-                r.Symbol == symbol
-                && r.Interval == interval
+                r.Interval == interval
                 && r.Timestamp >= earliest
                 && r.Timestamp <= latest
         );
 
-        await MongoConst.PxHistory.DeleteManyAsync(session.Session, filter);
-        await MongoConst.PxHistory.InsertManyAsync(session.Session, entries);
+        await MongoConst.GetHistoryCollection(symbol).DeleteManyAsync(session.Session, filter);
+        await MongoConst.GetHistoryCollection(symbol).InsertManyAsync(session.Session, entries);
 
         await session.Session.CommitTransactionAsync();
 

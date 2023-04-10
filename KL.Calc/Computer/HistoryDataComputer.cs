@@ -27,9 +27,9 @@ public static partial class HistoryDataComputer {
     }
 
     public static async Task<IEnumerable<CalculatedDataModel>> CalcPartial(
+        (string Symbol, int Period) c,
         IEnumerable<GroupedHistoryDataModel> groupedHistory,
-        IEnumerable<CalculatedDataModel> calculatedData,
-        int periodMin
+        IEnumerable<CalculatedDataModel> calculatedData
     ) {
         var start = Stopwatch.GetTimestamp();
 
@@ -57,18 +57,17 @@ public static partial class HistoryDataComputer {
         // Level 2 indicator (indicator on indicator)
         var candleDirection = await calcPartialCandleDirection;
 
-        var firstCalculated = baseData.Calculated[0];
         Log.Information(
             "Calculated partial indicator for {Symbol} @ {PeriodMin} ({Count}) in {Elapsed:0.00} ms",
-            firstCalculated.Symbol,
-            firstCalculated.PeriodMin,
+            c.Symbol,
+            c.Period,
             history.Length,
             start.GetElapsedMs()
         );
 
         return history.Select(
             (r, idx) => r.ToCalculated(
-                periodMin,
+                c.Period,
                 diff[idx],
                 tiePointData.MarketDateHigh[idx],
                 tiePointData.MarketDateLow[idx],
