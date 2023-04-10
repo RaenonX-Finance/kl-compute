@@ -1,9 +1,9 @@
 ﻿using System.Net;
-using System.Reflection;
 using KL.Common.Utils;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Serilog;
 
 namespace KL.Common.Extensions;
@@ -12,6 +12,10 @@ namespace KL.Common.Extensions;
 public static class InitializingExtensions {
     public static WebApplicationBuilder BuildGrpcService(this WebApplicationBuilder builder, int grpcPort) {
         builder.Services.AddGrpc();
+        if (builder.Environment.IsDevelopment()) {
+            builder.Services.AddGrpcReflection();
+        }
+
         builder.WebHost.ConfigureKestrel(options => { options.Listen(IPAddress.Loopback, grpcPort); });
 
         return builder;
@@ -49,6 +53,9 @@ public static class InitializingExtensions {
 
     public static WebApplication InitGrpcService<T>(this WebApplication app) where T : class {
         app.MapGrpcService<T>();
+        if (app.Environment.IsDevelopment()) {
+            app.MapGrpcReflectionService();
+        }
 
         return app;
     }
