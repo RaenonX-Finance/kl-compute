@@ -11,6 +11,8 @@ namespace KL.Touchance.Extensions;
 
 public static class SocketExtensions {
     private static readonly ILogger Log = Serilog.Log.ForContext(typeof(SocketExtensions));
+    
+    private static readonly object RequestLock = new();
 
     public static TReply SendTcRequest<TRequest, TReply>(
         this RequestSocket socket,
@@ -50,15 +52,18 @@ public static class SocketExtensions {
     )
         where TRequest : TcRequest
         where TReply : TcReply {
-        socket.SendFrame(request.ToJson());
+        // Using `lock` here because `SendTcRequest()` could be invoked from different thread, causing exception
+        lock (RequestLock) {
+            socket.SendFrame(request.ToJson());
 
-        var hasMessage = socket.TryReceiveFrameString(timeout, out var response);
+            var hasMessage = socket.TryReceiveFrameString(timeout, out var response);
 
-        if (!hasMessage || response is null) {
-            return null;
+            if (!hasMessage || response is null) {
+                return null;
+            }
+
+            return ParseReplyToJson<TReply>(response, hasPrefix);
         }
-
-        return ParseReplyToJson<TReply>(response, hasPrefix);
     }
 
     private static TReply ParseReplyToJson<TReply>(
