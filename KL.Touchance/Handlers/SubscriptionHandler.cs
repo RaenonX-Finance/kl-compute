@@ -34,7 +34,7 @@ internal class SubscriptionHandler {
     ) {
         var tcSubscription = messageJson.ToTcSubscription();
 
-        Log.Debug("Received subscription message of type {Type}", tcSubscription.GetType());
+        Log.Debug("Received Touchance message - {Type}", tcSubscription.GetType().Name.Split(".").Last());
 
         switch (tcSubscription) {
             case PingMessage:
@@ -47,11 +47,11 @@ internal class SubscriptionHandler {
                 return;
             case PxRealtimeMessage message:
                 var realtimeEventArgs = RealtimeHandler.ToEventArgs(message);
-                
+
                 if (realtimeEventArgs is null) {
                     return;
                 }
-                
+
                 Client.OnRealtimeDataUpdated(realtimeEventArgs);
                 return;
             case PxHistoryReadyMessage message:

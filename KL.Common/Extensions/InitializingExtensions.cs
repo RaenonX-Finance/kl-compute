@@ -34,7 +34,7 @@ public static class InitializingExtensions {
     }
 
     public static WebApplication InitLogging(this WebApplication app) {
-        LoggingHelper.Initialize(EnvironmentConfigHelper.Config.Logging.OutputDirectory, app.Environment);
+        LoggingHelper.Initialize(EnvironmentConfigHelper.Config.Logging.OutputDirectory, app);
 
         app.UseSerilogRequestLogging(
             options => {
