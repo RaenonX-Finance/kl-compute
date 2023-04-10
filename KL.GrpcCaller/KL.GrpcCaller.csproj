@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UserSecretsId>dotnet-KL.GrpcCaller-912E8412-7BCF-451C-8344-34E39581F3AA</UserSecretsId>
+        <Company>RaenonX</Company>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Google.Protobuf" Version="3.22.1" />
+        <PackageReference Include="Grpc.AspNetCore" Version="2.52.0" />
+        <PackageReference Include="Grpc.Net.Client" Version="2.52.0" />
+        <PackageReference Include="Grpc.Tools" Version="2.53.0">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
+        <PackageReference Include="Serilog" Version="2.12.0" />
+    </ItemGroup>
+
+    <Target Name="CopyConfigFileBeforeBuild" BeforeTargets="BeforeBuild">
+        <ItemGroup>
+            <ConfigFile Include="..\KL.Common\config.yaml" />
+        </ItemGroup>
+        <Copy SourceFiles="@(ConfigFile)" DestinationFolder="$(OutDir)" Condition="Exists('%(FullPath)')" />
+    </Target>
+
+    <ItemGroup>
+        <Protobuf Include="..\KL.Proto\Protos\pxParse.proto" GrpcServices="Client" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\KL.Common\KL.Common.csproj" />
+    </ItemGroup>
+    
+</Project>

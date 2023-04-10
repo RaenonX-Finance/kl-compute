@@ -1,0 +1,12 @@
+﻿{
+  "profiles": {
+    "KL.GrpcCaller": {
+      "commandName": "Project",
+      "commandLineArgs": "--action=subscribe --symbols=FITX",
+      "dotnetRunMessages": true,
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

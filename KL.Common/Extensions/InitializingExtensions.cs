@@ -2,6 +2,7 @@
 using KL.Common.Utils;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -21,6 +22,12 @@ public static class InitializingExtensions {
         return builder;
     }
 
+    public static IHostBuilder BuildLogging(this IHostBuilder builder) {
+        builder.UseSerilog();
+
+        return builder;
+    }
+
     public static WebApplicationBuilder BuildLogging(this WebApplicationBuilder builder) {
         builder.Host.UseSerilog();
 
@@ -33,8 +40,22 @@ public static class InitializingExtensions {
         return app;
     }
 
+    public static IHost InitLogging(this IHost app) {
+        LoggingHelper.Initialize(
+            EnvironmentConfigHelper.Config.Logging.OutputDirectory,
+            app.Services.GetRequiredService<IHostEnvironment>(),
+            app.Services.GetRequiredService<IConfiguration>()
+        );
+
+        return app;
+    }
+
     public static WebApplication InitLogging(this WebApplication app) {
-        LoggingHelper.Initialize(EnvironmentConfigHelper.Config.Logging.OutputDirectory, app);
+        LoggingHelper.Initialize(
+            EnvironmentConfigHelper.Config.Logging.OutputDirectory,
+            app.Environment,
+            app.Configuration
+        );
 
         app.UseSerilogRequestLogging(
             options => {

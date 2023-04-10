@@ -1,5 +1,5 @@
 ﻿using System.Reflection;
-using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Core;
@@ -19,10 +19,10 @@ public static class LoggingHelper {
         "{TimestampUtc:yyyy-MM-dd HH:mm:ss.fff} [{ThreadId,3}] "
         + "{SourceContext,50} [{Level:u1}] {Message:lj}{NewLine}{Exception}";
 
-    public static void Initialize(string? logDir, WebApplication app) {
+    public static void Initialize(string? logDir, IHostEnvironment env, IConfiguration config) {
         var appName = Assembly.GetEntryAssembly()?.FullName?.Split(',')[0] ?? "(Unmanaged)";
-        var isDevelopment = app.Environment.IsDevelopment();
-        var isProduction = app.Environment.IsProduction();
+        var isDevelopment = env.IsDevelopment();
+        var isProduction = env.IsProduction();
 
         if (isDevelopment) {
             appName += ".Development";
@@ -54,7 +54,7 @@ public static class LoggingHelper {
             );
         }
 
-        loggerConfig = loggerConfig.ReadFrom.Configuration(app.Configuration);
+        loggerConfig = loggerConfig.ReadFrom.Configuration(config);
 
         Log.Logger = loggerConfig.CreateLogger();
     }

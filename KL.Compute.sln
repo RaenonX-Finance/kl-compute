@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KL.Sandbox", "KL.Sandbox\KL
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KL.Proto", "KL.Proto\KL.Proto.csproj", "{5DB6C9AA-6234-4138-98F7-A71C78C1CCC2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KL.GrpcCaller", "KL.GrpcCaller\KL.GrpcCaller.csproj", "{599ECEA1-1F7A-4CCC-B642-71A57B310860}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,5 +44,9 @@ Global
 		{5DB6C9AA-6234-4138-98F7-A71C78C1CCC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5DB6C9AA-6234-4138-98F7-A71C78C1CCC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5DB6C9AA-6234-4138-98F7-A71C78C1CCC2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{599ECEA1-1F7A-4CCC-B642-71A57B310860}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{599ECEA1-1F7A-4CCC-B642-71A57B310860}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{599ECEA1-1F7A-4CCC-B642-71A57B310860}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{599ECEA1-1F7A-4CCC-B642-71A57B310860}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

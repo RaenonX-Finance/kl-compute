@@ -139,7 +139,7 @@ public static class GrpcHelper {
 
     public delegate Task OnGrpcStreamReply<in TReply>(TReply reply);
 
-    public static async Task ServerStream<TRequest, TReply>(
+    public static async Task<bool> ServerStream<TRequest, TReply>(
         GrpcServerStreamCall<TRequest, TReply> grpcCall,
         OnGrpcStreamReply<TReply> onReply,
         TRequest request,
@@ -158,7 +158,7 @@ public static class GrpcHelper {
                 endpointName,
                 nextOpen
             );
-            return;
+            return false;
         }
 
         try {
@@ -175,6 +175,8 @@ public static class GrpcHelper {
             ) {
                 await onReply(reply);
             }
+
+            return true;
         } catch (RpcException e) {
             switch (e) {
                 case { StatusCode: StatusCode.DeadlineExceeded }:
@@ -183,7 +185,7 @@ public static class GrpcHelper {
                         endpointName,
                         timeout
                     );
-                    return;
+                    return false;
                 case { StatusCode: StatusCode.Unavailable }:
                     Log.Warning(
                         e,
@@ -191,7 +193,7 @@ public static class GrpcHelper {
                         endpointName,
                         request
                     );
-                    return;
+                    return false;
                 case { StatusCode: StatusCode.Cancelled }:
                     Log.Warning(
                         e,
@@ -199,7 +201,7 @@ public static class GrpcHelper {
                         endpointName,
                         request
                     );
-                    return;
+                    return false;
                 default:
                     Log.Error(
                         e,
