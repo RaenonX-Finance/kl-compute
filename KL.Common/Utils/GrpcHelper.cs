@@ -137,7 +137,7 @@ public static class GrpcHelper {
         CallOptions options
     );
 
-    public delegate void OnGrpcStreamReply<in TReply>(TReply reply);
+    public delegate Task OnGrpcStreamReply<in TReply>(TReply reply);
 
     public static async Task ServerStream<TRequest, TReply>(
         GrpcServerStreamCall<TRequest, TReply> grpcCall,
@@ -170,9 +170,10 @@ public static class GrpcHelper {
                 )
             );
 
-            await foreach (var reply in
-                           streamingCall.ResponseStream.ReadAllAsync(cancellationToken: cancellationToken)) {
-                onReply(reply);
+            await foreach (
+                var reply in streamingCall.ResponseStream.ReadAllAsync(cancellationToken: cancellationToken)
+            ) {
+                await onReply(reply);
             }
         } catch (RpcException e) {
             switch (e) {

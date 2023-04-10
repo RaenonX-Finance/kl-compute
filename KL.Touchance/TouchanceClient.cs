@@ -1,4 +1,5 @@
-﻿using KL.Common.Controllers;
+﻿using KL.Common;
+using KL.Common.Controllers;
 using KL.Common.Enums;
 using KL.Common.Events;
 using KL.Common.Extensions;
@@ -96,24 +97,33 @@ public class TouchanceClient : PxParseClient {
         await InitializeSources(sources);
     }
 
-    public async Task<bool> InitializeSources(IList<PxSourceConfigModel> sources) {
+    // CA1822 False-positive - This function cannot be static because its overload cannot be static
+    #pragma warning disable CA1822
+    private Task<bool> InitializeSources(IList<PxSourceConfigModel> sources) {
+        return InitializeSources(sources, _ => Task.CompletedTask);
+    }
+    #pragma warning restore CA1822
+
+    public async Task<bool> InitializeSources(IList<PxSourceConfigModel> sources, OnUpdate onUpdate) {
         if (sources.IsEmpty()) {
             Log.Warning("Attempt to subscribe data but `sources` is empty");
             return false;
         }
 
+        await onUpdate($"Attempt to subscribe [{string.Join(", ", sources.Select(r => r.InternalSymbol))}]");
+
         await Task.WhenAll(
             this.CheckSourceInfo(sources),
-            InitializeHistoryData(sources)
+            InitializeHistoryData(sources, onUpdate)
         );
 
-        await OnInitCompleted(new InitCompletedEventArgs { Sources = sources });
+        await OnInitCompleted(new InitCompletedEventArgs { Sources = sources, OnUpdate = onUpdate });
 
-        await SendDataSubscriptionRequest(sources);
+        await SendDataSubscriptionRequest(sources, onUpdate);
         return true;
     }
 
-    private async Task InitializeHistoryData(IEnumerable<PxSourceConfigModel> sources) {
+    private async Task InitializeHistoryData(IEnumerable<PxSourceConfigModel> sources, OnUpdate onUpdate) {
         var isAnyPeriodDaily = PxConfigController.Config.Periods.Any(
             period => period.PeriodMin.GetHistoryInterval() == HistoryInterval.Daily
         );
@@ -124,13 +134,18 @@ public class TouchanceClient : PxParseClient {
             // Request all history data
             foreach (var source in sources) {
                 await _semaphore.WaitAsync();
-                await _historyDataHandler.SendHandshakeRequest(
-                    source.ExternalSymbol,
-                    HistoryInterval.Minute,
-                    DateTime.UtcNow.AddDays(-PxConfigController.Config.InitDataBacktrackDays[HistoryInterval.Minute]),
-                    // Need to fetch the history data until the very last available bar
-                    DateTime.UtcNow.AddHours(1),
-                    false
+                await Task.WhenAll(
+                    onUpdate($"Requesting minute history data of {source.ExternalSymbol}"),
+                    _historyDataHandler.SendHandshakeRequest(
+                        source.ExternalSymbol,
+                        HistoryInterval.Minute,
+                        DateTime.UtcNow.AddDays(
+                            -PxConfigController.Config.InitDataBacktrackDays[HistoryInterval.Minute]
+                        ),
+                        // Need to fetch the history data until the very last available bar
+                        DateTime.UtcNow.AddHours(1),
+                        false
+                    )
                 );
 
                 if (!isAnyPeriodDaily) {
@@ -138,12 +153,18 @@ public class TouchanceClient : PxParseClient {
                 }
 
                 await _semaphore.WaitAsync();
-                await _historyDataHandler.SendHandshakeRequest(
-                    source.ExternalSymbol,
-                    HistoryInterval.Daily,
-                    DateTime.UtcNow.AddDays(-PxConfigController.Config.InitDataBacktrackDays[HistoryInterval.Daily]),
-                    DateTime.UtcNow,
-                    false
+                await Task.WhenAll(
+                    onUpdate($"Requesting daily history data of {source.ExternalSymbol}"),
+                    _historyDataHandler.SendHandshakeRequest(
+                        source.ExternalSymbol,
+                        HistoryInterval.Daily,
+                        DateTime.UtcNow.AddDays(
+                            -PxConfigController.Config.InitDataBacktrackDays[HistoryInterval.Daily]
+                        ),
+                        // Need to fetch the history data until the very last available bar
+                        DateTime.UtcNow.AddDays(1),
+                        false
+                    )
                 );
             }
 
@@ -154,15 +175,27 @@ public class TouchanceClient : PxParseClient {
         _semaphore = null;
     }
 
-    private async Task SendDataSubscriptionRequest(IEnumerable<PxSourceConfigModel> sources) {
+    // CA1822 False-positive - This function cannot be static because its overload cannot be static
+    #pragma warning disable CA1822
+    private Task SendDataSubscriptionRequest(IEnumerable<PxSourceConfigModel> sources) {
+        return SendDataSubscriptionRequest(sources, _ => Task.CompletedTask);
+    }
+    #pragma warning restore CA1822
+
+    private async Task SendDataSubscriptionRequest(IEnumerable<PxSourceConfigModel> sources, OnUpdate onUpdate) {
         foreach (var source in sources) {
             if (!source.Enabled) {
+                await onUpdate(
+                    $"Skipped sending data subscription request of {source.ExternalSymbol} (source not enabled)"
+                );
                 Log.Information(
                     "Skipped sending data subscription request of {Symbol} (source not enabled)",
                     source.ExternalSymbol
                 );
                 continue;
             }
+
+            await onUpdate($"Subscribing price data of {source.ExternalSymbol}");
 
             if (source.EnableRealtime) {
                 _realtimeHandler.SubscribeRealtime(source.ExternalSymbol);

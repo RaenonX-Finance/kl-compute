@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using KL.Common;
 using KL.Common.Controllers;
 using KL.Common.Enums;
 using KL.Common.Events;
@@ -35,7 +36,7 @@ public class ClientAggregator : IClientAggregator {
     }
 
     private async Task OnInitCompleted(object? sender, InitCompletedEventArgs e) {
-        await GrpcPxDataCaller.CalcAll(e.Sources.Select(r => r.InternalSymbol), _cancellationToken);
+        await GrpcPxDataCaller.CalcAll(e, _cancellationToken);
 
         // --- Attaching event handlers after the client has initialized ---
         // `OnMinuteChanged` might invoke before `GrpcPxDataCaller.CalcAll`
@@ -160,11 +161,12 @@ public class ClientAggregator : IClientAggregator {
         return Task.CompletedTask;
     }
 
-    public Task<bool> Subscribe(IEnumerable<string> symbols) {
+    public Task<bool> Subscribe(IEnumerable<string> symbols, OnUpdate onUpdate) {
         return _touchanceClient.InitializeSources(
             PxConfigController.Config.SourceList
                 .Where(r => r is { Enabled: true, Source: PxSource.Touchance } && symbols.Contains(r.InternalSymbol))
-                .ToArray()
+                .ToArray(),
+            onUpdate
         );
     }
 }

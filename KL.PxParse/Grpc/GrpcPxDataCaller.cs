@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using Grpc.Net.Client;
+using KL.Common.Events;
 using KL.Common.Extensions;
 using KL.Common.Utils;
 using KL.Proto;
@@ -40,25 +41,31 @@ public class GrpcPxDataCaller {
         );
     }
 
-    public static async Task CalcAll(IEnumerable<string> symbols, CancellationToken cancellationToken) {
+    public static async Task CalcAll(InitCompletedEventArgs e, CancellationToken cancellationToken) {
         var start = Stopwatch.GetTimestamp();
-
         const string endpointName = nameof(Client.CalcAll);
 
         var request = new PxCalcRequestMulti();
-        request.Symbols.AddRange(symbols);
+        request.Symbols.AddRange(e.Sources.Select(r => r.InternalSymbol));
 
         if (request.Symbols.IsEmpty()) {
             Log.Error("gRPC call {GrpcCallEndpoint} should have symbols for calculation", endpointName);
+            await e.OnUpdate($"gRPC call {endpointName} should have symbols for calculation");
             return;
         }
 
         await GrpcHelper.ServerStream(
             Client.CalcAll,
-            reply => Log.Information(
-                "gRPC stream message of {GrpcCallEndpoint}: {Message}",
-                endpointName,
-                reply.Message
+            reply => Task.WhenAll(
+                e.OnUpdate(reply.Message),
+                Task.Run(
+                    () => Log.Information(
+                        "gRPC stream message of {GrpcCallEndpoint}: {Message}",
+                        endpointName,
+                        reply.Message
+                    ),
+                    cancellationToken
+                )
             ),
             request,
             endpointName,
