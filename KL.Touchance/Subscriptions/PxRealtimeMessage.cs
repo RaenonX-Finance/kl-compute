@@ -12,7 +12,9 @@ public record PxRealtimeData {
     public DateTime FilledTime => $"{TradeDate} {PreciseTime:D12}".FromTouchanceRealtime();
 
     // US futures use `ReferencePrice` as open instead
-    public decimal Open => string.IsNullOrEmpty(OpeningPrice) ? ReferencePrice : Convert.ToDecimal(OpeningPrice);
+    public decimal Open => string.IsNullOrEmpty(OpeningPrice) ? 
+        string.IsNullOrEmpty(ReferencePrice) ? 0 : Convert.ToDecimal(ReferencePrice) : 
+        Convert.ToDecimal(OpeningPrice);
 
     public decimal High => string.IsNullOrEmpty(HighPrice) ? 0 : Convert.ToDecimal(HighPrice);
 
@@ -47,7 +49,8 @@ public record PxRealtimeData {
     public required string ClosingPrice { get; init; }
 
     [UsedImplicitly]
-    public required decimal ReferencePrice { get; init; }
+    // Taking string and convert later because the JSON value might be empty
+    public required string ReferencePrice { get; init; }
 
     [UsedImplicitly]
     public required int TradeQuantity { get; init; }
