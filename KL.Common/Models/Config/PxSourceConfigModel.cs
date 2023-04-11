@@ -103,7 +103,7 @@ public record PxSourceConfigModel {
                     ExternalSymbol = "TC.F.NYBOT.DX.HOT",
                     Name = "美元指數",
                     ProductCategory = ProductCategory.UsFutures,
-                    SrLevelMinDiff = (decimal)0.1
+                    SrLevelMinDiff = 0.1m
                 }
             }, {
                 "GC",

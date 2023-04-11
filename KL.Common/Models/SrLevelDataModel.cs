@@ -34,13 +34,13 @@ public record SrLevelDataModel {
 
             return NumberHelper.DecreasingRangeWithStep(
                     Math.Min(LastClose, CurrentOpen),
-                    Math.Min(LastClose, CurrentOpen) * (decimal)0.95,
+                    Math.Min(LastClose, CurrentOpen) * 0.95m,
                     -diff
                 )
                 .Concat(
                     NumberHelper.IncreasingRangeWithStep(
                         Math.Max(LastClose, CurrentOpen),
-                        Math.Max(LastClose, CurrentOpen) * (decimal)1.05,
+                        Math.Max(LastClose, CurrentOpen) * 1.05m,
                         diff
                     )
                 )
