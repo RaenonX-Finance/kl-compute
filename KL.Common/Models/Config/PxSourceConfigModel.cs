@@ -5,16 +5,12 @@ namespace KL.Common.Models.Config;
 
 
 public record PxSourceConfigModel {
-    [UsedImplicitly]
     public required PxSource Source { get; init; }
 
-    [UsedImplicitly]
     public required ProductCategory ProductCategory { get; init; }
 
-    [UsedImplicitly]
     public required bool Enabled { get; init; }
 
-    [UsedImplicitly]
     public required bool EnableRealtime { get; init; }
 
     /// <summary>
@@ -22,18 +18,18 @@ public record PxSourceConfigModel {
     ///     This is used in various calculation processes, also stored in the database.
     /// </summary>
     /// <example>NQ</example>
-    [UsedImplicitly]
     public required string InternalSymbol { get; init; }
 
     /// <summary>
     ///     Symbol used on 3rd party API for data control.
     /// </summary>
     /// <example>TC.F.CME.NQ.HOT</example>
-    [UsedImplicitly]
     public required string ExternalSymbol { get; init; }
 
     [UsedImplicitly]
     public required string Name { get; init; }
+
+    public required decimal SrLevelMinDiff { get; init; }
 
     public static IDictionary<string, PxSourceConfigModel> GenerateDefault() {
         return new Dictionary<string, PxSourceConfigModel> {
@@ -46,7 +42,8 @@ public record PxSourceConfigModel {
                     InternalSymbol = "FITX",
                     ExternalSymbol = "TC.F.TWF.FITX.HOT",
                     Name = "台指",
-                    ProductCategory = ProductCategory.TaiwanIndexFutures
+                    ProductCategory = ProductCategory.TaiwanIndexFutures,
+                    SrLevelMinDiff = 35
                 }
             }, {
                 "NQ",
@@ -57,7 +54,8 @@ public record PxSourceConfigModel {
                     InternalSymbol = "NQ",
                     ExternalSymbol = "TC.F.CME.NQ.HOT",
                     Name = "小那",
-                    ProductCategory = ProductCategory.UsFutures
+                    ProductCategory = ProductCategory.UsFutures,
+                    SrLevelMinDiff = 35
                 }
             }, {
                 "YM",
@@ -68,7 +66,8 @@ public record PxSourceConfigModel {
                     InternalSymbol = "YM",
                     ExternalSymbol = "TC.F.CBOT.YM.HOT",
                     Name = "小道",
-                    ProductCategory = ProductCategory.UsFutures
+                    ProductCategory = ProductCategory.UsFutures,
+                    SrLevelMinDiff = 35
                 }
             }, {
                 "ES",
@@ -79,7 +78,8 @@ public record PxSourceConfigModel {
                     InternalSymbol = "ES",
                     ExternalSymbol = "TC.F.CME.ES.HOT",
                     Name = "SP",
-                    ProductCategory = ProductCategory.UsFutures
+                    ProductCategory = ProductCategory.UsFutures,
+                    SrLevelMinDiff = 4
                 }
             }, {
                 "RTY",
@@ -90,7 +90,8 @@ public record PxSourceConfigModel {
                     InternalSymbol = "RTY",
                     ExternalSymbol = "TC.F.CME.RTY.HOT",
                     Name = "羅素",
-                    ProductCategory = ProductCategory.UsFutures
+                    ProductCategory = ProductCategory.UsFutures,
+                    SrLevelMinDiff = 2
                 }
             }, {
                 "DX",
@@ -101,7 +102,8 @@ public record PxSourceConfigModel {
                     InternalSymbol = "DX",
                     ExternalSymbol = "TC.F.NYBOT.DX.HOT",
                     Name = "美元指數",
-                    ProductCategory = ProductCategory.UsFutures
+                    ProductCategory = ProductCategory.UsFutures,
+                    SrLevelMinDiff = (decimal)0.1
                 }
             }, {
                 "GC",
@@ -112,7 +114,8 @@ public record PxSourceConfigModel {
                     InternalSymbol = "GC",
                     ExternalSymbol = "TC.F.CME.GC.HOT",
                     Name = "黃金",
-                    ProductCategory = ProductCategory.UsFutures
+                    ProductCategory = ProductCategory.UsFutures,
+                    SrLevelMinDiff = 2
                 }
             }, {
                 "FTSE-TW",
@@ -123,7 +126,8 @@ public record PxSourceConfigModel {
                     InternalSymbol = "GC",
                     ExternalSymbol = "TC.F.SGXQ.TWN.HOT",
                     Name = "富時台",
-                    ProductCategory = ProductCategory.SingaporeTaiwanIndexFutures
+                    ProductCategory = ProductCategory.SingaporeTaiwanIndexFutures,
+                    SrLevelMinDiff = 1
                 }
             }, {
                 "NK",
@@ -134,7 +138,8 @@ public record PxSourceConfigModel {
                     InternalSymbol = "NK",
                     ExternalSymbol = "TC.F.OSE.NK225.HOT",
                     Name = "日經",
-                    ProductCategory = ProductCategory.JapanIndexFutures
+                    ProductCategory = ProductCategory.JapanIndexFutures,
+                    SrLevelMinDiff = 15
                 }
             }, {
                 "NKM",
@@ -145,7 +150,8 @@ public record PxSourceConfigModel {
                     InternalSymbol = "NKM",
                     ExternalSymbol = "TC.F.OSE.NK225M.HOT",
                     Name = "小日經",
-                    ProductCategory = ProductCategory.JapanIndexFutures
+                    ProductCategory = ProductCategory.JapanIndexFutures,
+                    SrLevelMinDiff = 15
                 }
             }, {
                 "FDAX",
@@ -156,7 +162,8 @@ public record PxSourceConfigModel {
                     InternalSymbol = "FDAX",
                     ExternalSymbol = "TC.F.EUREX.FDAX.HOT",
                     Name = "德指",
-                    ProductCategory = ProductCategory.EuroIndexFutures
+                    ProductCategory = ProductCategory.EuroIndexFutures,
+                    SrLevelMinDiff = 30
                 }
             }, {
                 "FESX",
@@ -167,7 +174,8 @@ public record PxSourceConfigModel {
                     InternalSymbol = "FESX",
                     ExternalSymbol = "TC.F.EUREX.FESX.HOT",
                     Name = "STOXX 50",
-                    ProductCategory = ProductCategory.EuroIndexFutures
+                    ProductCategory = ProductCategory.EuroIndexFutures,
+                    SrLevelMinDiff = 3
                 }
             }
         };

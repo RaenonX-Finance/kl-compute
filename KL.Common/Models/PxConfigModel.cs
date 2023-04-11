@@ -63,7 +63,7 @@ public record PxConfigModel {
                     Slow = 676
                 }
             },
-            SrLevel = new SrLevelConfigModel { MinDiff = 35, PairCount = 5 },
+            SrLevel = new SrLevelConfigModel { PairCount = 5 },
             Periods = new DataPeriodModel[] {
                 new() {
                     PeriodMin = 1,

@@ -28,7 +28,7 @@ public record SrLevelDataModel {
         get {
             var diff = Math.Abs(LastClose - CurrentOpen);
 
-            if (diff < PxConfigController.Config.SrLevel.MinDiff) {
+            if (diff < PxConfigController.Config.Sources[Symbol].SrLevelMinDiff) {
                 return Array.Empty<decimal>();
             }
 
