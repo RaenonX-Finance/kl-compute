@@ -2,6 +2,9 @@
 
 
 public enum ProductCategory {
-    UsIndexFutures,
-    TaiwanIndexFutures
+    UsFutures,
+    TaiwanIndexFutures,
+    JapanIndexFutures,
+    SingaporeTaiwanIndexFutures,
+    EuroIndexFutures
 }

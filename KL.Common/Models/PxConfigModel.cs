@@ -86,41 +86,12 @@ public record PxConfigModel {
                 StoreLimit = 2,
                 InitialBufferHrs = 1
             },
-            SrLevelTimingMap = new Dictionary<ProductCategory, SrLevelTimingModel> {
-                {
-                    ProductCategory.TaiwanIndexFutures,
-                    SrLevelTimingModel.GenerateDefault(ProductCategory.TaiwanIndexFutures)
-                }, {
-                    ProductCategory.UsIndexFutures,
-                    SrLevelTimingModel.GenerateDefault(ProductCategory.UsIndexFutures)
-                }
-            },
-            MarketSessionMap = new Dictionary<ProductCategory, MarketSessionModel[]> {
-                {
-                    ProductCategory.TaiwanIndexFutures,
-                    MarketSessionModel.GenerateDefault(ProductCategory.TaiwanIndexFutures)
-                }, {
-                    ProductCategory.UsIndexFutures,
-                    MarketSessionModel.GenerateDefault(ProductCategory.UsIndexFutures)
-                }
-            },
-            MarketDateCutoffMap = new Dictionary<ProductCategory, MarketDateCutoffModel> {
-                {
-                    ProductCategory.TaiwanIndexFutures,
-                    new MarketDateCutoffModel {
-                        Timezone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Taipei"),
-                        Time = new TimeOnly(8, 45),
-                        OffsetOnCutoff = 0
-                    }
-                }, {
-                    ProductCategory.UsIndexFutures,
-                    new MarketDateCutoffModel {
-                        Timezone = TimeZoneInfo.FindSystemTimeZoneById("America/Chicago"),
-                        Time = new TimeOnly(17, 00),
-                        OffsetOnCutoff = 1
-                    }
-                }
-            },
+            SrLevelTimingMap = Enum.GetValues<ProductCategory>()
+                .ToDictionary(r => r, SrLevelTimingModel.GenerateDefault),
+            MarketSessionMap = Enum.GetValues<ProductCategory>()
+                .ToDictionary(r => r, MarketSessionModel.GenerateDefault),
+            MarketDateCutoffMap = Enum.GetValues<ProductCategory>()
+                .ToDictionary(r => r, MarketDateCutoffModel.GenerateDefault),
             InitDataBacktrackDays = new Dictionary<HistoryInterval, int> {
                 { HistoryInterval.Minute, 45 },
                 { HistoryInterval.Daily, 360 }
@@ -128,7 +99,7 @@ public record PxConfigModel {
             Cache = new PxCacheConfigModel {
                 InitCount = 70, // Calculating momentum only needs at most 50 bars of 1K (10 MA of 5 min)
                 UpdateCount = 2, // 2nd last might get correction
-                MarketUpdateGapMs = 200
+                MarketUpdateGapMs = 333
             },
             Sources = PxSourceConfigModel.GenerateDefault()
         };

@@ -37,7 +37,7 @@ public record MarketSessionModel {
 
     public static MarketSessionModel[] GenerateDefault(ProductCategory productCategory) {
         return productCategory switch {
-            ProductCategory.UsIndexFutures => new[] {
+            ProductCategory.UsFutures => new[] {
                 new MarketSessionModel {
                     Timezone = TimeZoneInfo.FindSystemTimeZoneById("America/Chicago"),
                     TradingDays = new[] {
@@ -65,7 +65,57 @@ public record MarketSessionModel {
                     End = new TimeOnly(5, 45)
                 }
             },
-            _ => Array.Empty<MarketSessionModel>()
+            ProductCategory.JapanIndexFutures => new[] {
+                new MarketSessionModel {
+                    Timezone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Tokyo"),
+                    TradingDays = new[] {
+                        DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday
+                    },
+                    Start = new TimeOnly(8, 45),
+                    End = new TimeOnly(15, 15)
+                },
+                new MarketSessionModel {
+                    Timezone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Tokyo"),
+                    TradingDays = new[] {
+                        DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday
+                    },
+                    Start = new TimeOnly(16, 30),
+                    End = new TimeOnly(6, 00)
+                }
+            },
+            ProductCategory.SingaporeTaiwanIndexFutures => new[] {
+                new MarketSessionModel {
+                    Timezone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Singapore"),
+                    TradingDays = new[] {
+                        DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday
+                    },
+                    Start = new TimeOnly(9, 00),
+                    End = new TimeOnly(12, 00)
+                },
+                new MarketSessionModel {
+                    Timezone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Singapore"),
+                    TradingDays = new[] {
+                        DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday
+                    },
+                    Start = new TimeOnly(13, 00),
+                    End = new TimeOnly(17, 00)
+                }
+            },
+            ProductCategory.EuroIndexFutures => new[] {
+                new MarketSessionModel {
+                    Timezone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Berlin"),
+                    TradingDays = new[] {
+                        DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday
+                    },
+                    Start = new TimeOnly(1, 00),
+                    End = new TimeOnly(22, 30)
+                }
+            },
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(productCategory),
+                productCategory,
+                "Given product category doesn't have default value for `MarketSessionModel`"
+            )
         };
     }
 }

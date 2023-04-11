@@ -22,19 +22,32 @@ public record SrLevelTimingModel {
             ProductCategory.TaiwanIndexFutures => new SrLevelTimingModel {
                 Timezone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Taipei"),
                 Open = new TimeOnly(8, 45),
-                // Needs to be 29 instead of 30 because it's close of 13:29 being used
                 Close = new TimeOnly(13, 29)
             },
-            ProductCategory.UsIndexFutures => new SrLevelTimingModel {
+            ProductCategory.UsFutures => new SrLevelTimingModel {
                 Timezone = TimeZoneInfo.FindSystemTimeZoneById("America/Chicago"),
                 Open = new TimeOnly(8, 30),
-                // Needs to be 59 instead of 00 because it's close of 14:59 being used
                 Close = new TimeOnly(14, 59)
+            },
+            ProductCategory.JapanIndexFutures => new SrLevelTimingModel {
+                Timezone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Tokyo"),
+                Open = new TimeOnly(9, 00),
+                Close = new TimeOnly(14, 59)
+            },
+            ProductCategory.SingaporeTaiwanIndexFutures => new SrLevelTimingModel {
+                Timezone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Singapore"),
+                Open = new TimeOnly(8, 45),
+                Close = new TimeOnly(13, 29)
+            },
+            ProductCategory.EuroIndexFutures => new SrLevelTimingModel {
+                Timezone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Berlin"),
+                Open = new TimeOnly(9, 00),
+                Close = new TimeOnly(17, 29)
             },
             _ => throw new ArgumentOutOfRangeException(
                 nameof(productCategory),
                 productCategory,
-                "Product category doesn't have default value"
+                "Given product category doesn't have default value for `SrLevelTimingModel`"
             )
         };
     }
