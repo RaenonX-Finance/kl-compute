@@ -34,34 +34,51 @@ public static class CalculatedDataController {
     }
 
     public static async Task UpdateByEpoch(string symbol, IList<CalculatedDataModel> calculatedData) {
-        using var session = await MongoSession.Create();
+        try {
+            using var session = await MongoSession.Create();
 
-        Log.Debug(
-            "Session {Session}: To update {Count} calculated data",
-            session.SessionId,
-            calculatedData.Count
-        );
-
-        var filter = calculatedData
-            .Select(r => (r.PeriodMin, r.EpochSecond))
-            .Distinct()
-            .Select(
-                pair => FilterBuilder.Where(
-                    r =>
-                        r.PeriodMin == pair.PeriodMin
-                        && r.EpochSecond == pair.EpochSecond
-                )
+            Log.Debug(
+                "Session {Session}: To update {Count} calculated data",
+                session.SessionId,
+                calculatedData.Count
             );
-        await MongoConst.GetCalculatedCollection(symbol).DeleteManyAsync(session.Session, FilterBuilder.Or(filter));
-        await MongoConst.GetCalculatedCollection(symbol).InsertManyAsync(session.Session, calculatedData);
 
-        await session.Session.CommitTransactionAsync();
+            var filter = calculatedData
+                .Select(r => (r.PeriodMin, r.EpochSecond))
+                .Distinct()
+                .Select(
+                    pair => FilterBuilder.Where(
+                        r =>
+                            r.PeriodMin == pair.PeriodMin
+                            && r.EpochSecond == pair.EpochSecond
+                    )
+                );
+            await MongoConst.GetCalculatedCollection(symbol).DeleteManyAsync(session.Session, FilterBuilder.Or(filter));
+            await MongoConst.GetCalculatedCollection(symbol).InsertManyAsync(session.Session, calculatedData);
 
-        Log.Debug(
-            "Session {Session}: Updated {Count} calculated data",
-            session.SessionId,
-            calculatedData.Count
-        );
+            await session.Session.CommitTransactionAsync();
+
+            Log.Debug(
+                "Session {Session}: Updated {Count} calculated data",
+                session.SessionId,
+                calculatedData.Count
+            );
+        } catch (MongoCommandException ex) {
+            // https://github.com/mongodb/mongo/blob/master/src/mongo/base/error_codes.yml
+            switch (ex.Code) {
+                // Write Conflict
+                case 112:
+                    Log.Warning(
+                        "Write Conflict occurred during the update of calculated data of {Symbol} ({Count}), will retry",
+                        symbol,
+                        calculatedData.Count
+                    );
+                    await UpdateByEpoch(symbol, calculatedData);
+                    break;
+                default:
+                    throw;
+            }
+        }
     }
 
     public static async Task UpdateByEpoch(string symbol, CalculatedDataModel calculatedData) {
