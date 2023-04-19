@@ -13,7 +13,7 @@ public static class DateTimeExtensions {
     }
 
     public static DateTime FromTouchanceRealtime(this string dateTime) {
-        return dateTime.ToUtcDateTime("yyyyMMdd HHmmssffffff");
+        return dateTime.ToUtcDateTime("yyyyMMdd HHmmss");
     }
 
     public static DateTime ToTouchanceDatetime(this DateTime dateTime) {

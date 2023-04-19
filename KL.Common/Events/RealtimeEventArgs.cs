@@ -8,5 +8,7 @@ public class RealtimeEventArgs : EventArgs {
 
     public required PxRealtimeModel Data { get; init; }
 
+    public DateTime? Timestamp { get; init; }
+
     public required bool IsTriggeredByHistory { get; init; }
 }

@@ -124,10 +124,12 @@ public class ClientAggregator : IClientAggregator {
         }
 
         Log.Information(
-            "Realtime data of {Symbol} {WillHandle} in {Elapsed:0.00} ms",
+            "Realtime data of {Symbol} ({Px}) {WillHandle} in {Elapsed:0.00} ms ({FillTimeDiff:0.00} ms)",
             e.Symbol,
+            e.Data.Close,
             isPxUpdated ? "handled" : "skipped",
-            start.GetElapsedMs()
+            start.GetElapsedMs(),
+            e.Timestamp is not null ? (DateTime.UtcNow - e.Timestamp).Value.Milliseconds : double.NaN
         );
     }
 

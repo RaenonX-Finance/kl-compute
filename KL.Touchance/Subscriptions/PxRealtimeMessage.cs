@@ -9,7 +9,7 @@ namespace KL.Touchance.Subscriptions;
 
 
 public record PxRealtimeData {
-    public DateTime FilledTime => $"{TradeDate} {PreciseTime:D12}".FromTouchanceRealtime();
+    public DateTime FilledTimestamp => $"{TradeDate} {FilledTime:D6}".FromTouchanceRealtime();
 
     // US futures use `ReferencePrice` as open instead
     public decimal Open => string.IsNullOrEmpty(OpeningPrice) ? 
@@ -59,7 +59,7 @@ public record PxRealtimeData {
     public required long TradeDate { get; init; }
 
     [UsedImplicitly]
-    public required long PreciseTime { get; init; }
+    public required long FilledTime { get; init; }
 }
 
 public record PxRealtimeMessage : TcSubscription {
@@ -75,6 +75,7 @@ public record PxRealtimeMessage : TcSubscription {
         
         return new RealtimeEventArgs {
             Symbol = PxConfigController.GetInternalSymbol(Quote.Symbol, PxSource.Touchance),
+            Timestamp = Quote.FilledTimestamp,
             Data = new PxRealtimeModel {
                 Open = Quote.Open,
                 High = Quote.High,
