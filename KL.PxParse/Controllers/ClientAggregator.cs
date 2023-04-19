@@ -53,6 +53,12 @@ public class ClientAggregator : IClientAggregator {
 
         if (e.IsSubscription) {
             dataToDb = dataToDb.TakeLast(PxConfigController.Config.HistorySubscription.StoreLimit);
+            HistoryDataController.UpdateAllBatched(
+                e.Metadata.Symbol,
+                e.Metadata.Interval,
+                dataToDb.Select(r => r.ToHistoryDataModel(e.Metadata.Symbol, e.Metadata.Interval)).ToArray()
+            );
+            return;
         }
 
         await HistoryDataController.UpdateAll(

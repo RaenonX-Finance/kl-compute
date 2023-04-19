@@ -1,4 +1,6 @@
-﻿using System.Linq.Expressions;
+﻿using System.Diagnostics;
+using System.Linq.Expressions;
+using JetBrains.Annotations;
 using KL.Common.Enums;
 using KL.Common.Extensions;
 using KL.Common.Models;
@@ -10,11 +12,21 @@ using Serilog;
 namespace KL.Common.Controllers;
 
 
+public struct UpdateAllArgs {
+    [UsedImplicitly]
+    public required string Symbol { get; init; }
+
+    [UsedImplicitly]
+    public required HistoryInterval Interval { get; init; }
+}
+
 public static class HistoryDataController {
     private static readonly ILogger Log = Serilog.Log.ForContext(typeof(HistoryDataController));
 
     private static readonly FilterDefinitionBuilder<HistoryDataModel> FilterBuilder =
         Builders<HistoryDataModel>.Filter;
+
+    private static readonly Dictionary<UpdateAllArgs, DelayedOperation<IList<HistoryDataModel>>> BatchUpdateAll = new();
 
     public static IEnumerable<HistoryDataModel> GetAll(string symbol, HistoryInterval interval) {
         Log.Information("Request all history data of {Symbol} @ {Interval}", symbol, interval);
@@ -74,7 +86,12 @@ public static class HistoryDataController {
         );
     }
 
-    public static IEnumerable<HistoryDataModel> GetBeforeTime(string symbol, HistoryInterval interval, DateTime maxTimeExclusive, int limit) {
+    public static IEnumerable<HistoryDataModel> GetBeforeTime(
+        string symbol,
+        HistoryInterval interval,
+        DateTime maxTimeExclusive,
+        int limit
+    ) {
         Log.Information(
             "Request {limit} history data of {Symbol} @ {Interval} before {MaxTimeExclusive}",
             limit,
@@ -126,6 +143,35 @@ public static class HistoryDataController {
 
             throw;
         }
+    }
+
+    public static void UpdateAllBatched(
+        string symbol,
+        HistoryInterval interval,
+        IList<HistoryDataModel> entries
+    ) {
+        Log.Information(
+            "Queued batch update {Count} history data of {Symbol} @ {Interval} from {Start} to {End}",
+            entries.Count,
+            symbol,
+            interval,
+            entries.Select(r => r.Timestamp).Min(),
+            entries.Select(r => r.Timestamp).Max()
+        );
+
+        var args = new UpdateAllArgs {
+            Symbol = symbol,
+            Interval = interval
+        };
+
+        BatchUpdateAll.TryAdd(
+            args,
+            new DelayedOperation<IList<HistoryDataModel>>(
+                data => UpdateAll(symbol, interval, data),
+                TimeSpan.FromMilliseconds(EnvironmentConfigHelper.Config.Source.Common.History.BatchUpdateDelayMs)
+            )
+        );
+        BatchUpdateAll[args].UpdateArgs(entries);
     }
 
     public static async Task UpdateAll(
