@@ -64,20 +64,16 @@ public static class CalculatedDataController {
                 calculatedData.Count
             );
         } catch (MongoCommandException ex) {
-            // https://github.com/mongodb/mongo/blob/master/src/mongo/base/error_codes.yml
-            switch (ex.Code) {
-                // Write Conflict
-                case 112:
-                    Log.Warning(
-                        "Write Conflict occurred during the update of calculated data of {Symbol} ({Count}), will retry",
-                        symbol,
-                        calculatedData.Count
-                    );
-                    await UpdateByEpoch(symbol, calculatedData);
-                    break;
-                default:
-                    throw;
+            if (!ex.IsWriteConflictError()) {
+                throw;
             }
+
+            Log.Warning(
+                "Write Conflict occurred during the update of calculated data of {Symbol} ({Count}), will retry",
+                symbol,
+                calculatedData.Count
+            );
+            await UpdateByEpoch(symbol, calculatedData);
         }
     }
 

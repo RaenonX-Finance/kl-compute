@@ -62,7 +62,12 @@ public class ClientAggregator : IClientAggregator {
         if (e is { IsSubscription: true, IsMinuteChanged: false }) {
             HistoryDataController.UpdateAllBatched(e.Metadata.Symbol, e.Metadata.Interval, entries);
         } else {
-            await HistoryDataController.UpdateAll(e.Metadata.Symbol, e.Metadata.Interval, entries);
+            await HistoryDataController.UpdateAll(
+                e.Metadata.Symbol,
+                e.Metadata.Interval,
+                entries,
+                retryOnWriteConflict: true
+            );
         }
     }
 

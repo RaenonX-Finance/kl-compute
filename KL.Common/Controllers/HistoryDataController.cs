@@ -177,49 +177,64 @@ public static class HistoryDataController {
     public static async Task UpdateAll(
         string symbol,
         HistoryInterval interval,
-        IList<HistoryDataModel> entries
+        IList<HistoryDataModel> entries,
+        bool retryOnWriteConflict = false
     ) {
-        if (entries.IsEmpty()) {
-            Log.Warning("{Symbol} @ {Interval} has nothing to update", symbol, interval);
-            return;
+        try {
+            if (entries.IsEmpty()) {
+                Log.Warning("{Symbol} @ {Interval} has nothing to update", symbol, interval);
+                return;
+            }
+
+            var start = Stopwatch.GetTimestamp();
+            using var session = await MongoSession.Create();
+            var earliest = entries.Select(r => r.Timestamp).Min();
+            var latest = entries.Select(r => r.Timestamp).Max();
+
+            Log.Information(
+                "Session {Session}: To update {Count} history data of {Symbol} @ {Interval} from {Start} to {End}",
+                session.SessionId,
+                entries.Count,
+                symbol,
+                interval,
+                earliest,
+                latest
+            );
+
+            var filter = FilterBuilder.Where(
+                r =>
+                    r.Interval == interval
+                    && r.Timestamp >= earliest
+                    && r.Timestamp <= latest
+            );
+
+            await MongoConst.GetHistoryCollection(symbol).DeleteManyAsync(session.Session, filter);
+            await MongoConst.GetHistoryCollection(symbol).InsertManyAsync(session.Session, entries);
+
+            await session.Session.CommitTransactionAsync();
+
+            Log.Information(
+                "Session {Session}: Updated {Count} history data of {Symbol} @ {Interval} from {Start} to {End} in {Elapsed:0.00} ms",
+                session.SessionId,
+                entries.Count,
+                symbol,
+                interval,
+                earliest,
+                latest,
+                start.GetElapsedMs()
+            );
+        } catch (MongoCommandException ex) {
+            if (!retryOnWriteConflict || !ex.IsWriteConflictError()) {
+                throw;
+            }
+
+            Log.Warning(
+                "Write Conflict occurred during the update of history data of {Symbol} @ {Interval} ({Count}), will retry",
+                symbol,
+                interval,
+                entries.Count
+            );
+            await UpdateAll(symbol, interval, entries, retryOnWriteConflict: retryOnWriteConflict);
         }
-
-        var start = Stopwatch.GetTimestamp();
-        using var session = await MongoSession.Create();
-        var earliest = entries.Select(r => r.Timestamp).Min();
-        var latest = entries.Select(r => r.Timestamp).Max();
-
-        Log.Information(
-            "Session {Session}: To update {Count} history data of {Symbol} @ {Interval} from {Start} to {End}",
-            session.SessionId,
-            entries.Count,
-            symbol,
-            interval,
-            earliest,
-            latest
-        );
-
-        var filter = FilterBuilder.Where(
-            r =>
-                r.Interval == interval
-                && r.Timestamp >= earliest
-                && r.Timestamp <= latest
-        );
-
-        await MongoConst.GetHistoryCollection(symbol).DeleteManyAsync(session.Session, filter);
-        await MongoConst.GetHistoryCollection(symbol).InsertManyAsync(session.Session, entries);
-
-        await session.Session.CommitTransactionAsync();
-
-        Log.Information(
-            "Session {Session}: Updated {Count} history data of {Symbol} @ {Interval} from {Start} to {End} in {Elapsed:0.00} ms",
-            session.SessionId,
-            entries.Count,
-            symbol,
-            interval,
-            earliest,
-            latest,
-            start.GetElapsedMs()
-        );
     }
 }
