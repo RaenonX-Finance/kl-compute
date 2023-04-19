@@ -49,7 +49,7 @@ public class TouchanceClient : PxParseClient {
             Client = this,
             HistoryDataHandler = _historyDataHandler,
             RealtimeHandler = _realtimeHandler,
-            MinuteChangedHandler = new MinuteChangedHandler { Client = this }
+            MinuteChangedHandler = new MinuteChangedHandler()
         };
     }
 

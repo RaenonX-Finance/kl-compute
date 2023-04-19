@@ -1,17 +1,15 @@
-﻿using KL.Common.Interfaces;
+﻿using KL.Common.Events;
 using KL.Common.Models;
 
-namespace KL.Common.Events;
+namespace KL.Common.Interfaces; 
 
 
-public class HistoryEventArgs : EventArgs, IHistoryDataSourceReturn {
-    public required IHistoryMetadata Metadata { get; init; }
+public interface IHistoryDataSourceReturn {
+    public IHistoryMetadata Metadata { get; init; }
 
-    public required IList<IHistoryDataEntry> Data { get; init; }
+    public IList<IHistoryDataEntry> Data { get; init; }
 
-    public required bool IsSubscription { get; init; }
-
-    public required bool IsMinuteChanged { get; init; }
+    public bool IsSubscription { get; init; }
 
     public RealtimeEventArgs ToRealtimeEventArgs() {
         if (!IsSubscription) {

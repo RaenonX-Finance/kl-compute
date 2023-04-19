@@ -1,6 +1,5 @@
 ﻿using KL.Common.Controllers;
 using KL.Common.Enums;
-using KL.Common.Events;
 using KL.Common.Extensions;
 using KL.Common.Interfaces;
 using KL.Touchance.Extensions;
@@ -164,7 +163,10 @@ internal class HistoryDataHandler {
         );
     }
 
-    internal HistoryEventArgs? GetHistoryData(PxHistoryReadyMessage message, CancellationToken cancellationToken) {
+    internal HistoryDataSourceReturn? GetHistoryData(
+        PxHistoryReadyMessage message,
+        CancellationToken cancellationToken
+    ) {
         if (!message.IsReady) {
             Log.Warning("[{Identifier}] History data not ready ({Status})", message.IdentifierString, message.Status);
             return null;
@@ -219,7 +221,7 @@ internal class HistoryDataHandler {
             Log.Information("[{Identifier}] Completed history data request", message.IdentifierString);
         }
 
-        return new HistoryEventArgs {
+        return new HistoryDataSourceReturn {
             Metadata = message with {
                 Symbol = PxConfigController.GetInternalSymbol(message.Symbol, PxSource.Touchance)
             },

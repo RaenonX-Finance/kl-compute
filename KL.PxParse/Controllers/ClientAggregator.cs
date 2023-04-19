@@ -53,19 +53,17 @@ public class ClientAggregator : IClientAggregator {
 
         if (e.IsSubscription) {
             dataToDb = dataToDb.TakeLast(PxConfigController.Config.HistorySubscription.StoreLimit);
-            HistoryDataController.UpdateAllBatched(
-                e.Metadata.Symbol,
-                e.Metadata.Interval,
-                dataToDb.Select(r => r.ToHistoryDataModel(e.Metadata.Symbol, e.Metadata.Interval)).ToArray()
-            );
-            return;
         }
 
-        await HistoryDataController.UpdateAll(
-            e.Metadata.Symbol,
-            e.Metadata.Interval,
-            dataToDb.Select(r => r.ToHistoryDataModel(e.Metadata.Symbol, e.Metadata.Interval)).ToArray()
-        );
+        var entries = dataToDb
+            .Select(r => r.ToHistoryDataModel(e.Metadata.Symbol, e.Metadata.Interval))
+            .ToArray();
+
+        if (e is { IsSubscription: true, IsMinuteChanged: false }) {
+            HistoryDataController.UpdateAllBatched(e.Metadata.Symbol, e.Metadata.Interval, entries);
+        } else {
+            await HistoryDataController.UpdateAll(e.Metadata.Symbol, e.Metadata.Interval, entries);
+        }
     }
 
     private static async Task OnHistoryDataUpdatedUpdateCache(HistoryEventArgs e) {

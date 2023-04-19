@@ -55,21 +55,33 @@ internal class SubscriptionHandler {
                 Client.OnRealtimeDataUpdated(realtimeEventArgs);
                 return;
             case PxHistoryReadyMessage message:
-                var historyEventArgs = HistoryDataHandler.GetHistoryData(message, cancellationToken);
+                var historyData = HistoryDataHandler.GetHistoryData(message, cancellationToken);
 
-                if (historyEventArgs is null) {
+                if (historyData is null) {
                     return;
                 }
 
-                await Client.OnHistoryDataUpdated(historyEventArgs);
+                var symbol = historyData.Metadata.Symbol;
+                var lastTimestamp = historyData.Data[^1].Timestamp;
+
+                var isMinuteChanged = MinuteChangedHandler.IsMinuteChanged(symbol, lastTimestamp);
+
+                await Client.OnHistoryDataUpdated(
+                    new HistoryEventArgs {
+                        Metadata = historyData.Metadata,
+                        Data = historyData.Data,
+                        IsSubscription = historyData.IsSubscription,
+                        IsMinuteChanged = isMinuteChanged
+                    }
+                );
 
                 // Minute change needs to be placed AFTER history event
-                // History event handler could add a new bar, which is to be used by minute changed event 
-                if (historyEventArgs.Data.Count > 0) {
-                    MinuteChangedHandler.CheckMinuteChangedEvent(
-                        historyEventArgs.Metadata.Symbol,
-                        historyEventArgs.Data[^1].Timestamp
-                    );
+                // What history event handler has done could affect the behavior of minute change handler
+                // ------------------------------------------
+                // For example, history event handler adds a new bar into the database if there's one,
+                // Then, the calculation call in the minute changed event will need to take that bar into calculation
+                if (isMinuteChanged && historyData.Data.Count > 0) {
+                    Client.OnMinuteChanged(new MinuteChangeEventArgs { Symbol = symbol, Timestamp = lastTimestamp });
                 }
 
                 return;
@@ -101,7 +113,7 @@ internal class SubscriptionHandler {
                 .ReceiveFrameString()
                 // Only care about the message after 1st colon
                 .Split(":", 2)[1];
-            
+
             TaskHelper.FireAndForget(
                 async () => await HandleSubscriptionMessage(messageJson, cancellationToken),
                 ex => {
@@ -111,7 +123,7 @@ internal class SubscriptionHandler {
                         }
                     );
                     Log.Error(ex, "Unable to process JSON message: {Message}", messageJson);
-                    
+
                     if (ex is not null) {
                         throw ex;
                     }
