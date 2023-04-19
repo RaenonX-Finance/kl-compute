@@ -138,6 +138,7 @@ public static class HistoryDataController {
             return;
         }
 
+        var start = Stopwatch.GetTimestamp();
         using var session = await MongoSession.Create();
         var earliest = entries.Select(r => r.Timestamp).Min();
         var latest = entries.Select(r => r.Timestamp).Max();
@@ -165,13 +166,14 @@ public static class HistoryDataController {
         await session.Session.CommitTransactionAsync();
 
         Log.Information(
-            "Session {Session}: Updated {Count} history data of {Symbol} @ {Interval} from {Start} to {End}",
+            "Session {Session}: Updated {Count} history data of {Symbol} @ {Interval} from {Start} to {End} in {Elapsed:0.00} ms",
             session.SessionId,
             entries.Count,
             symbol,
             interval,
             earliest,
-            latest
+            latest,
+            start.GetElapsedMs()
         );
     }
 }
