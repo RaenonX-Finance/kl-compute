@@ -118,10 +118,10 @@ public static class RedisLastPxController {
         var redisEntries = new List<HashEntry> { new(LastMetaLastName, px) };
 
         if (
-            // Updated flag not popped yet
+            // Updated flag not popped yet (still true)
             (meta[LastMetaUpdatedName].TryParse(out int updatedInt) && Convert.ToBoolean(updatedInt))
             // Price changed and over certain period of time not updated
-            || (meta[LastMetaEpochMsName].TryParse(out long last)
+            || (meta[LastMetaLastName].TryParse(out long last)
                 && Math.Abs(last - px) > 1E-6
                 && meta[LastMetaEpochMsName].TryParse(out long epochMs)
                 && nowEpochMs - epochMs > PxConfigController.Config.Cache.MarketUpdateGapMs
