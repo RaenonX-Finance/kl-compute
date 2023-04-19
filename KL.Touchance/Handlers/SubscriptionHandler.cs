@@ -1,6 +1,6 @@
-﻿using System.Text.Json;
-using KL.Common.Controllers;
+﻿using KL.Common.Controllers;
 using KL.Common.Events;
+using KL.Common.Utils;
 using KL.Touchance.Extensions;
 using KL.Touchance.Requests;
 using KL.Touchance.Responses;
@@ -89,7 +89,7 @@ internal class SubscriptionHandler {
         }
     }
 
-    private async Task Start(int subscriberPort, PxParseClient client, CancellationToken cancellationToken) {
+    private void Start(int subscriberPort, PxParseClient client, CancellationToken cancellationToken) {
         var socketConnectionString = $">tcp://127.0.0.1:{subscriberPort}";
         using var subscriberSocket = new SubscriberSocket(socketConnectionString);
         subscriberSocket.SubscribeToAnyTopic();
@@ -101,18 +101,25 @@ internal class SubscriptionHandler {
                 .ReceiveFrameString()
                 // Only care about the message after 1st colon
                 .Split(":", 2)[1];
-
-            try {
-                await HandleSubscriptionMessage(messageJson, cancellationToken);
-            } catch (JsonException ex) {
-                client.OnPxError(
-                    new PxErrorEventArgs {
-                        Message = "Unable to process JSON message"
+            
+            TaskHelper.FireAndForget(
+                async () => await HandleSubscriptionMessage(messageJson, cancellationToken),
+                ex => {
+                    client.OnPxError(
+                        new PxErrorEventArgs {
+                            Message = "Unable to process JSON message"
+                        }
+                    );
+                    Log.Error(ex, "Unable to process JSON message: {Message}", messageJson);
+                    
+                    if (ex is not null) {
+                        throw ex;
                     }
-                );
-                Log.Error(ex, "Unable to process JSON message: {Message}", messageJson);
-                throw;
-            }
+
+                    throw new InvalidDataException("Exception is null, but failed to process JSON message");
+                },
+                cancellationToken
+            );
         }
     }
 }
