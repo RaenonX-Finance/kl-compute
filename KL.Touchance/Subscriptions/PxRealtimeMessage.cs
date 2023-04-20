@@ -12,9 +12,9 @@ public record PxRealtimeData {
     public DateTime FilledTimestamp => $"{TradeDate} {FilledTime:D6}".FromTouchanceRealtime();
 
     // US futures use `ReferencePrice` as open instead
-    public decimal Open => string.IsNullOrEmpty(OpeningPrice) ? 
-        string.IsNullOrEmpty(ReferencePrice) ? 0 : Convert.ToDecimal(ReferencePrice) : 
-        Convert.ToDecimal(OpeningPrice);
+    public decimal Open => string.IsNullOrEmpty(ReferencePrice) ? 
+        string.IsNullOrEmpty(OpeningPrice) ? 0 : Convert.ToDecimal(OpeningPrice) : 
+        Convert.ToDecimal(ReferencePrice);
 
     public decimal High => string.IsNullOrEmpty(HighPrice) ? 0 : Convert.ToDecimal(HighPrice);
 
