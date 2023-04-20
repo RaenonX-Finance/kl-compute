@@ -7,7 +7,7 @@ using MongoDB.Bson.Serialization.Attributes;
 namespace KL.Common.Models;
 
 
-public record HistoryDataModel : IHistoryDataEntry {
+public record HistoryDataModel : IHistoryDataEntry, IPxBarHlcOnly {
     [UsedImplicitly]
     public ObjectId Id { get; init; }
 

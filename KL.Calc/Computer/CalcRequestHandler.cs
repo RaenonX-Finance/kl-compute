@@ -5,6 +5,7 @@ using KL.Common.Controllers;
 using KL.Common.Enums;
 using KL.Common.Extensions;
 using KL.Common.Grpc;
+using KL.Common.Interfaces;
 using KL.Common.Models;
 using KL.Proto;
 using ILogger = Serilog.ILogger;
@@ -184,7 +185,7 @@ public static class CalcRequestHandler {
         );
     }
 
-    private static async Task CalcLast(string symbol, int periodMin, decimal lastPx) {
+    private static async Task CalcLast(string symbol, int periodMin, IPxBarHlcOnly lastPartialBar) {
         var data = CalculatedDataController.GetData(symbol, periodMin, 2).ToArray();
 
         if (data.IsEmpty()) {
@@ -196,18 +197,26 @@ public static class CalcRequestHandler {
             );
         }
 
-        data[^1].Close = lastPx;
+        data[^1].High = lastPartialBar.High;
+        data[^1].Low = lastPartialBar.Low;
+        data[^1].Close = lastPartialBar.Close;
 
         var calculated = HistoryDataComputer.CalcLast(data[^1], data[^2]);
         await CalculatedDataController.UpdateByEpoch(symbol, calculated);
     }
 
     public static async Task CalcLast(string symbol, CancellationToken cancellationToken) {
-        var lastPx = HistoryDataController.GetLastN(symbol, HistoryInterval.Minute, 1).First().Close;
+        // Using data from Redis instead of Mongo if realtime is enabled,
+        // because history data batch updated (will have some delay)
+        // > See `HistoryDataController.UpdateAllBatched()` is called
+        // > for updating non-minute change history data update
+        var lastHlcBar = PxConfigController.Config.Sources[symbol].EnableRealtime
+            ? await RedisLastPxController.GetLastPartialBar(symbol)
+            : HistoryDataController.GetLastN(symbol, HistoryInterval.Minute, 1).First();
 
         await Task.WhenAll(
             PxConfigController.Config.Periods
-                .Select(r => CalcLast(symbol, r.PeriodMin, lastPx))
+                .Select(r => CalcLast(symbol, r.PeriodMin, lastHlcBar))
                 .Concat(CalcGlobal(symbol))
         );
         GrpcSystemEventCaller.OnCalculatedAsync(symbol, $"CalcLast of {symbol} completed", cancellationToken);

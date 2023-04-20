@@ -1,6 +1,7 @@
 ﻿using KL.Common.Enums;
 using KL.Common.Extensions;
 using KL.Common.Interfaces;
+using KL.Common.Models;
 using KL.Common.Utils;
 using StackExchange.Redis;
 
@@ -27,8 +28,8 @@ internal static class PxCloseDataExtension {
 public static class RedisLastPxController {
     private const string SourcesInUseKey = "Sources";
 
-    private const string LastMetaMinName = "Min";
-    private const string LastMetaMaxName = "Max";
+    private const string LastMetaLowName = "Low";
+    private const string LastMetaHighName = "High";
     private const string LastMetaLastName = "Last";
     private const string LastMetaEpochMsName = "EpochMs";
     private const string LastMetaUpdatedName = "Updated";
@@ -94,8 +95,8 @@ public static class RedisLastPxController {
         await db.HashSetAsync(
             KeyOfLastMeta(symbol),
             new[] {
-                new HashEntry(LastMetaMinName, px),
-                new HashEntry(LastMetaMaxName, px),
+                new HashEntry(LastMetaLowName, px),
+                new HashEntry(LastMetaHighName, px),
                 new HashEntry(LastMetaLastName, px),
                 new HashEntry(LastMetaEpochMsName, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()),
                 new HashEntry(LastMetaUpdatedName, true)
@@ -130,14 +131,14 @@ public static class RedisLastPxController {
             update = true;
         }
 
-        if (meta[LastMetaMinName].TryParse(out double min) && px < min) {
+        if (meta[LastMetaLowName].TryParse(out double low) && px < low) {
             update = true;
-            redisEntries.Add(new HashEntry(LastMetaMinName, Math.Min(px, min)));
+            redisEntries.Add(new HashEntry(LastMetaLowName, Math.Min(px, low)));
         }
 
-        if (meta[LastMetaMaxName].TryParse(out double max) && px > max) {
+        if (meta[LastMetaHighName].TryParse(out double high) && px > high) {
             update = true;
-            redisEntries.Add(new HashEntry(LastMetaMaxName, Math.Max(px, max)));
+            redisEntries.Add(new HashEntry(LastMetaHighName, Math.Max(px, high)));
         }
 
         if (update) {
@@ -186,6 +187,25 @@ public static class RedisLastPxController {
             UpdateLastMeta(db, symbol, pxDouble),
             db.SetAddAsync(SourcesInUseKey, symbol)
         );
+    }
+
+    public static async Task<IPxBarHlcOnly> GetLastPartialBar(string symbol) {
+        var db = GetDatabase();
+
+        var values = await db.HashGetAsync(
+            KeyOfLastMeta(symbol),
+            new[] { new RedisValue(LastMetaLowName), new RedisValue(LastMetaHighName), new RedisValue(LastMetaLastName) }
+        );
+
+        values[0].TryParse(out double low);
+        values[1].TryParse(out double high);
+        values[2].TryParse(out double close);
+
+        return new RedisHlcBarFromLastMeta {
+            Low = (decimal)low,
+            High = (decimal)high,
+            Close = (decimal)close
+        };
     }
 
     public static async Task CreateNewBar(string symbol, DateTime timestamp) {
