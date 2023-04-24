@@ -1,4 +1,5 @@
-﻿using KL.Common.Controllers;
+﻿using System.Collections.Concurrent;
+using KL.Common.Controllers;
 using KL.Common.Enums;
 using KL.Common.Extensions;
 using KL.Common.Interfaces;
@@ -17,7 +18,7 @@ internal class HistoryDataHandler {
 
     // Has key = request to handle; value is true = is history data subscription
     private readonly IDictionary<PxHistoryRequestIdentifier, bool> _subscribedRequests
-        = new Dictionary<PxHistoryRequestIdentifier, bool>();
+        = new ConcurrentDictionary<PxHistoryRequestIdentifier, bool>();
 
     internal required TouchanceClient Client { get; init; }
 
