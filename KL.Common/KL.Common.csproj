@@ -33,7 +33,8 @@
 
     <ItemGroup>
         <Protobuf Include="..\KL.Proto\Protos\systemEvent.proto" GrpcServices="Client" />
-        <Protobuf Include="..\KL.Proto\Protos\decimalValue.proto" />
+        <Protobuf Include="..\KL.Proto\Protos\types\decimalValue.proto" />
+        <Protobuf Include="..\KL.Proto\Protos\types\date.proto" />
     </ItemGroup>
 
 </Project>

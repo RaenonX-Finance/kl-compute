@@ -9,7 +9,7 @@ public static class ConfigurationExtensions {
 
         if (actionValue is null) {
             throw new InvalidCastException(
-                $"Specify actions as `--{ConfigKeys.Action}=NQ,ES`. "
+                $"Specify actions as `--{ConfigKeys.Action}={WorkerAction.Subscribe.ToString()}`. "
                 + $"Valid values are [{string.Join(", ", Enum.GetNames(typeof(WorkerAction)))}]"
             );
         }

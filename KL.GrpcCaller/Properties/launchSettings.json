@@ -1,8 +1,24 @@
 ﻿{
   "profiles": {
-    "KL.GrpcCaller": {
+    "subscribe": {
       "commandName": "Project",
       "commandLineArgs": "--action=subscribe --symbols=FITX",
+      "dotnetRunMessages": true,
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    "optionsOi": {
+      "commandName": "Project",
+      "commandLineArgs": "--action=optionsOi --symbols=FITX",
+      "dotnetRunMessages": true,
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    "financialEvents": {
+      "commandName": "Project",
+      "commandLineArgs": "--action=financialEvents",
       "dotnetRunMessages": true,
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"

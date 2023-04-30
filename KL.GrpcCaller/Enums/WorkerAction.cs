@@ -1,6 +1,8 @@
-﻿namespace KL.GrpcCaller.Enums; 
+﻿namespace KL.GrpcCaller.Enums;
 
 
 public enum WorkerAction {
-    Subscribe
+    Subscribe,
+    OptionsOi,
+    FinancialEvents
 }

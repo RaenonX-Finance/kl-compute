@@ -23,6 +23,12 @@ public static class Initializer {
             case WorkerAction.Subscribe:
                 services.AddHostedService<SubscribeWorker>();
                 break;
+            case WorkerAction.OptionsOi:
+                services.AddHostedService<OptionsOiWorker>();
+                break;
+            case WorkerAction.FinancialEvents:
+                services.AddHostedService<FinancialEventsWorker>();
+                break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(action), $"Action `{action}` is unhandled");
         }

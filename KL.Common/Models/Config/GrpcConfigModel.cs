@@ -17,6 +17,9 @@ public record GrpcConfigModel {
     
     [UsedImplicitly]
     public required int PxParsePort { get; init; }
+    
+    [UsedImplicitly]
+    public required int PxInfoPort { get; init; }
 
     [UsedImplicitly]
     public required int SysPort { get; init; }

@@ -29,6 +29,7 @@
 
     <ItemGroup>
         <Protobuf Include="..\KL.Proto\Protos\pxParse.proto" GrpcServices="Client" />
+        <Protobuf Include="..\KL.Proto\Protos\pxInfo.proto" GrpcServices="Client" />
     </ItemGroup>
 
     <ItemGroup>
