@@ -211,7 +211,8 @@ internal class HistoryDataHandler {
                 historyDataFetched.Count
             );
         } else {
-            Log.Error("[{Identifier}] No history data available", message.IdentifierString);
+            Log.Warning("[{Identifier}] No history data available", message.IdentifierString);
+            return null;
         }
 
         // If not subscribed
