@@ -19,14 +19,12 @@ public static class LoggingHelper {
         "{TimestampUtc:yyyy-MM-dd HH:mm:ss.fff} [{ThreadId,3}] "
         + "{SourceContext,50} [{Level:u1}] {Message:lj}{NewLine}{Exception}";
 
-    public static void Initialize(string? logDir, IHostEnvironment env, IConfiguration config) {
+    public static void Initialize(string? logDir, bool isDev, bool isProd, IConfiguration? config) {
         var appName = Assembly.GetEntryAssembly()?.FullName?.Split(',')[0] ?? "(Unmanaged)";
-        var isDevelopment = env.IsDevelopment();
-        var isProduction = env.IsProduction();
 
-        if (isDevelopment) {
+        if (isDev) {
             appName += ".Development";
-        } else if (isProduction) {
+        } else if (isProd) {
             appName += ".Production";
         }
 
@@ -35,7 +33,7 @@ public static class LoggingHelper {
             .Enrich.With(new UtcTimestampEnricher())
             .MinimumLevel.Information();
 
-        if (isDevelopment) {
+        if (isDev) {
             loggerConfig = loggerConfig.WriteTo.Console(outputTemplate: OutputTemplate);
         }
 
@@ -54,8 +52,14 @@ public static class LoggingHelper {
             );
         }
 
-        loggerConfig = loggerConfig.ReadFrom.Configuration(config);
+        if (config is not null) {
+            loggerConfig = loggerConfig.ReadFrom.Configuration(config);
+        }
 
         Log.Logger = loggerConfig.CreateLogger();
+    }
+
+    public static void Initialize(string? logDir, IHostEnvironment env, IConfiguration config) {
+        Initialize(logDir, env.IsDevelopment(), env.IsProduction(), config);
     }
 }

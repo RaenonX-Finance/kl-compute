@@ -58,8 +58,7 @@ public static class SrLevelComputer {
 
         var srLevelModels = new List<SrLevelDataModel>();
         using var dataEnumerator = dataOpenCloseCrossed.OrderByDescending(r => r.Timestamp).GetEnumerator();
-        dataEnumerator.MoveNext(); // Enumerator starts with `Current` being `null`
-        var dataEnumeratorMoved = true;
+        var dataEnumeratorMoved = dataEnumerator.MoveNext(); // Enumerator starts with `Current` being `null`
 
         while (srLevelModels.Count < pairCount && dataEnumeratorMoved) {
             var currentOpen = dataEnumerator.Current;
