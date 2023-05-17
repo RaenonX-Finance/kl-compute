@@ -117,9 +117,24 @@ internal class HistoryDataHandler {
         }
     }
 
+    private void UnsubscribeAllSubscriptions(string symbol) {
+        foreach (var (requestIdentifier, isSubscription) in _subscribedRequests) {
+            if (!isSubscription || requestIdentifier.Symbol != symbol) {
+                continue;
+            }
+                
+            SendUnsubscribeRequest(requestIdentifier);
+        }
+    }
+
     private void SendHandshakeRequest(PxHistoryRequestIdentifier identifier, bool isSubscription) {
         // Unsubscribe first to ensure successful subscription
         SendUnsubscribeRequest(identifier);
+
+        // Unsubscribe all subscribing requests of same symbol to prevent receiving duplicated data
+        if (isSubscription) {
+            UnsubscribeAllSubscriptions(identifier.Symbol);
+        }
 
         Log.Information(
             "[{Identifier}] Handshake to {Action} history data",

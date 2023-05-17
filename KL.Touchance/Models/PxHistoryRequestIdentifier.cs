@@ -5,7 +5,7 @@ using KL.Touchance.Extensions;
 namespace KL.Touchance.Models;
 
 
-public record PxHistoryRequestIdentifier : IHistoryMetadata {
+public struct PxHistoryRequestIdentifier : IHistoryMetadata {
     private readonly DateTime _start;
     private readonly DateTime _end;
 
