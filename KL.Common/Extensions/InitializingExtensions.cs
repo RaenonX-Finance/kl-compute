@@ -81,6 +81,12 @@ public static class InitializingExtensions {
         return app;
     }
 
+    public static WebApplication InitEnforceSingleton(this WebApplication app) {
+        AppSingletonEnforcer.Enforce(AppNameManager.GetAppName(app));
+
+        return app;
+    }
+
     public static WebApplication InitEndpoints(this WebApplication app) {
         app.MapGet(
             "/",

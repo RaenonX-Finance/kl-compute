@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Core;
@@ -20,13 +19,7 @@ public static class LoggingHelper {
         + "{SourceContext,50} [{Level:u1}] {Message:lj}{NewLine}{Exception}";
 
     public static void Initialize(string? logDir, bool isDev, bool isProd, IConfiguration? config) {
-        var appName = Assembly.GetEntryAssembly()?.FullName?.Split(',')[0] ?? "(Unmanaged)";
-
-        if (isDev) {
-            appName += ".Development";
-        } else if (isProd) {
-            appName += ".Production";
-        }
+        var appName = AppNameManager.GetAppName(isDev, isProd);
 
         var loggerConfig = new LoggerConfiguration()
             .Enrich.WithThreadId()

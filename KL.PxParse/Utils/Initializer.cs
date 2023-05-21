@@ -16,6 +16,7 @@ public static class Initializer {
             .BuildGrpcService(EnvironmentConfigHelper.Config.Grpc.PxParsePort)
             .BuildApp()
             .InitLogging()
+            .InitEnforceSingleton()
             .InitGrpcService<PxParseGrpcService>()
             .InitEndpoints()
             .InitClientAggregator();

@@ -13,6 +13,7 @@ public static class Initializer {
             .BuildGrpcService(EnvironmentConfigHelper.Config.Grpc.CalcPort)
             .BuildApp()
             .InitLogging()
+            .InitEnforceSingleton()
             .InitGrpcService<PxDataService>()
             .InitEndpoints();
 
