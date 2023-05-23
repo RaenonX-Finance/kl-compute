@@ -167,18 +167,28 @@ public static class HistoryDataController {
         BatchUpdateAll.TryAdd(
             args,
             new DelayedOperation<IList<HistoryDataModel>>(
-                data => UpdateAll(symbol, interval, data),
+                data => UpdateAll(symbol, interval, data, 0),
                 TimeSpan.FromMilliseconds(EnvironmentConfigHelper.Config.Source.Common.History.BatchUpdateDelayMs)
             )
         );
         BatchUpdateAll[args].UpdateArgs(entries);
     }
 
-    public static async Task UpdateAll(
+    public static Task UpdateAll(
         string symbol,
         HistoryInterval interval,
         IList<HistoryDataModel> entries,
-        bool retryOnWriteConflict = false
+        int maxWriteConflictRetryCount = 5
+    ) {
+        return UpdateAll(symbol, interval, entries, maxWriteConflictRetryCount, 0);
+    }
+
+    private static async Task UpdateAll(
+        string symbol,
+        HistoryInterval interval,
+        IList<HistoryDataModel> entries,
+        int maxWriteConflictRetryCount,
+        int currentWriteConflictRetryCount
     ) {
         try {
             if (entries.IsEmpty()) {
@@ -224,17 +234,17 @@ public static class HistoryDataController {
                 start.GetElapsedMs()
             );
         } catch (MongoCommandException ex) {
-            if (!retryOnWriteConflict || !ex.IsWriteConflictError()) {
+            if (currentWriteConflictRetryCount < maxWriteConflictRetryCount || !ex.IsWriteConflictError()) {
                 throw;
             }
 
             Log.Warning(
-                "Write Conflict occurred during the update of history data of {Symbol} @ {Interval} ({Count}), will retry",
+                "Write conflict occurred during the update of history data of {Symbol} @ {Interval} ({Count}), will retry",
                 symbol,
                 interval,
                 entries.Count
             );
-            await UpdateAll(symbol, interval, entries, retryOnWriteConflict: retryOnWriteConflict);
+            await UpdateAll(symbol, interval, entries, maxWriteConflictRetryCount, currentWriteConflictRetryCount + 1);
         }
     }
 }

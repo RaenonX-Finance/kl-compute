@@ -69,7 +69,7 @@ public static class CalculatedDataController {
             }
 
             Log.Warning(
-                "Write Conflict occurred during the update of calculated data of {Symbol} ({Count}), will retry",
+                "Write conflict occurred during the update of calculated data of {Symbol} ({Count}), will retry",
                 symbol,
                 calculatedData.Count
             );
