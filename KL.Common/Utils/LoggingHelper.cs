@@ -15,7 +15,7 @@ internal class UtcTimestampEnricher : ILogEventEnricher {
 
 public static class LoggingHelper {
     private const string OutputTemplate =
-        "{TimestampUtc:yyyy-MM-dd HH:mm:ss.fff} [{ThreadId,3}] "
+        "{TimestampUtc:yyyy-MM-dd HH:mm:ss.fff} [{ProcessId,6}] [{ThreadId,3}] "
         + "{SourceContext,50} [{Level:u1}] {Message:lj}{NewLine}{Exception}";
 
     public static void Initialize(string? logDir, bool isDev, bool isProd, IConfiguration? config) {
@@ -23,6 +23,7 @@ public static class LoggingHelper {
 
         var loggerConfig = new LoggerConfiguration()
             .Enrich.WithThreadId()
+            .Enrich.WithProcessId()
             .Enrich.With(new UtcTimestampEnricher())
             .MinimumLevel.Information();
 
@@ -41,7 +42,8 @@ public static class LoggingHelper {
             loggerConfig = loggerConfig.WriteTo.File(
                 Path.Combine(logDir, $"{appName}-.log"),
                 rollingInterval: RollingInterval.Day,
-                outputTemplate: OutputTemplate
+                outputTemplate: OutputTemplate,
+                shared: true
             );
         }
 

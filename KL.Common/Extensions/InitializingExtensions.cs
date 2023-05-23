@@ -11,6 +11,8 @@ namespace KL.Common.Extensions;
 
 
 public static class InitializingExtensions {
+    private static readonly ILogger Log = Serilog.Log.ForContext(typeof(InitializingExtensions));
+    
     public static WebApplicationBuilder BuildGrpcService(this WebApplicationBuilder builder, int grpcPort) {
         builder.Services.AddGrpc();
         if (builder.Environment.IsDevelopment()) {
@@ -68,6 +70,8 @@ public static class InitializingExtensions {
                                           + "in {Elapsed:0.00} ms from {RequestHost}";
             }
         );
+        
+        Log.Information("Booting {AppName}", AppNameManager.GetAppName(app));
 
         return app;
     }
