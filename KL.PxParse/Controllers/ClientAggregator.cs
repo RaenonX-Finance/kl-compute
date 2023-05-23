@@ -128,7 +128,11 @@ public class ClientAggregator : IClientAggregator {
         if (isPxUpdated) {
             await Task.WhenAll(
                 Task.Run(() => GrpcPxDataCaller.CalcLastAsync(e.Symbol, _cancellationToken), _cancellationToken),
-                GrpcSystemEventCaller.OnRealtimeAsync(e.Symbol, e.Data, _cancellationToken)
+                // Only call gRPC `realtime` if the realtime update is triggered by real realtime data
+                // > open of `e.Data` might be an undesired value (current bar open instead of daily open)
+                e.IsTriggeredByHistory ? 
+                    Task.CompletedTask :
+                    GrpcSystemEventCaller.OnRealtimeAsync(e.Symbol, e.Data, _cancellationToken)
             );
         }
 
