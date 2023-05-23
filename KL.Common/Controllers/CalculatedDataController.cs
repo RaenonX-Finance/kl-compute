@@ -93,12 +93,13 @@ public static class CalculatedDataController {
     public static async Task AddData(string symbol, IEnumerable<CalculatedDataModel> calculatedData) {
         var start = Stopwatch.GetTimestamp();
 
-        Log.Information("To add calculated data");
+        Log.Information("To add calculated data of {Symbol}", symbol);
 
         await MongoConst.GetCalculatedCollection(symbol).InsertManyAsync(calculatedData);
 
         Log.Information(
-            "Added calculated data in {Elapsed:0.00} ms",
+            "Added calculated data of {Symbol} in {Elapsed:0.00} ms",
+            symbol,
             start.GetElapsedMs()
         );
     }
