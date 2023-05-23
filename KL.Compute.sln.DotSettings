@@ -182,6 +182,7 @@
 	<s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A3E2D557F5CAC54285D13E038ECDBCBE/Shortcut/@EntryValue">wl</s:String>
 	<s:Boolean x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A3E2D557F5CAC54285D13E038ECDBCBE/ShortenQualifiedReferences/@EntryValue">True</s:Boolean>
 	<s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=A3E2D557F5CAC54285D13E038ECDBCBE/Text/@EntryValue">Console.WriteLine($"$TEXT$");</s:String>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=autorestart/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=CBOT/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=Chrono/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=Enricher/@EntryIndexedValue">True</s:Boolean>

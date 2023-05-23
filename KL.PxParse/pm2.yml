@@ -7,6 +7,6 @@
     # Execution configs
     exec_mode: 'fork'
     # Restart options
-    max_restarts: 5
+    autorestart: false
     # Others
     time: true  # Log timestamp in logs
