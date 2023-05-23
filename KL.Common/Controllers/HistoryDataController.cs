@@ -178,15 +178,24 @@ public static class HistoryDataController {
         string symbol,
         HistoryInterval interval,
         IList<HistoryDataModel> entries,
-        int maxWriteConflictRetryCount = 5
+        int maxWriteConflictRetryCount = 5,
+        bool throwIfAllRetryFailed = true
     ) {
-        return UpdateAll(symbol, interval, entries, maxWriteConflictRetryCount, 0);
+        try { 
+            return UpdateAll(symbol, interval, entries, maxWriteConflictRetryCount, 0);
+        } catch (MongoCommandException ex) {
+            if (throwIfAllRetryFailed && ex.IsWriteConflictError()) {
+                throw;
+            }
+
+            return Task.CompletedTask;
+        }
     }
 
     private static async Task UpdateAll(
         string symbol,
         HistoryInterval interval,
-        IList<HistoryDataModel> entries,
+        ICollection<HistoryDataModel> entries,
         int maxWriteConflictRetryCount,
         int currentWriteConflictRetryCount
     ) {

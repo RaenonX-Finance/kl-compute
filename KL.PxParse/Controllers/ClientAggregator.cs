@@ -65,7 +65,9 @@ public class ClientAggregator : IClientAggregator {
             await HistoryDataController.UpdateAll(
                 e.Metadata.Symbol,
                 e.Metadata.Interval,
-                entries
+                entries,
+                maxWriteConflictRetryCount: 10,
+                throwIfAllRetryFailed: false
             );
         }
     }
