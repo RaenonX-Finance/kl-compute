@@ -20,6 +20,9 @@ internal class HistoryDataHandler {
     private readonly IDictionary<PxHistoryRequestIdentifier, bool> _subscribedRequests
         = new ConcurrentDictionary<PxHistoryRequestIdentifier, bool>();
 
+    private readonly ISet<PxHistoryRequestIdentifier> _requestsToUnsubscribe
+        = new HashSet<PxHistoryRequestIdentifier>();
+
     internal required TouchanceClient Client { get; init; }
 
     internal async Task SendHandshakeRequest(
@@ -122,7 +125,7 @@ internal class HistoryDataHandler {
             if (!isSubscription || requestIdentifier.Symbol != symbol) {
                 continue;
             }
-                
+
             SendUnsubscribeRequest(requestIdentifier);
         }
     }
@@ -147,7 +150,13 @@ internal class HistoryDataHandler {
         );
     }
 
-    private void SendUnsubscribeRequest(PxHistoryRequestIdentifier identifier) {
+    private void UnsubscribePendingCancellationRequests() {
+        foreach (var identifier in _requestsToUnsubscribe) {
+            SendUnsubscribeRequest(identifier, false);
+        }
+    }
+
+    private void SendUnsubscribeRequest(PxHistoryRequestIdentifier identifier, bool checkPendingRequests = true) {
         // Print the log only if `identifier` is really subscribed
         if (_subscribedRequests.Remove(identifier)) {
             Log.Information(
@@ -161,6 +170,11 @@ internal class HistoryDataHandler {
         Client.RequestSocket.SendTcRequest<PxHistoryUnsubscribeRequest, PxUnsubscribedReply>(
             new PxHistoryUnsubscribeRequest { SessionKey = Client.SessionKey, Param = identifier.ToHandshakeParams() }
         );
+
+        // Check & unsubscribe requests pending cancellation if any
+        if (checkPendingRequests) {
+            UnsubscribePendingCancellationRequests();
+        }
     }
 
     private PxHistoryDataReply GetPartialData(PxHistoryReadyMessage message, int queryIndex) {
@@ -191,6 +205,21 @@ internal class HistoryDataHandler {
         if (!_subscribedRequests.TryGetValue(message.Identifier, out var isSubscription)) {
             Log.Warning("[{Identifier}] Skipped processing unrequested history data", message.IdentifierString);
             return null;
+        }
+
+        if (_requestsToUnsubscribe.Contains(message.Identifier)) {
+            Log.Warning("[{Identifier}] Skipped processing pending cancellation request", message.IdentifierString);
+            return null;
+        }
+
+        // - Remove request from record / invalidate request internally to
+        //   prevent duplicate handling on long non-subscription history data request
+        // - Sending actual Touchance unsubscription request later because `GetPartialData()` will not return anything
+        //   if subscription is cancelled before completing getting the data
+        // > Might get history data ready message while still handling the previous history data request,
+        // > therefore unsubscribing the data as early as possible
+        if (!isSubscription) {
+            _requestsToUnsubscribe.Add(message.Identifier);
         }
 
         var queryIndex = 0;
@@ -230,9 +259,8 @@ internal class HistoryDataHandler {
             return null;
         }
 
-        // If not subscribed
         // ReSharper disable once InvertIf
-        if (_subscribedRequests.TryGetValue(message.Identifier, out var subscribed) && !subscribed) {
+        if (!isSubscription) {
             SendUnsubscribeRequest(message.Identifier);
 
             Log.Information("[{Identifier}] Completed history data request", message.IdentifierString);
