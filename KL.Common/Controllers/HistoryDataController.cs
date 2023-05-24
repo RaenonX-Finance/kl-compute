@@ -199,6 +199,8 @@ public static class HistoryDataController {
         int maxWriteConflictRetryCount,
         int currentWriteConflictRetryCount
     ) {
+        var currentTrialCount = currentWriteConflictRetryCount + 1;
+
         try {
             if (entries.IsEmpty()) {
                 Log.Warning("{Symbol} @ {Interval} has nothing to update", symbol, interval);
@@ -211,13 +213,14 @@ public static class HistoryDataController {
             var latest = entries.Select(r => r.Timestamp).Max();
 
             Log.Information(
-                "Session {Session}: To update {Count} history data of {Symbol} @ {Interval} from {Start} to {End}",
+                "Session {Session}: To update {Count} history data of {Symbol} @ {Interval} from {Start} to {End} (Trial #{TrialCount})",
                 session.SessionId,
                 entries.Count,
                 symbol,
                 interval,
                 earliest,
-                latest
+                latest,
+                currentTrialCount
             );
 
             var filter = FilterBuilder.Where(
@@ -233,14 +236,15 @@ public static class HistoryDataController {
             await session.Session.CommitTransactionAsync();
 
             Log.Information(
-                "Session {Session}: Updated {Count} history data of {Symbol} @ {Interval} from {Start} to {End} in {Elapsed:0.00} ms",
+                "Session {Session}: Updated {Count} history data of {Symbol} @ {Interval} from {Start} to {End} in {Elapsed:0.00} ms (Trial #{TrialCount})",
                 session.SessionId,
                 entries.Count,
                 symbol,
                 interval,
                 earliest,
                 latest,
-                start.GetElapsedMs()
+                start.GetElapsedMs(),
+                currentTrialCount
             );
         } catch (MongoCommandException ex) {
             if (currentWriteConflictRetryCount < maxWriteConflictRetryCount || !ex.IsWriteConflictError()) {
@@ -248,10 +252,11 @@ public static class HistoryDataController {
             }
 
             Log.Warning(
-                "Write conflict occurred during the update of history data of {Symbol} @ {Interval} ({Count}), will retry",
+                "Write conflict occurred during the update of history data of {Symbol} @ {Interval} ({Count}), will retry (Trial #{TrialCount})",
                 symbol,
                 interval,
-                entries.Count
+                entries.Count,
+                currentTrialCount
             );
             await UpdateAll(symbol, interval, entries, maxWriteConflictRetryCount, currentWriteConflictRetryCount + 1);
         }
