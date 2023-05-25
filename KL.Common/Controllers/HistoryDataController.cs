@@ -245,7 +245,7 @@ public static class HistoryDataController {
                 currentTrialCount
             );
         } catch (MongoCommandException ex) {
-            if (currentWriteConflictRetryCount < maxWriteConflictRetryCount || !ex.IsWriteConflictError()) {
+            if (currentWriteConflictRetryCount > maxWriteConflictRetryCount || !ex.IsWriteConflictError()) {
                 throw;
             }
 
