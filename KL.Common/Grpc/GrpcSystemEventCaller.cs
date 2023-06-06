@@ -9,8 +9,10 @@ namespace KL.Common.Grpc;
 
 
 public static class GrpcSystemEventCaller {
-    private static readonly SystemEvent.SystemEventClient Client = new(
-        GrpcChannel.ForAddress($"http://localhost:{EnvironmentConfigHelper.Config.Grpc.SysPort}")
+    private static readonly GrpcClientWrapper<SystemEvent.SystemEventClient> ClientWrapper = new(
+        () => new SystemEvent.SystemEventClient(
+            GrpcChannel.ForAddress($"http://localhost:{EnvironmentConfigHelper.Config.Grpc.SysPort}")
+        )
     );
 
     public static async Task OnRealtimeAsync(
@@ -19,7 +21,8 @@ public static class GrpcSystemEventCaller {
         CancellationToken cancellationToken
     ) {
         GrpcHelper.CallWithDeadlineAsync(
-            Client.RealtimeAsync,
+            ClientWrapper,
+            ClientWrapper.Client.RealtimeAsync,
             new RealtimeData {
                 Data = {
                     [symbol] = new RealtimeDataSingle {
@@ -33,7 +36,7 @@ public static class GrpcSystemEventCaller {
                     }
                 }
             },
-            nameof(Client.RealtimeAsync),
+            nameof(ClientWrapper.Client.RealtimeAsync),
             cancellationToken,
             reason: $"{symbol} received realtime data (GrpcSystemEvent)"
         );
@@ -44,9 +47,10 @@ public static class GrpcSystemEventCaller {
         request.Symbols.Add(symbol);
 
         return GrpcHelper.CallWithDeadline(
-            Client.MinuteChangeAsync,
+            ClientWrapper,
+            ClientWrapper.Client.MinuteChangeAsync,
             request,
-            nameof(Client.MinuteChangeAsync),
+            nameof(ClientWrapper.Client.MinuteChangeAsync),
             cancellationToken,
             useTimeout: false,
             reason: $"`{symbol}` minute changed to {epochSec}"
@@ -57,14 +61,19 @@ public static class GrpcSystemEventCaller {
         OnCalculatedAsync(new[] { symbol }, reason, cancellationToken);
     }
 
-    public static void OnCalculatedAsync(IEnumerable<string> symbols, string reason, CancellationToken cancellationToken) {
+    public static void OnCalculatedAsync(
+        IEnumerable<string> symbols,
+        string reason,
+        CancellationToken cancellationToken
+    ) {
         var requestBody = new CalculatedData();
         requestBody.Symbols.AddRange(symbols);
 
         GrpcHelper.CallWithDeadlineAsync(
-            Client.CalculatedAsync,
+            ClientWrapper,
+            ClientWrapper.Client.CalculatedAsync,
             requestBody,
-            nameof(Client.CalculatedAsync),
+            nameof(ClientWrapper.Client.CalculatedAsync),
             cancellationToken,
             reason: reason
         );
@@ -72,9 +81,10 @@ public static class GrpcSystemEventCaller {
 
     public static void OnErrorAsync(string message, CancellationToken cancellationToken) {
         GrpcHelper.CallWithDeadlineAsync(
-            Client.ErrorAsync,
+            ClientWrapper,
+            ClientWrapper.Client.ErrorAsync,
             new ErrorData { Message = message },
-            nameof(Client.ErrorAsync),
+            nameof(ClientWrapper.Client.ErrorAsync),
             cancellationToken
         );
     }
@@ -84,9 +94,10 @@ public static class GrpcSystemEventCaller {
         request.Symbols.Add(symbol);
 
         return GrpcHelper.CallWithDeadline(
-            Client.MarketDateCutoffAsync,
+            ClientWrapper,
+            ClientWrapper.Client.MarketDateCutoffAsync,
             request,
-            nameof(Client.MarketDateCutoffAsync),
+            nameof(ClientWrapper.Client.MarketDateCutoffAsync),
             cancellationToken,
             reason: $"{symbol} market date cutoff"
         );

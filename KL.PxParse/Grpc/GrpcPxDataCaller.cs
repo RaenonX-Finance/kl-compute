@@ -12,27 +12,32 @@ namespace KL.PxParse.Grpc;
 public class GrpcPxDataCaller {
     private static readonly ILogger Log = Serilog.Log.ForContext(typeof(GrpcPxDataCaller));
 
-    private static readonly PxData.PxDataClient Client
-        = new(GrpcChannel.ForAddress($"http://localhost:{EnvironmentConfigHelper.Config.Grpc.CalcPort}"));
+    private static readonly GrpcClientWrapper<PxData.PxDataClient> ClientWrapper = new(
+        () => new PxData.PxDataClient(
+            GrpcChannel.ForAddress($"http://localhost:{EnvironmentConfigHelper.Config.Grpc.CalcPort}")
+        )
+    );
 
     public static void CalcLastAsync(string symbol, CancellationToken cancellationToken) {
         GrpcHelper.CallWithDeadlineAsync(
-            Client.CalcLastAsync,
+            ClientWrapper,
+            ClientWrapper.Client.CalcLastAsync,
             new PxCalcRequestSingle { Symbol = symbol },
-            nameof(Client.CalcLastAsync),
+            nameof(ClientWrapper.Client.CalcLastAsync),
             cancellationToken,
             reason: $"{symbol} received realtime data (GrpcPxData)"
         );
     }
 
     public static Task CalcPartial(string symbol, CancellationToken cancellationToken) {
-        const string endpointName = nameof(Client.CalcPartialAsync);
+        const string endpointName = nameof(ClientWrapper.Client.CalcPartialAsync);
 
         var request = new PxCalcRequestMulti();
         request.Symbols.Add(symbol);
 
         return GrpcHelper.CallWithDeadline(
-            Client.CalcPartialAsync,
+            ClientWrapper,
+            ClientWrapper.Client.CalcPartialAsync,
             request,
             endpointName,
             cancellationToken,
@@ -43,7 +48,7 @@ public class GrpcPxDataCaller {
 
     public static async Task CalcAll(InitCompletedEventArgs e, CancellationToken cancellationToken) {
         var start = Stopwatch.GetTimestamp();
-        const string endpointName = nameof(Client.CalcAll);
+        const string endpointName = nameof(ClientWrapper.Client.CalcAll);
 
         var request = new PxCalcRequestMulti();
         request.Symbols.AddRange(e.Sources.Select(r => r.InternalSymbol));
@@ -55,7 +60,8 @@ public class GrpcPxDataCaller {
         }
 
         await GrpcHelper.ServerStream(
-            Client.CalcAll,
+            ClientWrapper,
+            ClientWrapper.Client.CalcAll,
             reply => Task.WhenAll(
                 e.OnUpdate(reply.Message),
                 Task.Run(

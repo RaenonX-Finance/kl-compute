@@ -9,18 +9,21 @@ namespace KL.GrpcCaller.Grpc;
 public class GrpcPxParseCaller {
     private static readonly ILogger Log = Serilog.Log.ForContext(typeof(GrpcPxParseCaller));
 
-    private static readonly PxParse.PxParse.PxParseClient Client = new(
-        GrpcChannel.ForAddress($"http://localhost:{EnvironmentConfigHelper.Config.Grpc.PxParsePort}")
+    private static readonly GrpcClientWrapper<PxParse.PxParse.PxParseClient> ClientWrapper = new(
+        () => new PxParse.PxParse.PxParseClient(
+            GrpcChannel.ForAddress($"http://localhost:{EnvironmentConfigHelper.Config.Grpc.PxParsePort}")
+        )
     );
 
     public static Task<bool> Subscribe(IEnumerable<string> symbols, CancellationToken cancellationToken) {
-        const string endpointName = nameof(Client.Subscribe);
+        const string endpointName = nameof(ClientWrapper.Client.Subscribe);
         var request = new PxParseSubscribe();
 
         request.Symbols.AddRange(symbols);
 
         return GrpcHelper.ServerStream(
-            Client.Subscribe,
+            ClientWrapper,
+            ClientWrapper.Client.Subscribe,
             reply => Task.Run(
                 () => Log.Information(
                     "Stream message of {GrpcCallEndpoint}: {Message}",

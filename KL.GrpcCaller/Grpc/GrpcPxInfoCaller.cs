@@ -11,19 +11,22 @@ using ILogger = Serilog.ILogger;
 public class GrpcPxInfoCaller {
     private static readonly ILogger Log = Serilog.Log.ForContext(typeof(GrpcPxInfoCaller));
 
-    private static readonly PxInfo.PxInfoClient Client = new(
-        GrpcChannel.ForAddress($"http://localhost:{EnvironmentConfigHelper.Config.Grpc.PxInfoPort}")
+    private static readonly GrpcClientWrapper<PxInfo.PxInfoClient> ClientWrapper = new(
+        () => new PxInfo.PxInfoClient(
+            GrpcChannel.ForAddress($"http://localhost:{EnvironmentConfigHelper.Config.Grpc.PxInfoPort}")
+        )
     );
 
     public static Task<bool> GetOptionsOi(DateOnly date, string symbol, CancellationToken cancellationToken) {
-        const string endpointName = nameof(Client.GetOptionsOi);
+        const string endpointName = nameof(ClientWrapper.Client.GetOptionsOi);
         var request = new PxInfoGetOptionsOiOptions {
             Symbol = symbol,
             Date = date.ToGrpcDate()
         };
 
         return GrpcHelper.ServerStream(
-            Client.GetOptionsOi,
+            ClientWrapper,
+            ClientWrapper.Client.GetOptionsOi,
             reply => Task.Run(
                 () => Log.Information(
                     "Stream message of {GrpcCallEndpoint}: {Message}",
@@ -39,13 +42,14 @@ public class GrpcPxInfoCaller {
     }
 
     public static Task<bool> GetFinancialEvents(DateOnly date, CancellationToken cancellationToken) {
-        const string endpointName = nameof(Client.GetFinancialEvents);
+        const string endpointName = nameof(ClientWrapper.Client.GetFinancialEvents);
         var request = new PxInfoGetFinancialEventsOptions {
             Date = date.ToGrpcDate()
         };
 
         return GrpcHelper.ServerStream(
-            Client.GetFinancialEvents,
+            ClientWrapper,
+            ClientWrapper.Client.GetFinancialEvents,
             reply => Task.Run(
                 () => Log.Information(
                     "Stream message of {GrpcCallEndpoint}: {Message}",

@@ -9,6 +9,8 @@ public static class GrpcHelper {
 
     private static readonly ChronoGate<string> ChronoGate = new();
 
+    private const int MaxUnavailableRetryCount = 5;
+
     public delegate AsyncUnaryCall<TReply> GrpcUnaryCall<in TRequest, TReply>(
         TRequest request,
         Metadata? metadata = null,
@@ -16,7 +18,8 @@ public static class GrpcHelper {
         CancellationToken cancellationToken = default
     );
 
-    public static Task<TReply?> CallWithDeadline<TRequest, TReply>(
+    public static Task<TReply?> CallWithDeadline<TClient, TRequest, TReply>(
+        GrpcClientWrapper<TClient> grpcClient,
         GrpcUnaryCall<TRequest, TReply> grpcCall,
         TRequest request,
         string endpointName,
@@ -24,8 +27,9 @@ public static class GrpcHelper {
         bool useTimeout = true,
         int timeoutExtension = 0,
         string reason = "(Unknown)"
-    ) {
+    ) where TClient : ClientBase<TClient> {
         return CallWithDeadline(
+            grpcClient,
             grpcCall,
             request,
             endpointName,
@@ -37,7 +41,8 @@ public static class GrpcHelper {
         );
     }
 
-    private static async Task<TReply?> CallWithDeadline<TRequest, TReply>(
+    private static async Task<TReply?> CallWithDeadline<TClient, TRequest, TReply>(
+        GrpcClientWrapper<TClient> grpcClient,
         GrpcUnaryCall<TRequest, TReply> grpcCall,
         TRequest request,
         string endpointName,
@@ -45,8 +50,9 @@ public static class GrpcHelper {
         CancellationToken cancellationToken,
         bool useTimeout = true,
         int timeoutExtension = 0,
-        string reason = "(Unknown)"
-    ) {
+        string reason = "(Unknown)",
+        int retryCount = 1
+    ) where TClient : ClientBase<TClient> {
         Log.Information(
             "Calling gRPC unary `{GrpcCallEndpoint}` {GrpcCallType} ({Reason})",
             endpointName,
@@ -81,9 +87,36 @@ public static class GrpcHelper {
                     );
                     return default;
                 case { StatusCode: StatusCode.Unavailable }:
-                    Log.Warning(
+                    if (retryCount < MaxUnavailableRetryCount) {
+                        Log.Warning(
+                            e,
+                            "gRPC server unavailable for `{GrpcCallEndpoint}` (Call body: {@GrpcCallBody}), #{RetryCount} attempt to reconnect in {RetryWaitSec}s",
+                            endpointName,
+                            request,
+                            retryCount,
+                            retryCount
+                        );
+
+                        await Task.Delay(retryCount * 1000, cancellationToken);
+                        grpcClient.Reconnect();
+
+                        return await CallWithDeadline(
+                            grpcClient,
+                            grpcCall,
+                            request,
+                            endpointName,
+                            isFireAndForget,
+                            cancellationToken,
+                            useTimeout,
+                            timeoutExtension,
+                            reason,
+                            retryCount: retryCount + 1
+                        );
+                    }
+
+                    Log.Error(
                         e,
-                        "gRPC server unavailable for `{GrpcCallEndpoint}` (Call body: {@GrpcCallBody})",
+                        "gRPC server unavailable for `{GrpcCallEndpoint}` (Call body: {@GrpcCallBody}), max retry exceeded",
                         endpointName,
                         request
                     );
@@ -100,7 +133,8 @@ public static class GrpcHelper {
         }
     }
 
-    public static void CallWithDeadlineAsync<TRequest, TReply>(
+    public static void CallWithDeadlineAsync<TClient, TRequest, TReply>(
+        GrpcClientWrapper<TClient> grpcClient,
         GrpcUnaryCall<TRequest, TReply> grpcCall,
         TRequest request,
         string endpointName,
@@ -108,10 +142,11 @@ public static class GrpcHelper {
         bool useTimeout = false,
         int timeoutExtension = 0,
         string reason = "(Unknown)"
-    ) {
+    ) where TClient : ClientBase<TClient> {
         // Cannot use `nameof(grpcRequestFunc)` because it would return literally `grpcRequestFunc`
         TaskHelper.FireAndForget(
             () => CallWithDeadline(
+                grpcClient,
                 grpcCall,
                 request,
                 endpointName,
@@ -139,15 +174,17 @@ public static class GrpcHelper {
 
     public delegate Task OnGrpcStreamReply<in TReply>(TReply reply);
 
-    public static async Task<bool> ServerStream<TRequest, TReply>(
+    public static async Task<bool> ServerStream<TClient, TRequest, TReply>(
+        GrpcClientWrapper<TClient> grpcClient,
         GrpcServerStreamCall<TRequest, TReply> grpcCall,
         OnGrpcStreamReply<TReply> onReply,
         TRequest request,
         string endpointName,
         CancellationToken cancellationToken,
         bool useTimeout = true,
-        int timeoutExtension = 0
-    ) {
+        int timeoutExtension = 0,
+        int retryCount = 1
+    ) where TClient : ClientBase<TClient> {
         Log.Information("Calling gRPC server stream `{GrpcCallEndpoint}`", endpointName);
 
         var timeout = EnvironmentConfigHelper.Config.Grpc.Timeout.Default + timeoutExtension;
@@ -187,9 +224,35 @@ public static class GrpcHelper {
                     );
                     return false;
                 case { StatusCode: StatusCode.Unavailable }:
-                    Log.Warning(
+                    if (retryCount < MaxUnavailableRetryCount) {
+                        Log.Warning(
+                            e,
+                            "gRPC server unavailable for `{GrpcCallEndpoint}` (Call body: {@GrpcCallBody}), #{RetryCount} attempt to reconnect in {RetryWaitSec}s",
+                            endpointName,
+                            request,
+                            retryCount,
+                            retryCount
+                        );
+
+                        await Task.Delay(retryCount * 1000, cancellationToken);
+                        grpcClient.Reconnect();
+
+                        return await ServerStream(
+                            grpcClient,
+                            grpcCall,
+                            onReply,
+                            request,
+                            endpointName,
+                            cancellationToken,
+                            useTimeout: true,
+                            timeoutExtension: 0,
+                            retryCount: retryCount + 1
+                        );
+                    }
+
+                    Log.Error(
                         e,
-                        "gRPC server unavailable for `{GrpcCallEndpoint}` (Call body: {@GrpcCallBody})",
+                        "gRPC server unavailable for `{GrpcCallEndpoint}` (Call body: {@GrpcCallBody}), max retry exceeded",
                         endpointName,
                         request
                     );
