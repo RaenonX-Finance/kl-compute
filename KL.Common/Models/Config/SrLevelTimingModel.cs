@@ -24,6 +24,11 @@ public record SrLevelTimingModel {
                 Open = new TimeOnly(8, 45),
                 Close = new TimeOnly(13, 29)
             },
+            ProductCategory.HongKongIndexFutures => new SrLevelTimingModel {
+                Timezone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Hong_Kong"),
+                Open = new TimeOnly(9, 20),
+                Close = new TimeOnly(16, 29)
+            },
             ProductCategory.UsFutures => new SrLevelTimingModel {
                 Timezone = TimeZoneInfo.FindSystemTimeZoneById("America/Chicago"),
                 Open = new TimeOnly(8, 30),

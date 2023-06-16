@@ -22,6 +22,11 @@ public record MarketDateCutoffModel {
                 Time = new TimeOnly(8, 45),
                 OffsetOnCutoff = 0
             },
+            ProductCategory.HongKongIndexFutures => new MarketDateCutoffModel {
+                Timezone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Hong_Kong"),
+                Time = new TimeOnly(17, 15),
+                OffsetOnCutoff = 1
+            },
             ProductCategory.JapanIndexFutures => new MarketDateCutoffModel {
                 Timezone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Tokyo"),
                 Time = new TimeOnly(8, 45),

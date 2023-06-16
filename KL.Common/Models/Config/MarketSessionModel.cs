@@ -65,6 +65,16 @@ public record MarketSessionModel {
                     End = new TimeOnly(5, 45)
                 }
             },
+            ProductCategory.HongKongIndexFutures => new[] {
+                new MarketSessionModel {
+                    Timezone = TimeZoneInfo.FindSystemTimeZoneById("America/Hong_Kong"),
+                    TradingDays = new[] {
+                        DayOfWeek.Sunday, DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday
+                    },
+                    Start = new TimeOnly(17, 15),
+                    End = new TimeOnly(16, 30)
+                }
+            },
             ProductCategory.JapanIndexFutures => new[] {
                 new MarketSessionModel {
                     Timezone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Tokyo"),

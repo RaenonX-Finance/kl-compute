@@ -177,7 +177,19 @@ public record PxSourceConfigModel {
                     ProductCategory = ProductCategory.EuroIndexFutures,
                     SrLevelMinDiff = 3
                 }
-            }
+            },  {
+                "HSI",
+                new PxSourceConfigModel {
+                    Source = PxSource.Touchance,
+                    Enabled = false,
+                    EnableRealtime = true,
+                    InternalSymbol = "HSI",
+                    ExternalSymbol = "TC.F.HKEX.HSI.HOT",
+                    Name = "恆生",
+                    ProductCategory = ProductCategory.HongKongIndexFutures,
+                    SrLevelMinDiff = 35
+                }
+            },
         };
     }
 }
