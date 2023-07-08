@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
+using Serilog.Sinks.File.Archive;
 
 namespace KL.Common.Utils;
 
@@ -43,7 +44,12 @@ public static class LoggingHelper {
                 Path.Combine(logDir, $"{appName}-.log"),
                 rollingInterval: RollingInterval.Day,
                 outputTemplate: OutputTemplate,
-                shared: true
+                // Only files over the limit of Serilog retain will trigger hook, causing the log files to be archived
+                // VM already have script to clean up the log files
+                retainedFileCountLimit: 1,
+                // Default is 1 GB only
+                fileSizeLimitBytes: null, 
+                hooks: new ArchiveHooks()
             );
         }
 

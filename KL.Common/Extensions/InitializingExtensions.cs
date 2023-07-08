@@ -72,6 +72,8 @@ public static class InitializingExtensions {
         );
         
         Log.Information("Booting {AppName}", AppNameManager.GetAppName(app));
+        
+        app.Lifetime.ApplicationStopping.Register(Serilog.Log.CloseAndFlush);
 
         return app;
     }
