@@ -1,4 +1,5 @@
 ﻿using Grpc.Core;
+using KL.Common.Extensions;
 using Serilog;
 
 namespace KL.Common.Utils;
@@ -86,16 +87,19 @@ public static class GrpcHelper {
                         timeout
                     );
                     return default;
+                case { StatusCode: StatusCode.Internal }:
                 case { StatusCode: StatusCode.Unavailable }:
                     if (retryCount < MaxUnavailableRetryCount) {
-                        Log.Warning(
-                            e,
-                            "gRPC server unavailable for `{GrpcCallEndpoint}` (Call body: {@GrpcCallBody}), #{RetryCount} attempt to reconnect in {RetryWaitSec}s",
-                            endpointName,
-                            request,
-                            retryCount,
-                            retryCount
-                        );
+                        if (!e.IsServerClosed()) {
+                            Log.Warning(
+                                e,
+                                "gRPC server unavailable for `{GrpcCallEndpoint}` (Call body: {@GrpcCallBody}), #{RetryCount} attempt to reconnect in {RetryWaitSec}s",
+                                endpointName,
+                                request,
+                                retryCount,
+                                retryCount
+                            );
+                        }
 
                         await Task.Delay(retryCount * 1000, cancellationToken);
                         grpcClient.Reconnect();
@@ -114,12 +118,14 @@ public static class GrpcHelper {
                         );
                     }
 
-                    Log.Error(
-                        e,
-                        "gRPC server unavailable for `{GrpcCallEndpoint}` (Call body: {@GrpcCallBody}), max retry exceeded",
-                        endpointName,
-                        request
-                    );
+                    if (!e.IsServerClosed()) {
+                        Log.Error(
+                            e,
+                            "gRPC server unavailable for `{GrpcCallEndpoint}` (Call body: {@GrpcCallBody}), max retry exceeded",
+                            endpointName,
+                            request
+                        );
+                    }
                     return default;
                 default:
                     Log.Error(
@@ -223,16 +229,19 @@ public static class GrpcHelper {
                         timeout
                     );
                     return false;
+                case { StatusCode: StatusCode.Internal }:
                 case { StatusCode: StatusCode.Unavailable }:
                     if (retryCount < MaxUnavailableRetryCount) {
-                        Log.Warning(
-                            e,
-                            "gRPC server unavailable for `{GrpcCallEndpoint}` (Call body: {@GrpcCallBody}), #{RetryCount} attempt to reconnect in {RetryWaitSec}s",
-                            endpointName,
-                            request,
-                            retryCount,
-                            retryCount
-                        );
+                        if (!e.IsServerClosed()) {
+                            Log.Warning(
+                                e,
+                                "gRPC server unavailable for `{GrpcCallEndpoint}` (Call body: {@GrpcCallBody}), #{RetryCount} attempt to reconnect in {RetryWaitSec}s",
+                                endpointName,
+                                request,
+                                retryCount,
+                                retryCount
+                            );
+                        }
 
                         await Task.Delay(retryCount * 1000, cancellationToken);
                         grpcClient.Reconnect();
@@ -250,12 +259,14 @@ public static class GrpcHelper {
                         );
                     }
 
-                    Log.Error(
-                        e,
-                        "gRPC server unavailable for `{GrpcCallEndpoint}` (Call body: {@GrpcCallBody}), max retry exceeded",
-                        endpointName,
-                        request
-                    );
+                    if (!e.IsServerClosed()) {
+                        Log.Error(
+                            e,
+                            "gRPC server unavailable for `{GrpcCallEndpoint}` (Call body: {@GrpcCallBody}), max retry exceeded",
+                            endpointName,
+                            request
+                        );
+                    }
                     return false;
                 case { StatusCode: StatusCode.Cancelled }:
                     Log.Warning(
