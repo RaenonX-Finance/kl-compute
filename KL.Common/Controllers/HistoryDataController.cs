@@ -12,7 +12,7 @@ using Serilog;
 namespace KL.Common.Controllers;
 
 
-public struct UpdateAllArgs {
+public record struct UpdateAllArgs {
     [UsedImplicitly]
     public required string Symbol { get; init; }
 
@@ -26,7 +26,10 @@ public static class HistoryDataController {
     private static readonly FilterDefinitionBuilder<HistoryDataModel> FilterBuilder =
         Builders<HistoryDataModel>.Filter;
 
-    private static readonly Dictionary<UpdateAllArgs, DelayedOperation<IList<HistoryDataModel>>> BatchUpdateAll = new();
+    private static readonly Dictionary<UpdateAllArgs, DelayedOperation<IList<HistoryDataModel>>> BatchUpdateAll =
+        new();
+
+    private const int UpdateAllEntryMaxBatchSize = 10000;
 
     public static IEnumerable<HistoryDataModel> GetAll(string symbol, HistoryInterval interval) {
         Log.Information("Request all history data of {Symbol} @ {Interval}", symbol, interval);
@@ -191,6 +194,25 @@ public static class HistoryDataController {
     }
 
     private static async Task UpdateAll(
+        string symbol,
+        HistoryInterval interval,
+        ICollection<HistoryDataModel> entries,
+        int maxWriteConflictRetryCount,
+        int currentWriteConflictRetryCount
+    ) {
+        for (var i = 0; i < entries.Count; i += UpdateAllEntryMaxBatchSize) {
+            // Transaction can't contain too many uncommitted changes, otherwise error will occur
+            await UpdateAllOfSegment(
+                symbol,
+                interval,
+                entries.Skip(i).Take(UpdateAllEntryMaxBatchSize).ToList(),
+                maxWriteConflictRetryCount,
+                currentWriteConflictRetryCount
+            );
+        }
+    }
+
+    private static async Task UpdateAllOfSegment(
         string symbol,
         HistoryInterval interval,
         ICollection<HistoryDataModel> entries,
