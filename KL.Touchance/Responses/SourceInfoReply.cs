@@ -5,6 +5,12 @@ using KL.Touchance.Extensions;
 namespace KL.Touchance.Responses;
 
 
+public record ProductExchangeName {
+    [UsedImplicitly]
+    [JsonPropertyName("CHT")]
+    public required string TraditionalChinese { get; init; }
+}
+
 public record ProductInfo {
     private int? _decimals;
 
@@ -17,10 +23,6 @@ public record ProductInfo {
     [UsedImplicitly]
     [JsonPropertyName("EXG")]
     public required string ExchangeSymbol { get; init; }
-
-    [UsedImplicitly]
-    [JsonPropertyName("EXGName.CHT")]
-    public required string ExchangeName { get; init; }
 
     public int Decimals {
         get {
@@ -44,7 +46,7 @@ public record SourceInfoReply : TcActionReply {
     private ProductInfo? _productInfo;
 
     [UsedImplicitly]
-    public required Dictionary<string, Dictionary<string, string>> Info { get; init; }
+    public required Dictionary<string, Dictionary<string, object>> Info { get; init; }
 
     public ProductInfo ProductInfo {
         get { return _productInfo ??= Info.First(r => r.Key.Count(c => c == '.') == 3).Value.ToModel<ProductInfo>(); }

@@ -5,7 +5,7 @@ namespace KL.Touchance.Extensions;
 
 
 public static class DictionaryExtensions {
-    public static T ToModel<T>(this IDictionary<string, string> data) {
+    public static T ToModel<T>(this IDictionary<string, object> data) {
         var model = JsonSerializer.Deserialize<T>(
             JsonSerializer.Serialize(data, JsonHelper.SerializingOptions),
             JsonHelper.SerializingOptions

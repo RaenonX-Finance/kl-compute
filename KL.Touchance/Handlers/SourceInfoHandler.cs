@@ -30,7 +30,7 @@ internal static class SourceInfoHandler {
                         MinTick = reply.ProductInfo.TickSize,
                         Decimals = reply.ProductInfo.Decimals,
                         ExchangeSymbol = reply.ProductInfo.ExchangeSymbol,
-                        ExchangeName = reply.ProductInfo.ExchangeName
+                        ExchangeName = reply.ProductInfo.ExchangeSymbol,
                     };
                 } catch (InvalidOperationException e) {
                     Log.Error(
