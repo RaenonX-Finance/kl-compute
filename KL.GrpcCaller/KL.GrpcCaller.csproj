@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
 
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <UserSecretsId>dotnet-KL.GrpcCaller-912E8412-7BCF-451C-8344-34E39581F3AA</UserSecretsId>
